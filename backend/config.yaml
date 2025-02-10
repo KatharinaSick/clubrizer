@@ -1,0 +1,10 @@
+server:
+  port: 8080
+database:
+  url: ${DB_URL}
+oauth:
+  issuer: clubrizer.com
+  secretKey: ${OAUTH_SECRET_KEY}
+  google:
+    clientId: ${OAUTH_GOOGLE_CLIENT_ID}
+    clientSecret: ${OAUTH_GOOGLE_CLIENT_SECRET}

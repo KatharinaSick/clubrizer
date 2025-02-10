@@ -1,0 +1,39 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+
+:root {
+  --cr-white: #ffffff;
+  --cr-black: #000000;
+
+  --cr-blue: #0016DB;
+  --cr-light-blue: #52E3FE;
+
+  --cr-text-light: #0C1D36;
+}
+
+/* semantic color variables for this project */
+:root {
+  --color-background: var(--cr-white);
+  --color-text: var(--cr-text-light);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* TODO adjust all colors for dark theme */
+    /* --color-background: var(--cr-black); */
+  }
+}
+
+body {
+  min-height: 100vh;
+  background: var(--color-background);
+
+  /* Font */
+  color: var(--color-text);
+  font-family: "DM Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+
+  transition:
+    color 0.5s,
+    background-color 0.5s;
+}
