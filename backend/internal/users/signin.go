@@ -12,21 +12,19 @@ type SignInOrRegisterRequest struct {
 }
 
 type SignInOrRegisterResponse struct {
-	AccessToken  string `json:"accessToken"`
-	RefreshToken string `json:"refreshToken"`
+	AccessToken string `json:"accessToken"`
 }
 
-func (s *Service) SignInOrRegister(ctx context.Context, r SignInOrRegisterRequest) (*SignInOrRegisterResponse, error) {
-	// Validate Google ID Token
+func (s *Service) SignInOrRegister(ctx context.Context, r SignInOrRegisterRequest) (*SignInOrRegisterResponse, *RefreshTokenInfo, error) {
+	// Validate & parse Google ID Token
 	token, err := idtoken.Validate(ctx, r.IdToken, s.cfg.OAuth.Google.ClientId)
 	if err != nil {
-		return nil, apperrors.NewUnauthorized("invalid id token", err)
+		return nil, nil, apperrors.NewUnauthorized("invalid id token", err)
 	}
 
-	// Parse token googleTokenClaims
 	c, err := s.parseClaims(token.Claims)
 	if err != nil {
-		return nil, apperrors.NewBadRequest("failed to parse token googleTokenClaims", err)
+		return nil, nil, apperrors.NewBadRequest("failed to parse token googleTokenClaims", err)
 	}
 
 	// Create user if it doesn't exist yet
@@ -37,16 +35,21 @@ func (s *Service) SignInOrRegister(ctx context.Context, r SignInOrRegisterReques
 			isNewUser = true
 			u, err = s.store.createUser(ctx, c)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 		} else {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
-	// Generate access & refresh token
-	accessToken, refreshToken, err := s.generateTokens(u, isNewUser)
-	return &SignInOrRegisterResponse{accessToken, refreshToken}, nil
+	// Return refresh token as cookie and the access token in the response body
+	accessToken, refreshToken, refreshTokenExpiresAt, err := s.generateTokens(u, isNewUser)
+	return &SignInOrRegisterResponse{accessToken},
+		&RefreshTokenInfo{
+			Token:   refreshToken,
+			Expires: refreshTokenExpiresAt,
+		},
+		nil
 }
 
 func (s *Service) parseClaims(c map[string]interface{}) (*googleTokenClaims, error) {

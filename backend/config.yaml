@@ -3,8 +3,21 @@ server:
 database:
   url: ${DB_URL}
 oauth:
-  issuer: clubrizer.com
-  secretKey: ${OAUTH_SECRET_KEY}
+  accessToken:
+    issuer: clubrizer.com
+    headerName: Authorization
+    secretKey: ${OAUTH_ACCESS_TOKEN_SECRET_KEY}
+  refreshToken:
+    issuer: clubrizer.com
+    cookieName: clubrizer.refreshToken
+    secretKey: ${OAUTH_REFRESH_TOKEN_SECRET_KEY}
+  user:
+    key: user
   google:
     clientId: ${OAUTH_GOOGLE_CLIENT_ID}
     clientSecret: ${OAUTH_GOOGLE_CLIENT_SECRET}
+cors:
+  allowedOrigins:
+    - http://localhost:5173
+  allowedHeaders:
+    - '*'

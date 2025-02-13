@@ -20,7 +20,7 @@
     ],
     "scripts": {
       "initdb":    "initdb --username=postgres --pwfile=<(echo a-super-secure-password)",
-      "startdb":   "todo",
+      "startdb":   "pg_ctl -D ./.devbox/virtenv/postgresql/data -l logfile start",
       "stopdb":    "todo",
       "destroydb": "todo",
       "migratedb": "migrate -database ${DB_URL} -path database/migrations up",

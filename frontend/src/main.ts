@@ -6,15 +6,16 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import GoogleSignInPlugin from 'vue3-google-signin'
+import { configureAxiosInterceptors } from '@/service/axiosInterceptors'
+
+configureAxiosInterceptors()
 
 const app = createApp(App)
-
 app.use(createPinia())
 app.use(router)
 
 app.use(GoogleSignInPlugin, {
-  // TODO secret? pass as env variable
-  clientId: '281221302650-5kinlm2k9b8rllcb4blh72lcj3qe0jbj'
+  clientId: import.meta.env.VITE_OAUTH_GOOGLE_CLIENT_ID
 })
 
 app.mount('#app')

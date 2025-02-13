@@ -23,12 +23,12 @@ type googleTokenClaims struct {
 	Issuer     string  `json:"iss"`
 }
 
-type accessTokenClaims struct {
+type Claims struct {
 	jwt.RegisteredClaims
 	IsNew      bool    `json:"isNew"`
 	Email      string  `json:"email"`
-	FamilyName string  `json:"family_name"`
-	GivenName  string  `json:"given_name"`
-	NickName   string  `json:"nick_name"`
+	FamilyName string  `json:"familyName"`
+	GivenName  string  `json:"givenName"`
+	NickName   string  `json:"nickName"`
 	Picture    *string `json:"picture"`
 }

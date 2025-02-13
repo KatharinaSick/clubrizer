@@ -2,7 +2,8 @@ package main
 
 import (
 	"github.com/katharinasick/clubrizer/internal/api"
-	"github.com/katharinasick/clubrizer/internal/setup"
+	"github.com/katharinasick/clubrizer/internal/app"
+	"github.com/katharinasick/clubrizer/internal/events"
 	"github.com/katharinasick/clubrizer/internal/users"
 	"net"
 	"net/http"
@@ -11,15 +12,15 @@ import (
 )
 
 func main() {
-	log := setup.NewLogger()
+	log := app.NewLogger()
 
-	cfg, err := setup.ParseConfig()
+	cfg, err := app.ParseConfig()
 	if err != nil {
 		log.Error("Failed to parse config. Terminating.", "error", err)
 		os.Exit(1)
 	}
 
-	dbPool, err := setup.ConnectDatastore(log, cfg)
+	dbPool, err := app.ConnectDatastore(log, cfg)
 	if err != nil {
 		log.Error("Failed to connect to database. Terminating.", "error", err)
 		os.Exit(1)
@@ -28,7 +29,9 @@ func main() {
 	httpServer := &http.Server{
 		Addr: net.JoinHostPort("", cfg.Server.Port),
 		Handler: api.NewHandler(
+			*cfg,
 			users.NewService(log, cfg, dbPool),
+			events.NewService(log, cfg),
 		),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,

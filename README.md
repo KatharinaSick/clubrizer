@@ -3,7 +3,3 @@
 # Clubrizer
 
 A side/fun project that aims to create a platform for teams. More details will follow.
-
-## Next Steps
-
-- Login/Register User and store to db

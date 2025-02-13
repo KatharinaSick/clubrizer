@@ -1,0 +1,50 @@
+package api
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/katharinasick/clubrizer/internal/app"
+	"github.com/katharinasick/clubrizer/internal/users"
+	"net/http"
+)
+
+func authenticated(cfg app.Config, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		accessTokenString := r.Header.Get(cfg.OAuth.AccessToken.HeaderName)
+		if accessTokenString == "" {
+			http.Error(w, "no access token set", http.StatusUnauthorized)
+			return
+		}
+
+		token, err := jwt.ParseWithClaims(accessTokenString, &users.Claims{}, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				http.Error(w, fmt.Sprintf("unexpected signing method: %v", token.Header["alg"]), http.StatusUnauthorized)
+			}
+
+			return []byte(cfg.OAuth.AccessToken.SecretKey), nil
+		})
+
+		if err != nil || !token.Valid {
+			if errors.Is(err, jwt.ErrTokenExpired) {
+				http.Error(w, "access token expired", http.StatusUnauthorized)
+			} else {
+				http.Error(w, "invalid access token", http.StatusUnauthorized)
+			}
+			return
+		}
+
+		claims, ok := token.Claims.(*users.Claims)
+		if !ok {
+			http.Error(w, "invalid access token claims", http.StatusBadRequest)
+			return
+		}
+
+		// Add user claims to context for later use
+		ctx := context.WithValue(r.Context(), cfg.OAuth.User.Key, claims)
+		r = r.WithContext(ctx)
+
+		next.ServeHTTP(w, r)
+	})
+}

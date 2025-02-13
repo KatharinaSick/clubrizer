@@ -1,66 +1,96 @@
 <script setup lang="ts">
-import {
-  GoogleSignInButton,
-  type CredentialResponse,
-  decodeCredential
-} from 'vue3-google-signin'
+import { type CredentialResponse, GoogleSignInButton } from 'vue3-google-signin'
+import { useAuthStore } from '@/stores/auth'
+import Loader from '@/components/Loader.vue'
+import Modal from '@/components/Modal.vue'
+import Alert from '@/components/Alert.vue'
 import { ref } from 'vue'
-import axios from '@/plugins/axios'
+import router from '@/router'
+import { useRoute } from 'vue-router'
 
-const profileInfo = ref()
+const auth = useAuthStore()
+const route = useRoute()
+const googleSignInError = ref<string>('')
 
 const handleGoogleLoginSuccess = (response: CredentialResponse) => {
-  const { credential } = response;
+  const { credential } = response
   if (!credential) {
-    // TODO error
+    googleSignInError.value = 'Failed to parse Google login token'
     return
   }
 
-  axios
-    .post("/users", {idToken: credential})
-    .then((response) => console.log(response))
-    .catch((error) => console.error(error));
-
-  /*const googleProfileInfo = decodeCredential(credential);
-  profileInfo.value = {
-    email: googleProfileInfo.email,
-    fullName: googleProfileInfo.name,
-    nickName: googleProfileInfo.given_name,
-    picture: googleProfileInfo.picture,
-  }*/
-};
-
-const handleGoogleLoginError = () => {
-  // TODO do something
-  console.error("Login failed");
-};
+  auth.login(credential)
+    .then(() => {
+      if (auth.isLoggedIn) {
+        router.replace({path: route.query.redirect as string ?? '/'})
+      }
+    })
+}
 </script>
 
 <template>
-  <div>
-    <h1>Sign In</h1>
+  <div class="container">
+    <div class="center">
+      <img
+        alt="Clubrizer Logo"
+        class="logo"
+        src="@/assets/logo.svg"
+      />
+      <h1 class="title">Clubrizer</h1>
+      <h3 class="slogan">Team Up!</h3>
+    </div>
+
+    <div class="center">
+      <h1>Welcome to<br />LISC-2010!</h1>
+      <p>Sign in to get started</p>
+    </div>
 
     <GoogleSignInButton
-      v-if="!profileInfo"
       @success="handleGoogleLoginSuccess"
-      @error="handleGoogleLoginError"
+      @error="() => googleSignInError = 'Failed to sign in with Google'"
       size="large"
       shape="pill"
     ></GoogleSignInButton>
+    <Modal v-if="auth.isLoading">
+      <Loader />
+    </Modal>
+    <Alert v-if="googleSignInError" class="alert" title="Failed to sign in" :message="googleSignInError"/>
+    <Alert v-if="auth.error" class="alert" title="Failed to sign in" :message="auth.error"/>
 
-    <div v-if="profileInfo">
-      <h2>Tell us a bit about yourself</h2>
-      TODO allow user to customize information here with pre-filled input fields
-
-      <strong>TODO just skip this step. People can edit their profile later on anyways.
-      Still, enrich token with roll & approval information in the backend and return access & refresh token
-        Create axios interceptor to automatically refresh token
-      </strong>
-      <button></button>
-    </div>
   </div>
 </template>
 
-<style>
+<style scoped>
+.container {
+  width: 100%;
+  margin-top: 64px;
 
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 48px;
+}
+
+.center {
+  text-align: center;
+}
+
+.logo {
+  height: 100px;
+}
+
+.title {
+  margin: 8px 0 0 0;
+  text-transform: uppercase;
+  letter-spacing: .1rem;
+}
+
+.slogan {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: .1rem;
+  background-image: var(--gradient);
+  color: transparent;
+  background-clip: text;
+}
 </style>
