@@ -7,6 +7,7 @@ import Alert from '@/components/Alert.vue'
 import { ref } from 'vue'
 import router from '@/router'
 import { useRoute } from 'vue-router'
+import i18n from '@/plugins/i18n'
 
 const auth = useAuthStore()
 const route = useRoute()
@@ -15,7 +16,7 @@ const googleSignInError = ref<string>('')
 const handleGoogleLoginSuccess = (response: CredentialResponse) => {
   const { credential } = response
   if (!credential) {
-    googleSignInError.value = 'Failed to parse Google login token'
+    googleSignInError.value = i18n.global.t('signIn.failedToParseGoogleToken')
     return
   }
 
@@ -41,21 +42,22 @@ const handleGoogleLoginSuccess = (response: CredentialResponse) => {
     </div>
 
     <div class="center">
-      <h1>Welcome to<br />LISC-2010!</h1>
-      <p>Sign in to get started</p>
+      <h1>{{ $t('signIn.welcomeTo') }}<br />{{ $t('team') }}!</h1>
+      <p>{{ $t('signIn.getStarted') }}</p>
     </div>
 
     <GoogleSignInButton
       @success="handleGoogleLoginSuccess"
-      @error="() => googleSignInError = 'Failed to sign in with Google'"
+      @error="() => googleSignInError = i18n.global.t('signIn.failedToSignInWithGoogle')"
       size="large"
       shape="pill"
+
     ></GoogleSignInButton>
     <Modal v-if="auth.isLoading">
       <Loader />
     </Modal>
-    <Alert v-if="googleSignInError" class="alert" title="Failed to sign in" :message="googleSignInError"/>
-    <Alert v-if="auth.error" class="alert" title="Failed to sign in" :message="auth.error"/>
+    <Alert v-if="googleSignInError" class="alert" :title="i18n.global.t('signIn.failedToSignIn')" :message="googleSignInError"/>
+    <Alert v-if="auth.error" class="alert" :title="i18n.global.t('signIn.failedToSignIn')" :message="auth.error"/>
 
   </div>
 </template>
@@ -94,3 +96,4 @@ const handleGoogleLoginSuccess = (response: CredentialResponse) => {
   background-clip: text;
 }
 </style>
+
