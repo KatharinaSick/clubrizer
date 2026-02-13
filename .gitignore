@@ -114,6 +114,7 @@ fabric.properties
 
 !.idea/codeStyles
 !.idea/runConfigurations
+!.idea/mcp.json
 
 ### Vue ###
 # gitignore template for Vue.js projects

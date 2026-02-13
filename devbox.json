@@ -1,10 +1,10 @@
 {
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.13.7/.schema/devbox.schema.json",
   "packages": [
-    "postgresql@17.2",
-    "go-migrate@4.18.1",
-    "go@1.23.4",
-    "parallel@20241222"
+    "postgresql@17.7",
+    "go-migrate@4.19.1",
+    "go@1.25.5",
+    "parallel@20260122"
   ],
   "env": {
     "GOPATH": "$HOME/go/",
@@ -28,7 +28,6 @@
       "backend":  "go run -C backend ./cmd/api-server/main.go",
       "frontend": "npm run dev --prefix frontend",
       "dev":      "parallel --line-buffer --tag ::: 'devbox run backend' 'devbox run frontend'",
-
       "test": [
         "echo \"Error: no test specified\" && exit 1"
       ]
