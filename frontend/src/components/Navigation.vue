@@ -30,7 +30,7 @@ import IconEvents from '@/components/icons/IconEvents.vue'
   justify-content: space-evenly;
 
   box-shadow: var(--box-shadow);
-  border-radius: var(--border-radius-big);
+  border-radius: var(--border-radius);
 }
 
 .navigationIcon {
@@ -43,10 +43,10 @@ import IconEvents from '@/components/icons/IconEvents.vue'
 .navigationLink {
   padding: 0;
   margin: 0;
-  fill: var(--gray);
+  color: var(--gray);
 }
 
 .navigationActiveLink {
-  fill: var(--blue);
+  color: var(--blue);
 }
 </style>

@@ -51,7 +51,11 @@ func addRoutes(
 	mux.Handle("POST /oauth/tokens", handleWithRefreshToken(cfg, userService.RefreshTokens))
 
 	// Events
-	mux.Handle("GET /events", authenticated(cfg, handle(eventsService.ListEvents)))
+	mux.Handle("GET /events/categories", authenticated(cfg, handleAndReturnList(eventsService.ListCategories)))
+
+	//mux.Handle("GET /events", authenticated(cfg, handleAndReturnList(eventsService.ListEvents)))
+	mux.Handle("GET /events", handleAndReturnList(eventsService.ListEvents))
+	mux.Handle("POST /events", authenticated(cfg, handleWithBody(eventsService.CreateEvent)))
 }
 
 type userService interface {
@@ -60,5 +64,7 @@ type userService interface {
 }
 
 type eventsService interface {
-	ListEvents(ctx context.Context) (*events.ListEventsResponse, error)
+	ListCategories(ctx context.Context) ([]*events.Category, error)
+	ListEvents(ctx context.Context) ([]*events.Event, error)
+	CreateEvent(ctx context.Context, e *events.Event) error
 }

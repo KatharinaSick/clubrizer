@@ -80,6 +80,7 @@ func (s *Service) generateAccessToken(u *User, isNew bool, registeredClaims jwt.
 
 	accessClaims := Claims{
 		RegisteredClaims: registeredClaims,
+		ID:               u.ID,
 		IsNew:            isNew,
 		Email:            u.Email,
 		GivenName:        u.GivenName,

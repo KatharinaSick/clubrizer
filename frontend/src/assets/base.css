@@ -1,6 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
 
 :root {
+    --font-size-small: 14px;
+    --font-size-medium: 16px;
+    --font-size-large: 20px;
+
     --white: #ffffff;
     --black: #000000;
 
@@ -8,15 +12,19 @@
     --light-blue: #52E3FE;
     --green: #c2ee21;
     --gray:#E2E0E0;
+    --light-gray: #F5F5F5;
 
     --red: #F3675E;
     --light-red: #fcd7d4;
 
     --text-light: #0C1D36;
+    --text-gray: #B6BBC3;
 
-    --box-shadow-light: 2px 2px 8px 2px rgba(12, 29, 54, 0.24);
+    --box-shadow-light: 2px 2px 8px rgba(12, 29, 54, 0.12);
     --gradient-start-light: #0762EF;
     --gradient-end-light: #52E3FE;
+    --active-gradient-start-light: #82B3FF;
+    --active-gradient-end-light: #8FEDFF;
 
     --modal-background-light: rgba(12, 29, 54, 0.30);
 }
@@ -32,13 +40,19 @@
     --modal-background-color: var(--modal-background-light);
 
     --box-shadow: var(--box-shadow-light);
-    --border-radius: 4px;
-    --border-radius-big: 12px;
+    --border-radius: 12px;
 
     --horizotal-gradient: linear-gradient(to right, var(--gradient-start-light), var(--gradient-end-light));
+    --horizotal-gradient-active: linear-gradient(to right, var(--active-gradient-start-light), var(--active-gradient-end-light));
+
     --gradient: linear-gradient(to top right, var(--gradient-start-light), var(--gradient-end-light));
 
+    --input-padding: 10px;
     --padding: 12px;
+
+    --font-weight-regular: 300;
+    --font-weight-medium: 500;
+    --font-weight-bold: 700;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -62,6 +76,8 @@ body {
     font-family: "DM Sans", sans-serif;
     font-optical-sizing: auto;
     font-style: normal;
+    font-size: var(--font-size-medium);
+    font-weight: var(--font-weight-regular);
 
     transition: color 0.5s,
     background-color 0.5s;

@@ -1,11 +1,21 @@
 package events
 
-import "context"
+import (
+	"context"
+)
 
-type ListEventsResponse struct {
-	Foo string `json:"foo"`
+func (s *Service) ListEvents(ctx context.Context) ([]*Event, error) {
+	events, err := s.store.getAllEvents(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return events, nil
 }
 
-func (s *Service) ListEvents(_ context.Context) (*ListEventsResponse, error) {
-	return &ListEventsResponse{Foo: "bar!"}, nil
+func (s *Service) CreateEvent(ctx context.Context, e *Event) error {
+	err := s.store.createEvent(ctx, e)
+	if err != nil {
+		return err
+	}
+	return nil
 }

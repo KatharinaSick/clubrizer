@@ -13,7 +13,11 @@ import (
 )
 
 type handler[Out any] func(context.Context) (*Out, error)
-type handlerWithInput[In any, Out any] func(context.Context, In) (*Out, error)
+type handlerWithInput[In any] func(context.Context, In) error
+type handlerWithInputAndReturnValue[In any, Out any] func(context.Context, In) (*Out, error)
+
+type handlerWithListReturn[Out any] func(context.Context) ([]*Out, error)
+
 type handlerWithInputAndRefreshTokenReturn[In any, Out any] func(context.Context, In) (*Out, *users.RefreshTokenInfo, error)
 type handlerWithRefreshToken[Out any] func(context.Context, users.RefreshTokenInfo) (*Out, *users.RefreshTokenInfo, error)
 
@@ -29,7 +33,37 @@ func handle[Out any](f handler[Out]) http.Handler {
 	})
 }
 
-func handleWithBody[In any, Out any](f handlerWithInput[In, Out]) http.Handler {
+func handleAndReturnList[Out any](f handlerWithListReturn[Out]) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		out, err := f(r.Context())
+		if err != nil {
+			http.Error(w, err.Error(), apperrors.HttpStatusCode(err))
+			return
+		}
+
+		writeResponse(w, out)
+	})
+}
+
+func handleWithBody[In any](f handlerWithInput[In]) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		in, err := getAndValidatePayload[In](r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		err = f(r.Context(), *in)
+		if err != nil {
+			http.Error(w, err.Error(), apperrors.HttpStatusCode(err))
+			return
+		}
+
+		ok(w)
+	})
+}
+
+func handleWithBodyAndReturnValue[In any, Out any](f handlerWithInputAndReturnValue[In, Out]) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		in, err := getAndValidatePayload[In](r)
 		if err != nil {
@@ -118,4 +152,9 @@ func writeResponse[Out any](w http.ResponseWriter, out Out) {
 	if err != nil {
 		// TODO log error
 	}
+}
+
+func ok(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 }

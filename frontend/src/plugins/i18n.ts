@@ -17,7 +17,20 @@ export default createI18n({
         header: 'My Profile'
       },
       events: {
-        header: 'Events'
+        header: 'Events',
+        new: {
+          header: 'Create Event',
+          title: 'Title',
+          date: 'Date',
+          time: 'Time',
+          location: 'Location',
+          category: 'Category',
+          description: 'Description',
+          create: 'Create',
+        }
+      },
+      select: {
+        loading: 'Loading...'
       }
     },
     de: {
@@ -33,7 +46,17 @@ export default createI18n({
         header: 'Mein Profil'
       },
       events: {
-        header: 'Events'
+        header: 'Events',
+        new: {
+          header: 'Neues Event',
+          title: 'Name',
+          date: 'Datum',
+          time: 'Uhrzeit',
+          location: 'Ort',
+          category: 'Kategorie',
+          description: 'Beschreibu  ng',
+          create: 'Speichern',
+        }
       }
     }
   }

@@ -31,7 +31,7 @@ func main() {
 		Handler: api.NewHandler(
 			*cfg,
 			users.NewService(log, cfg, dbPool),
-			events.NewService(log, cfg),
+			events.NewService(log, cfg, dbPool),
 		),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
