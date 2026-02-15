@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS event_categories
 CREATE TABLE IF NOT EXISTS events
 (
     id          UUID      DEFAULT gen_random_uuid() UNIQUE PRIMARY KEY,
-    name        VARCHAR(300)                          NOT NULL,
+    title       VARCHAR(300)                          NOT NULL,
     category    UUID REFERENCES event_categories (id) NOT NULL,
     description VARCHAR(500),
     location    VARCHAR(500),

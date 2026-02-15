@@ -11,6 +11,8 @@ oauth:
     issuer: clubrizer.com
     cookieName: clubrizer.refreshToken
     secretKey: ${OAUTH_REFRESH_TOKEN_SECRET_KEY}
+    secure: false
+    sameSite: Lax
   user:
     key: user
   google:

@@ -53,7 +53,6 @@ const setUpRefreshTokenInterceptors = (): void => {
         }
       }
 
-      logout()
       return Promise.reject(error)
     }
   )

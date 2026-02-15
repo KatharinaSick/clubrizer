@@ -50,11 +50,14 @@ const createEvent = () => {
       description: eventToCreate.value.description,
       startTime: new Date(eventToCreate.value.date + 'T' + eventToCreate.value.time),
       location: eventToCreate.value.location,
-      category: eventToCreate.value.category?.id
+      categoryId: eventToCreate.value.category?.id
     })
     .then(response => {
       createLoading.value = false;
-      // TODO show success or go back
+      // Redirect to the new event
+      // router.push(`/events/${response.data.id}`)
+      // For now, redirect to list until detail view is ready
+      router.push('/events')
     })
     .catch(error => {
       createLoading.value = false;

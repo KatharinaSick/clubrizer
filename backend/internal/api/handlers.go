@@ -120,13 +120,20 @@ func handleWithRefreshToken[Out any](cfg app.Config, f handlerWithRefreshToken[O
 }
 
 func setRefreshTokenCookie(w http.ResponseWriter, cfg app.Config, t *users.RefreshTokenInfo) {
+	sameSite := http.SameSiteStrictMode
+	if cfg.OAuth.RefreshToken.SameSite == "Lax" {
+		sameSite = http.SameSiteLaxMode
+	} else if cfg.OAuth.RefreshToken.SameSite == "None" {
+		sameSite = http.SameSiteNoneMode
+	}
+
 	http.SetCookie(w, &http.Cookie{
 		Name:     cfg.OAuth.RefreshToken.CookieName,
 		Value:    t.Token,
 		Expires:  t.Expires,
 		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteStrictMode,
+		Secure:   cfg.OAuth.RefreshToken.Secure,
+		SameSite: sameSite,
 	})
 }
 

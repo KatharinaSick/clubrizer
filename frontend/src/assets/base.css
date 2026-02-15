@@ -20,11 +20,13 @@
     --text-light: #0C1D36;
     --text-gray: #B6BBC3;
 
-    --box-shadow-light: 2px 2px 8px rgba(12, 29, 54, 0.12);
+    --box-shadow-light: 0px 1px 8px rgba(12, 29, 54, 0.20);
     --gradient-start-light: #0762EF;
     --gradient-end-light: #52E3FE;
     --active-gradient-start-light: #82B3FF;
     --active-gradient-end-light: #8FEDFF;
+
+    --gap: 8px;
 
     --modal-background-light: rgba(12, 29, 54, 0.30);
 }

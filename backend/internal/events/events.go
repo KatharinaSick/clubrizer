@@ -12,10 +12,11 @@ func (s *Service) ListEvents(ctx context.Context) ([]*Event, error) {
 	return events, nil
 }
 
-func (s *Service) CreateEvent(ctx context.Context, e *Event) error {
-	err := s.store.createEvent(ctx, e)
+func (s *Service) CreateEvent(ctx context.Context, e Event) (*Event, error) {
+	id, err := s.store.createEvent(ctx, &e)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	e.ID = id
+	return &e, nil
 }

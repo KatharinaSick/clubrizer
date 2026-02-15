@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.13.7/.schema/devbox.schema.json",
   "packages": [
     "postgresql@17.7",
-    "go-migrate@4.19.1",
+    "go-migrate@4.18.1",
     "go@1.25.5",
     "parallel@20260122"
   ],

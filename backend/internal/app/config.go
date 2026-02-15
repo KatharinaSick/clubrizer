@@ -24,6 +24,8 @@ type Config struct {
 			Issuer     string `yaml:"issuer"`
 			CookieName string `yaml:"cookieName"`
 			SecretKey  string `yaml:"secretKey"`
+			Secure     bool   `yaml:"secure"`
+			SameSite   string `yaml:"sameSite"`
 		} `yaml:"refreshToken"`
 		User struct {
 			Key string `yaml:"key"`

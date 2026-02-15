@@ -5,24 +5,39 @@ import Navigation from '@/components/Navigation.vue'
 
 <template>
   <div class="app">
-    <RouterView class="router" />
-    <Navigation v-if="$route.meta.showNavigation" />
+    <div class="content">
+      <RouterView />
+    </div>
+    <Navigation v-if="$route.meta.showNavigation" class="navigation" />
   </div>
 </template>
 
 <style scoped>
 .app {
-  height: 100%;
+  height: 100dvh;
   width: 100%;
-  padding: var(--padding);
 
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
-.router {
+.content {
   flex-grow: 1;
-  height: 100%;
+  overflow-y: auto;
+  padding: var(--padding);
+  padding-bottom: var(--padding);
+}
+
+.navigation {
+  flex-shrink: 0;
+  margin-top: auto;
+
+  margin-left: var(--padding);
+  margin-right: var(--padding);
+  margin-bottom: var(--padding);
+
+  width: calc(100% - 2 * var(--padding));
 }
 </style>

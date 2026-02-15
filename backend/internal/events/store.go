@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/katharinasick/clubrizer/internal/app"
@@ -39,34 +40,54 @@ func (s *store) getAllCategories(ctx context.Context) ([]*Category, error) {
 }
 
 func (s *store) getAllEvents(ctx context.Context) ([]*Event, error) {
-	rows, err := s.conn.Query(ctx, "SELECT * from events e "+
-		"LEFT JOIN event_categories c ON e.category = c.id "+
-		"ORDER BY e.start_time",
-	)
+	rows, err := s.conn.Query(ctx, `
+		SELECT 
+			e.id, e.title, e.description, e.location, e.start_time, e.created_by, e.created_at, e.category,
+			c.id, c.name, c.color, c.picture
+		FROM events e
+		LEFT JOIN event_categories c ON e.category = c.id
+		ORDER BY e.start_time
+	`)
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("failed to query events: %s", err.Error()))
 	}
+	defer rows.Close()
 
-	c, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Event])
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, apperrors.NewNotFound(fmt.Sprintf("no events found"))
+	var events []*Event
+	for rows.Next() {
+		var e Event
+		var c Category
+		// We don't need created_by/at for category in the list view usually, or we can scan them if needed.
+		// For now, scanning the main fields.
+		err := rows.Scan(
+			&e.ID, &e.Title, &e.Description, &e.Location, &e.StartTime, &e.CreatedBy, &e.CreatedAt, &e.CategoryID,
+			&c.ID, &c.Name, &c.Color, &c.Picture,
+		)
+		if err != nil {
+			return nil, errors.New(fmt.Sprintf("failed to scan event: %s", err.Error()))
 		}
-		return nil, errors.New(fmt.Sprintf("failed to scan events: %s", err.Error()))
+		e.Category = c
+		events = append(events, &e)
 	}
 
-	return c, nil
+	if rows.Err() != nil {
+		return nil, errors.New(fmt.Sprintf("rows error: %s", rows.Err().Error()))
+	}
+
+	return events, nil
 }
 
-func (s *store) createEvent(ctx context.Context, e *Event) error {
-	_, err := s.conn.Exec(
+func (s *store) createEvent(ctx context.Context, e *Event) (uuid.UUID, error) {
+	var id uuid.UUID
+	err := s.conn.QueryRow(
 		context.Background(),
-		"INSERT INTO events(title, category, description, location, start_time, created_by) VALUES ($1, $2, $3, $4, $5, $6)",
-		e.Title, e.Category, e.Description, e.Location, e.StartTime, ctx.Value(s.cfg.OAuth.User.Key).(*users.Claims).ID,
-	)
+		"INSERT INTO events(title, category, description, location, start_time, created_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
+		e.Title, e.CategoryID, e.Description, e.Location, e.StartTime, ctx.Value(s.cfg.OAuth.User.Key).(*users.Claims).ID,
+	).Scan(&id)
+
 	if err != nil {
-		return errors.New(fmt.Sprintf("failed to create event: %s", err.Error()))
+		return uuid.Nil, errors.New(fmt.Sprintf("failed to create event: %s", err.Error()))
 	}
 
-	return nil
+	return id, nil
 }
