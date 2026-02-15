@@ -23,7 +23,7 @@ func newStore(log app.Logger, cfg *app.Config, conn *pgxpool.Pool) *store {
 }
 
 func (s *store) getAllCategories(ctx context.Context) ([]*Category, error) {
-	rows, err := s.conn.Query(ctx, "SELECT * FROM event_categories")
+	rows, err := s.conn.Query(ctx, "SELECT * FROM event_categories ORDER BY sort_order ASC")
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("failed to query event categories: %s", err.Error()))
 	}
@@ -43,7 +43,7 @@ func (s *store) getAllEvents(ctx context.Context) ([]*Event, error) {
 	rows, err := s.conn.Query(ctx, `
 		SELECT 
 			e.id, e.title, e.description, e.location, e.start_time, e.created_by, e.created_at, e.category,
-			c.id, c.name, c.color, c.picture
+			c.id, c.name, c.color, c.picture, c.sort_order
 		FROM events e
 		LEFT JOIN event_categories c ON e.category = c.id
 		ORDER BY e.start_time
@@ -61,7 +61,7 @@ func (s *store) getAllEvents(ctx context.Context) ([]*Event, error) {
 		// For now, scanning the main fields.
 		err := rows.Scan(
 			&e.ID, &e.Title, &e.Description, &e.Location, &e.StartTime, &e.CreatedBy, &e.CreatedAt, &e.CategoryID,
-			&c.ID, &c.Name, &c.Color, &c.Picture,
+			&c.ID, &c.Name, &c.Color, &c.Picture, &c.SortOrder,
 		)
 		if err != nil {
 			return nil, errors.New(fmt.Sprintf("failed to scan event: %s", err.Error()))

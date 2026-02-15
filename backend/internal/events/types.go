@@ -10,6 +10,7 @@ type Category struct {
 	Name      string    `db:"name" json:"name"`
 	Color     string    `db:"color" json:"color"`
 	Picture   string    `db:"picture" json:"picture"`
+	SortOrder int       `db:"sort_order" json:"sortOrder"`
 	CreatedBy string    `db:"created_by" json:"-"`
 	CreatedAt time.Time `db:"created_at" json:"-"`
 }

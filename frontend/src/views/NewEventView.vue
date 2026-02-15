@@ -4,41 +4,24 @@ import i18n from '@/plugins/i18n'
 import router from '@/router'
 import Input from '@/components/Input.vue'
 import Button from '@/components/Button.vue'
-import Select, { type Option } from '@/components/Select.vue'
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import axios from '@/plugins/axios'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+const categoryId = route.params.categoryId as string
+const categoryName = route.query.categoryName as string
 
 const eventToCreate = ref({
-  title: null,
+  title: categoryName || null,
   date: null,
   time: null,
   location: null,
-  category: null as Option | null,
   description: null
 })
 
 const createLoading = ref(false)
 const createError = ref(null)
-
-const categoriesLoading = ref(true)
-const categoriesError = ref(null)
-const categories = ref<Option[]>([])
-
-onMounted(() => {
-  categoriesLoading.value = true
-  categoriesError.value = null
-
-  axios
-    .get('/events/categories')
-    .then(response => {
-      categoriesLoading.value = false
-      categories.value = response.data.map((c: any) => ({ id: c.id, name: c.name }))
-    })
-    .catch(error => {
-      // TODO handle
-      console.log(error)
-    })
-})
 
 const createEvent = () => {
   createLoading.value = true;
@@ -50,7 +33,7 @@ const createEvent = () => {
       description: eventToCreate.value.description,
       startTime: new Date(eventToCreate.value.date + 'T' + eventToCreate.value.time),
       location: eventToCreate.value.location,
-      categoryId: eventToCreate.value.category?.id
+      categoryId: categoryId
     })
     .then(response => {
       createLoading.value = false;
@@ -100,13 +83,6 @@ const createEvent = () => {
       :placeholder="i18n.global.t('events.new.location')"
       v-model="eventToCreate.location"
     />
-    <Select
-      id="category"
-      :placeholder="i18n.global.t('events.new.category')"
-      :options="categories"
-      :loading="categoriesLoading"
-      v-model="eventToCreate.category"
-    />
     <Input
       id="description"
       type="text"
@@ -115,6 +91,10 @@ const createEvent = () => {
       v-model="eventToCreate.description"
     />
 
-    <Button :title="i18n.global.t('events.new.create')" @click="createEvent" />
+    <Button
+      :title="i18n.global.t('events.new.create')"
+      :loading="createLoading"
+      @click="createEvent"
+    />
   </div>
 </template>

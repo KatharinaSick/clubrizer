@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS event_categories
     name       VARCHAR(50) UNIQUE                  NOT NULL,
     color      VARCHAR(7)                          NOT NULL,
     picture    VARCHAR(500)                        NOT NULL,
+    sort_order INT       DEFAULT 0                 NOT NULL,
     created_by UUID REFERENCES users (id)          NOT NULL,
     created_at TIMESTAMP DEFAULT current_timestamp NOT NULL
 );
