@@ -27,7 +27,8 @@ export default createI18n({
           category: 'Category',
           description: 'Description',
           create: 'Create',
-          failedToCreate: 'Failed to create event'
+          failedToCreate: 'Failed to create event',
+          required: 'Required'
         }
       },
       select: {
@@ -57,7 +58,8 @@ export default createI18n({
           category: 'Kategorie',
           description: 'Beschreibung',
           create: 'Speichern',
-          failedToCreate: 'Event konnte nicht erstellt werden'
+          failedToCreate: 'Event konnte nicht erstellt werden',
+          required: 'Pflichtfeld'
         }
       }
     }

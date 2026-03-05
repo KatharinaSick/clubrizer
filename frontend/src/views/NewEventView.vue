@@ -5,7 +5,7 @@ import router from '@/router'
 import Input from '@/components/Input.vue'
 import Button from '@/components/Button.vue'
 import Alert from '@/components/Alert.vue'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import axios from '@/plugins/axios'
 import { useRoute } from 'vue-router'
 
@@ -23,8 +23,47 @@ const eventToCreate = ref({
 
 const createLoading = ref(false)
 const createError = ref<string | null>(null)
+const validationErrors = ref<Record<string, string>>({})
+
+const validate = () => {
+  validationErrors.value = {}
+  let isValid = true
+
+  if (!eventToCreate.value.title) {
+    validationErrors.value.title = i18n.global.t('events.new.required')
+    isValid = false
+  }
+  if (!eventToCreate.value.date) {
+    validationErrors.value.date = i18n.global.t('events.new.required')
+    isValid = false
+  }
+  if (!eventToCreate.value.time) {
+    validationErrors.value.time = i18n.global.t('events.new.required')
+    isValid = false
+  }
+  if (!eventToCreate.value.location) {
+    validationErrors.value.location = i18n.global.t('events.new.required')
+    isValid = false
+  }
+
+  return isValid
+}
+
+watch(eventToCreate, () => {
+  if (Object.keys(validationErrors.value).length > 0) {
+    // Only clear errors if they exist to avoid unnecessary re-renders or logic
+    if (eventToCreate.value.title) delete validationErrors.value.title
+    if (eventToCreate.value.date) delete validationErrors.value.date
+    if (eventToCreate.value.time) delete validationErrors.value.time
+    if (eventToCreate.value.location) delete validationErrors.value.location
+  }
+}, { deep: true })
 
 const createEvent = () => {
+  if (!validate()) {
+    return
+  }
+
   createLoading.value = true;
   createError.value = null;
 
@@ -64,24 +103,32 @@ const createEvent = () => {
       type="text"
       :placeholder="i18n.global.t('events.new.title')"
       v-model="eventToCreate.title"
+      :error="validationErrors.title"
+      required
     />
     <Input
       id="date"
       type="date"
       :placeholder="i18n.global.t('events.new.date')"
       v-model="eventToCreate.date"
+      :error="validationErrors.date"
+      required
     />
     <Input
       id="time"
       type="time"
       :placeholder="i18n.global.t('events.new.time')"
       v-model="eventToCreate.time"
+      :error="validationErrors.time"
+      required
     />
     <Input
       id="location"
       type="text"
       :placeholder="i18n.global.t('events.new.location')"
       v-model="eventToCreate.location"
+      :error="validationErrors.location"
+      required
     />
     <Input
       id="description"
