@@ -7,7 +7,7 @@ defineProps<{
 
 <template>
   <div class="alert">
-    <strong>{{title}}</strong>
+    <p style="font-weight: var(--font-weight-bold)">{{title}}</p>
     <p>{{message}}</p>
   </div>
 </template>

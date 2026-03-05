@@ -27,6 +27,7 @@ export default createI18n({
           category: 'Category',
           description: 'Description',
           create: 'Create',
+          failedToCreate: 'Failed to create event'
         }
       },
       select: {
@@ -54,8 +55,9 @@ export default createI18n({
           time: 'Uhrzeit',
           location: 'Ort',
           category: 'Kategorie',
-          description: 'Beschreibu  ng',
+          description: 'Beschreibung',
           create: 'Speichern',
+          failedToCreate: 'Event konnte nicht erstellt werden'
         }
       }
     }

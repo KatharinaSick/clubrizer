@@ -4,6 +4,7 @@ import i18n from '@/plugins/i18n'
 import router from '@/router'
 import Input from '@/components/Input.vue'
 import Button from '@/components/Button.vue'
+import Alert from '@/components/Alert.vue'
 import { ref } from 'vue'
 import axios from '@/plugins/axios'
 import { useRoute } from 'vue-router'
@@ -21,7 +22,7 @@ const eventToCreate = ref({
 })
 
 const createLoading = ref(false)
-const createError = ref(null)
+const createError = ref<string | null>(null)
 
 const createEvent = () => {
   createLoading.value = true;
@@ -44,8 +45,7 @@ const createEvent = () => {
     })
     .catch(error => {
       createLoading.value = false;
-      // TODO handle properly
-      createError.value = error.response.data;
+      createError.value = error.response?.data || i18n.global.t('events.new.failedToCreate');
     })
 }
 </script>
@@ -91,6 +91,13 @@ const createEvent = () => {
       v-model="eventToCreate.description"
     />
 
+    <Alert
+      v-if="createError"
+      :title="i18n.global.t('events.new.failedToCreate')"
+      :message="createError"
+      class="newEventAlert"
+    />
+
     <Button
       :title="i18n.global.t('events.new.create')"
       :loading="createLoading"
@@ -98,3 +105,9 @@ const createEvent = () => {
     />
   </div>
 </template>
+
+<style scoped>
+.newEventAlert {
+  margin-top: 24px;
+}
+</style>
