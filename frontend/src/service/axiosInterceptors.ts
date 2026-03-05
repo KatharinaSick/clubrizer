@@ -1,6 +1,7 @@
 import axios from '@/plugins/axios'
 import type { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios'
 import { useAuthStore } from '@/stores/auth'
+import router from '@/router'
 
 interface RetryableRequest extends AxiosRequestConfig {
   _retry?: boolean
@@ -47,6 +48,7 @@ const setUpRefreshTokenInterceptors = (): void => {
           return axios(originalRequest)
         } catch (error: unknown) {
           logout()
+          router.push('/signin')
           return Promise.reject(error)
         } finally {
           isRefreshingToken = false
