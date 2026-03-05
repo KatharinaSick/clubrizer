@@ -28,7 +28,8 @@ export default createI18n({
           description: 'Description',
           create: 'Create',
           failedToCreate: 'Failed to create event',
-          required: 'Required'
+          required: 'Required',
+          pastDate: 'Date cannot be in the past'
         }
       },
       select: {
@@ -59,7 +60,8 @@ export default createI18n({
           description: 'Beschreibung',
           create: 'Speichern',
           failedToCreate: 'Event konnte nicht erstellt werden',
-          required: 'Pflichtfeld'
+          required: 'Pflichtfeld',
+          pastDate: 'Datum darf nicht in der Vergangenheit liegen'
         }
       }
     }

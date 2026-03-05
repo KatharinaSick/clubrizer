@@ -7,6 +7,7 @@ defineProps<{
   multiLine?: boolean
   error?: string
   required?: boolean
+  min?: string
 }>()
 
 const value = defineModel()
@@ -35,6 +36,7 @@ const value = defineModel()
       onfocus="(this.type = 'date')"
       onblur="if(!this.value) this.type = 'text'"
       v-model="value"
+      :min="min"
       required
     />
     <input
@@ -47,6 +49,7 @@ const value = defineModel()
       onfocus="(this.type = 'time')"
       onblur="if(!this.value) this.type = 'text'"
       v-model="value"
+      :min="min"
       required
     />
     <input

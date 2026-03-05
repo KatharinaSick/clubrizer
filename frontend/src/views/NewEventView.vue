@@ -6,8 +6,9 @@ import Input from '@/components/Input.vue'
 import Button from '@/components/Button.vue'
 import Alert from '@/components/Alert.vue'
 import { ref, watch } from 'vue'
-import axios from '@/plugins/axios'
 import { useRoute } from 'vue-router'
+import { combineDateAndTime } from '@/utils/date'
+import { createEvent as createEventApi } from '@/service/events'
 
 const route = useRoute()
 const categoryId = route.params.categoryId as string
@@ -24,6 +25,8 @@ const eventToCreate = ref({
 const createLoading = ref(false)
 const createError = ref<string | null>(null)
 const validationErrors = ref<Record<string, string>>({})
+
+const minDate = new Date().toISOString().split('T')[0]
 
 const validate = () => {
   validationErrors.value = {}
@@ -67,15 +70,14 @@ const createEvent = () => {
   createLoading.value = true;
   createError.value = null;
 
-  axios
-    .post('/events', {
-      title: eventToCreate.value.title,
-      description: eventToCreate.value.description,
-      startTime: new Date(eventToCreate.value.date + 'T' + eventToCreate.value.time),
-      location: eventToCreate.value.location,
-      categoryId: categoryId
-    })
-    .then(response => {
+  createEventApi({
+    title: eventToCreate.value.title!,
+    description: eventToCreate.value.description,
+    startTime: combineDateAndTime(eventToCreate.value.date!, eventToCreate.value.time!),
+    location: eventToCreate.value.location!,
+    categoryId: categoryId
+  })
+    .then(() => {
       createLoading.value = false;
       // Redirect to the new event
       // router.push(`/events/${response.data.id}`)
@@ -113,6 +115,7 @@ const createEvent = () => {
       v-model="eventToCreate.date"
       :error="validationErrors.date"
       required
+      :min="minDate"
     />
     <Input
       id="time"
