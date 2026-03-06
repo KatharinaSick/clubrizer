@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
@@ -7,11 +6,16 @@ const router = createRouter({
   routes: [
     {
       path: '/',
+      redirect: '/events'
+    },
+    /*
+    {
+      path: '/',
       name: 'home',
       component: HomeView,
       meta: { showNavigation: true, requiresAuth: true }
     },
-
+    */
     {
       path: '/events',
       name: 'events',
@@ -24,8 +28,6 @@ const router = createRouter({
       component: () => import('../views/NewEventView.vue'),
       meta: { showNavigation: false, requiresAuth: true }
     },
-
-
     {
       path: '/profile',
       name: 'profile',
@@ -48,7 +50,7 @@ router.beforeEach((to) => {
       query: { redirect: to.fullPath }
     }
   } else if (!to.meta.requiresAuth && auth.isLoggedIn) {
-    return { path: '/' }
+    return { path: '/events' }
   }
 })
 

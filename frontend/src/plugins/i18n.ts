@@ -19,6 +19,10 @@ export default createI18n({
       },
       events: {
         header: 'Events',
+        development: {
+          title: 'Development Preview',
+          message: 'This app is still in development. Please reach out to Kathi if you notice any bugs.'
+        },
         new: {
           header: 'Create Event',
           title: 'Title',
@@ -52,6 +56,10 @@ export default createI18n({
       },
       events: {
         header: 'Events',
+        development: {
+          title: 'Entwicklungs-Vorschau',
+          message: 'Diese App ist in der Entwicklung. Bitte melde dich bei Kathi, wenn dir Fehler auffallen.'
+        },
         new: {
           header: 'Neues Event',
           title: 'Name',

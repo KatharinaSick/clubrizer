@@ -1,12 +1,22 @@
 <script setup lang="ts">
-defineProps<{
+import { computed } from 'vue'
+
+const props = defineProps<{
   title: string
   message: string
+  variant?: 'error' | 'warning'
 }>()
+
+const variantClass = computed(() => {
+  if (props.variant === 'warning') {
+    return 'alertWarning'
+  }
+  return 'alertError'
+})
 </script>
 
 <template>
-  <div class="alert">
+  <div class="alert" :class="variantClass">
     <p style="font-weight: var(--font-weight-bold)">{{title}}</p>
     <p>{{message}}</p>
   </div>
@@ -15,10 +25,18 @@ defineProps<{
 <style scoped>
 .alert {
   width: 100%;
-  background: var(--light-red);
   padding: var(--padding);
-  border: 1px solid var(--red);
   border-radius: var(--border-radius);
   box-sizing: border-box;
+}
+
+.alertError {
+  background: var(--light-red);
+  border: 1px solid var(--red);
+}
+
+.alertWarning {
+  background: var(--light-orange);
+  border: 1px solid var(--orange);
 }
 </style>

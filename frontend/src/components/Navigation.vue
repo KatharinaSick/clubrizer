@@ -1,9 +1,9 @@
 <script setup lang="ts">
 
-import IconHome from '@/components/icons/IconHome.vue'
 import { RouterLink } from 'vue-router'
 import IconProfile from '@/components/icons/IconProfile.vue'
 import IconEvents from '@/components/icons/IconEvents.vue'
+import IconHome from '@/components/icons/IconHome.vue'
 </script>
 
 <template>
@@ -11,9 +11,11 @@ import IconEvents from '@/components/icons/IconEvents.vue'
     <RouterLink to="/events" class="navigationLink" activeClass="navigationActiveLink">
       <IconEvents class="navigationIcon" />
     </RouterLink>
+    <!--
     <RouterLink to="/" class="navigationLink" activeClass="navigationActiveLink">
       <IconHome class="navigationIcon" />
     </RouterLink>
+    -->
     <RouterLink to="/profile" class="navigationLink" activeClass="navigationActiveLink">
       <IconProfile class="navigationIcon" />
     </RouterLink>

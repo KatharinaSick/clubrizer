@@ -7,6 +7,7 @@ import { onMounted, ref } from 'vue'
 import type { EventProps } from '@/components/Event.vue'
 import Event from '@/components/Event.vue'
 import { useRouter } from 'vue-router'
+import Alert from '@/components/Alert.vue'
 
 const router = useRouter()
 
@@ -67,6 +68,12 @@ const loadCategories = () => {
 <template>
   <div>
     <Header :title="i18n.global.t('events.header')" />
+    <Alert
+      :title="i18n.global.t('events.development.title')"
+      :message="i18n.global.t('events.development.message')"
+      variant="warning"
+      style="margin-bottom: 12px;"
+    />
 
     <Event v-for="event in events" :event="event" />
 
