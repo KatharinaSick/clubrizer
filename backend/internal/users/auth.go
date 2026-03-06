@@ -49,6 +49,10 @@ func (s *Service) RefreshTokens(ctx context.Context, t RefreshTokenInfo) (*Refre
 	}
 
 	accessToken, refreshToken, refreshTokenExpiresAt, err := s.generateTokens(user, false)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	return &RefreshTokensResponse{accessToken},
 		&RefreshTokenInfo{
 			Token:   refreshToken,

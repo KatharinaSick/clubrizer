@@ -49,6 +49,7 @@ func addRoutes(
 	// Authentication & Users
 	mux.Handle("POST /signin", handleWithBodyAndReturnRefreshToken(cfg, userService.SignInOrRegister))
 	mux.Handle("POST /oauth/tokens", handleWithRefreshToken(cfg, userService.RefreshTokens))
+	mux.Handle("POST /logout", handleLogout(cfg))
 
 	// Events
 	mux.Handle("GET /events/categories", authenticated(cfg, handleAndReturnList(eventsService.ListCategories)))

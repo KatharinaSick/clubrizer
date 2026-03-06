@@ -10,6 +10,7 @@ import (
 	"github.com/katharinasick/clubrizer/internal/apperrors"
 	"github.com/katharinasick/clubrizer/internal/users"
 	"net/http"
+	"time"
 )
 
 type handler[Out any] func(context.Context) (*Out, error)
@@ -116,6 +117,18 @@ func handleWithRefreshToken[Out any](cfg app.Config, f handlerWithRefreshToken[O
 
 		setRefreshTokenCookie(w, cfg, rt)
 		writeResponse(w, out)
+	})
+}
+
+func handleLogout(cfg app.Config) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Clear the refresh token cookie
+		setRefreshTokenCookie(w, cfg, &users.RefreshTokenInfo{
+			Token:   "",
+			Expires: time.Unix(0, 0), // Expire immediately
+		})
+
+		ok(w)
 	})
 }
 

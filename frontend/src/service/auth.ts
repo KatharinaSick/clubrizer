@@ -24,6 +24,14 @@ const authService = {
       throw error
     }
   },
+
+  async logout(): Promise<void> {
+    try {
+      await axios.post('/logout', undefined, { withCredentials: true })
+    } catch (error: any) {
+      throw error
+    }
+  }
 }
 
 export default authService

@@ -54,11 +54,18 @@ export const useAuthStore = defineStore('auth', {
         this.isLoading = false
       }
     },
-    logout() {
-      this.user = emptyUser
-      this.isAuthenticated = false
-      this.isLoading = false
-      this.error = null
+    async logout() {
+      try {
+        await authService.logout()
+      } catch (error) {
+        // ignore error
+      } finally {
+        this.user = emptyUser
+        this.isAuthenticated = false
+        this.accessToken = ""
+        this.isLoading = false
+        this.error = null
+      }
     }
   }
 })

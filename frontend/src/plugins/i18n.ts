@@ -14,7 +14,8 @@ export default createI18n({
         failedToParseGoogleToken: 'Failed to parse Google login token'
       },
       profile: {
-        header: 'My Profile'
+        header: 'My Profile',
+        logout: 'Logout'
       },
       events: {
         header: 'Events',
@@ -46,7 +47,8 @@ export default createI18n({
         failedToParseGoogleToken: 'Google-Anmelde-Token konnte nicht verarbeitet werden'
       },
       profile: {
-        header: 'Mein Profil'
+        header: 'Mein Profil',
+        logout: 'Abmelden'
       },
       events: {
         header: 'Events',
