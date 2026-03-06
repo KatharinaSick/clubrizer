@@ -7,7 +7,7 @@ import (
 )
 
 func (s *Service) ListEvents(ctx context.Context) ([]*Event, error) {
-	events, err := s.store.getAllEvents(ctx)
+	events, err := s.store.getFutureEvents(ctx)
 	if err != nil {
 		return nil, err
 	}

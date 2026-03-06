@@ -39,13 +39,14 @@ func (s *store) getAllCategories(ctx context.Context) ([]*Category, error) {
 	return c, nil
 }
 
-func (s *store) getAllEvents(ctx context.Context) ([]*Event, error) {
+func (s *store) getFutureEvents(ctx context.Context) ([]*Event, error) {
 	rows, err := s.conn.Query(ctx, `
 		SELECT 
 			e.id, e.title, e.description, e.location, e.start_time, e.created_by, e.created_at, e.category,
 			c.id, c.name, c.color, c.picture, c.sort_order
 		FROM events e
 		LEFT JOIN event_categories c ON e.category = c.id
+		WHERE e.start_time >= NOW()
 		ORDER BY e.start_time
 	`)
 	if err != nil {
