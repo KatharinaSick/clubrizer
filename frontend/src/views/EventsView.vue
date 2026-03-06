@@ -3,19 +3,21 @@ import Header from '@/components/Header.vue'
 import axios from '@/plugins/axios'
 import i18n from '@/plugins/i18n'
 import FloatingActionButton, { type Action } from '@/components/FloatingActionButton.vue'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import type { EventProps } from '@/components/Event.vue'
 import Event from '@/components/Event.vue'
 import { useRouter } from 'vue-router'
 import Alert from '@/components/Alert.vue'
+import Loader from '@/components/Loader.vue'
 
 const router = useRouter()
 
 const eventsLoading = ref(true)
-const eventsError = ref(null)
+const eventsError = ref<string | null>(null)
 const events = ref<EventProps[]>([])
 
 const categoriesLoading = ref(false)
+const categoriesError = ref<string | null>(null)
 const categories = ref<Action[]>([])
 
 onMounted(() => {
@@ -24,7 +26,6 @@ onMounted(() => {
 })
 
 const loadEvents = () => {
-  // TODO actually show a loading indicator
   eventsLoading.value = true
   eventsError.value = null
 
@@ -35,13 +36,14 @@ const loadEvents = () => {
       events.value = response.data
     })
     .catch(error => {
-      // TODO handle
-      console.log(error)
+      eventsLoading.value = false
+      eventsError.value = error.response?.data || error.message || 'Unknown error'
     })
 }
 
 const loadCategories = () => {
   categoriesLoading.value = true
+  categoriesError.value = null
   axios
     .get('/events/categories')
     .then(response => {
@@ -59,10 +61,31 @@ const loadCategories = () => {
     })
     .catch(error => {
       categoriesLoading.value = false
-      // TODO handle
-      console.log('Failed to load categories', error)
+      categoriesError.value = error.response?.data || error.message || 'Unknown error'
     })
 }
+
+const errorState = computed(() => {
+  if (eventsError.value && categoriesError.value) {
+    return {
+      title: i18n.global.t('events.failedToLoad'),
+      message: `${eventsError.value} | ${categoriesError.value}`
+    }
+  }
+  if (eventsError.value) {
+    return {
+      title: i18n.global.t('events.failedToLoad'),
+      message: eventsError.value
+    }
+  }
+  if (categoriesError.value) {
+    return {
+      title: i18n.global.t('events.failedToLoadCategories'),
+      message: categoriesError.value
+    }
+  }
+  return null
+})
 </script>
 
 <template>
@@ -75,7 +98,19 @@ const loadCategories = () => {
       style="margin-bottom: 12px;"
     />
 
-    <Event v-for="event in events" :event="event" />
+    <Loader v-if="eventsLoading" />
+
+    <Alert
+      v-if="errorState"
+      :title="errorState.title"
+      :message="errorState.message"
+      variant="error"
+      style="margin-bottom: 12px;"
+    />
+
+    <div v-if="!eventsLoading && !eventsError">
+      <Event v-for="event in events" :event="event" />
+    </div>
 
     <FloatingActionButton :actions="categories" :loading="categoriesLoading" />
   </div>

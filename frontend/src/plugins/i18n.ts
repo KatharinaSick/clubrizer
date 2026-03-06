@@ -19,6 +19,8 @@ export default createI18n({
       },
       events: {
         header: 'Events',
+        failedToLoad: 'Failed to load events',
+        failedToLoadCategories: 'Failed to load categories',
         development: {
           title: 'Development Preview',
           message: 'This app is still in development. Please reach out to Kathi if you notice any bugs.'
@@ -56,6 +58,8 @@ export default createI18n({
       },
       events: {
         header: 'Events',
+        failedToLoad: 'Events konnten nicht geladen werden',
+        failedToLoadCategories: 'Kategorien konnten nicht geladen werden',
         development: {
           title: 'Entwicklungs-Vorschau',
           message: 'Diese App ist in der Entwicklung. Bitte melde dich bei Kathi, wenn dir Fehler auffallen.'
