@@ -100,7 +100,7 @@ func (s *Service) generateAccessToken(u *User, isNew bool, registeredClaims jwt.
 func (s *Service) generateRefreshToken(registeredClaims jwt.RegisteredClaims) (string, time.Time, error) {
 	expiresAt := time.Now().Add(7 * 24 * time.Hour)
 	registeredClaims.ExpiresAt = jwt.NewNumericDate(expiresAt)
-	registeredClaims.Issuer = s.cfg.OAuth.AccessToken.Issuer
+	registeredClaims.Issuer = s.cfg.OAuth.RefreshToken.Issuer
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, registeredClaims)
 	signedToken, err := token.SignedString([]byte(s.cfg.OAuth.RefreshToken.SecretKey))

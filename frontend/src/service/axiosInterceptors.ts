@@ -8,6 +8,7 @@ interface RetryableRequest extends AxiosRequestConfig {
 }
 
 let isRefreshingToken = false
+let refreshSubscribers: ((token: string) => void)[] = []
 
 const configureAxiosInterceptors = (): void => {
   setUpRefreshTokenInterceptors()
@@ -33,29 +34,43 @@ const setUpRefreshTokenInterceptors = (): void => {
       return response
     },
     async (error: AxiosError) => {
-      const { refreshTokens, logout, accessToken } = useAuthStore()
-
       const originalRequest = error.config as RetryableRequest
 
-      if (error.response?.status === 401 && !originalRequest._retry && !isRefreshingToken) {
-        originalRequest._retry = true
-        isRefreshingToken = true
-
-        try {
-          await refreshTokens()
-          originalRequest.headers = { ...originalRequest.headers };
-          originalRequest.headers.Authorization = accessToken;
-          return axios(originalRequest)
-        } catch (error: unknown) {
-          logout()
-          router.push('/signin')
-          return Promise.reject(error)
-        } finally {
-          isRefreshingToken = false
-        }
+      if (error.response?.status !== 401 || originalRequest._retry) {
+        return Promise.reject(error)
       }
 
-      return Promise.reject(error)
+      // A refresh is already in progress — queue this request to retry once done
+      if (isRefreshingToken) {
+        return new Promise((resolve) => {
+          refreshSubscribers.push((token: string) => {
+            originalRequest.headers = { ...originalRequest.headers }
+            originalRequest.headers!.Authorization = token
+            resolve(axios(originalRequest))
+          })
+        })
+      }
+
+      originalRequest._retry = true
+      isRefreshingToken = true
+
+      const { refreshTokens, logout, accessToken } = useAuthStore()
+
+      try {
+        await refreshTokens()
+        refreshSubscribers.forEach((cb) => cb(accessToken))
+        originalRequest.headers = { ...originalRequest.headers }
+        originalRequest.headers!.Authorization = accessToken
+        return axios(originalRequest)
+      } catch (refreshError: unknown) {
+        refreshSubscribers.forEach((cb) => cb(''))
+        logout()
+        router.push('/signin')
+        return Promise.reject(refreshError)
+      } finally {
+        refreshSubscribers = []
+        isRefreshingToken = false
+      }
     }
   )
 }

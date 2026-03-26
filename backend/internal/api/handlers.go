@@ -124,7 +124,7 @@ func handleWithRefreshToken[Out any](cfg app.Config, f handlerWithRefreshToken[O
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c, err := r.Cookie(cfg.OAuth.RefreshToken.CookieName)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
 
@@ -163,6 +163,7 @@ func setRefreshTokenCookie(w http.ResponseWriter, cfg app.Config, t *users.Refre
 		Name:     cfg.OAuth.RefreshToken.CookieName,
 		Value:    t.Token,
 		Expires:  t.Expires,
+		Path:     "/",
 		HttpOnly: true,
 		Secure:   cfg.OAuth.RefreshToken.Secure,
 		SameSite: sameSite,
