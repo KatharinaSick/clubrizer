@@ -1,10 +1,16 @@
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
+import { RouterView, useRouter } from 'vue-router'
 import Navigation from '@/components/Navigation.vue'
+import TopProgressBar from '@/components/TopProgressBar.vue'
+import { useRequestStore } from '@/stores/request'
+
+const requestStore = useRequestStore()
+useRouter().afterEach(() => requestStore.clearError())
 </script>
 
 <template>
   <div class="app">
+    <TopProgressBar />
     <div class="content">
       <RouterView />
     </div>

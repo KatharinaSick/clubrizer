@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { type CredentialResponse, GoogleSignInButton } from 'vue3-google-signin'
 import { useAuthStore } from '@/stores/auth'
-import Loader from '@/components/Loader.vue'
-import Modal from '@/components/Modal.vue'
 import Alert from '@/components/Alert.vue'
+import RequestError from '@/components/RequestError.vue'
 import { ref } from 'vue'
 import router from '@/router'
 import { useRoute } from 'vue-router'
@@ -53,11 +52,8 @@ const handleGoogleLoginSuccess = (response: CredentialResponse) => {
       shape="pill"
 
     ></GoogleSignInButton>
-    <Modal v-if="auth.isLoading">
-      <Loader />
-    </Modal>
     <Alert v-if="googleSignInError" class="alert" :title="i18n.global.t('signIn.failedToSignIn')" :message="googleSignInError"/>
-    <Alert v-if="auth.error" class="alert" :title="i18n.global.t('signIn.failedToSignIn')" :message="auth.error"/>
+    <RequestError class="alert" />
 
   </div>
 </template>

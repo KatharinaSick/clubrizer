@@ -4,7 +4,7 @@ import i18n from '@/plugins/i18n'
 import router from '@/router'
 import Input from '@/components/Input.vue'
 import Button from '@/components/Button.vue'
-import Alert from '@/components/Alert.vue'
+import RequestError from '@/components/RequestError.vue'
 import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { combineDateAndTime } from '@/utils/date'
@@ -23,7 +23,6 @@ const eventToCreate = ref({
 })
 
 const createLoading = ref(false)
-const createError = ref<string | null>(null)
 const validationErrors = ref<Record<string, string>>({})
 
 const minDate = new Date().toISOString().split('T')[0]
@@ -68,7 +67,6 @@ const createEvent = () => {
   }
 
   createLoading.value = true;
-  createError.value = null;
 
   createEventApi({
     title: eventToCreate.value.title!,
@@ -81,9 +79,8 @@ const createEvent = () => {
       createLoading.value = false;
       router.push(`/events/${event.id}`)
     })
-    .catch(error => {
+    .catch(() => {
       createLoading.value = false;
-      createError.value = error.response?.data || i18n.global.t('events.new.failedToCreate');
     })
 }
 </script>
@@ -137,12 +134,7 @@ const createEvent = () => {
       v-model="eventToCreate.description"
     />
 
-    <Alert
-      v-if="createError"
-      :title="i18n.global.t('events.new.failedToCreate')"
-      :message="createError"
-      class="newEventAlert"
-    />
+    <RequestError class="newEventRequestError" />
 
     <Button
       :title="i18n.global.t('events.new.create')"
@@ -154,7 +146,7 @@ const createEvent = () => {
 </template>
 
 <style scoped>
-.newEventAlert {
+.newEventRequestError {
   margin-top: 24px;
 }
 

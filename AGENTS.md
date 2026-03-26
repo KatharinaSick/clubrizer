@@ -30,7 +30,10 @@
 - **Styling**: Use scoped CSS (`<style scoped>`).
   - **CSS Variables**: Always use variables from `frontend/src/assets/base.css`. Never hardcode values for colors, font sizes, font weights, spacing, border radius, shadows, or any other design token — always use the corresponding CSS variable.
   - **Class Naming**: Use camelCase for CSS class names and always prefix them with the component name (e.g., `.myComponentHeader`).
-- **Error Handling**: Handle API errors gracefully and display user-friendly error messages (localized).
+- **Loading & Error Handling**: Do not add per-component loading or error state for API requests. Loading and errors are handled globally:
+  - **Loading**: A counter-based Pinia store (`requestStore`) is incremented/decremented automatically by axios interceptors (`frontend/src/service/axiosInterceptors.ts`). A slim top progress bar in `App.vue` reflects this globally. Do not add local loading indicators except inside buttons (button spinners are fine and encouraged to prevent double-submits).
+  - **Errors**: All non-422, non-401 errors are caught by the axios interceptor and stored in `requestStore.error`. Views place a `<RequestError />` component wherever they want the error to appear — this component reads from the store automatically. Do not add local error `<Alert>` components for API errors.
+  - **Exceptions**: 422 (form validation) errors should be handled locally by the component. Client-side errors that don't involve an HTTP request (e.g. missing Google credential) should also be handled locally.
 
 ### Backend
 - **Structure**: Follow standard Go project layout.

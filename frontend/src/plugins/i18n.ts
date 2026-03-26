@@ -19,8 +19,6 @@ export default createI18n({
       },
       events: {
         header: 'Events',
-        failedToLoad: 'Failed to load events',
-        failedToLoadCategories: 'Failed to load categories',
         back: 'Back',
         development: {
           title: 'Development Preview',
@@ -35,13 +33,10 @@ export default createI18n({
           category: 'Category',
           description: 'Description',
           create: 'Create',
-          failedToCreate: 'Failed to create event',
           required: 'Required',
           pastDate: 'Date cannot be in the past'
         },
         detail: {
-          loading: 'Loading event...',
-          failedToLoad: 'Failed to load event details',
           wontGo: 'Won\'t Go',
           going: 'Going',
           at: 'at',
@@ -49,6 +44,10 @@ export default createI18n({
       },
       select: {
         loading: 'Loading...'
+      },
+      request: {
+        errorTitle: 'Something went wrong',
+        unexpectedError: 'An unexpected error occurred. Please try again.'
       }
     },
     de: {
@@ -66,8 +65,6 @@ export default createI18n({
       },
       events: {
         header: 'Events',
-        failedToLoad: 'Events konnten nicht geladen werden',
-        failedToLoadCategories: 'Kategorien konnten nicht geladen werden',
         back: 'Zurück',
         development: {
           title: 'Entwicklungs-Vorschau',
@@ -82,17 +79,18 @@ export default createI18n({
           category: 'Kategorie',
           description: 'Beschreibung',
           create: 'Speichern',
-          failedToCreate: 'Event konnte nicht erstellt werden',
           required: 'Pflichtfeld',
           pastDate: 'Datum darf nicht in der Vergangenheit liegen'
         },
         detail: {
-          loading: 'Event wird geladen...',
-          failedToLoad: 'Event-Details konnten nicht geladen werden',
           wontGo: 'Absagen',
           going: 'Zusagen',
           at: 'um',
         }
+      },
+      request: {
+        errorTitle: 'Etwas ist schiefgelaufen',
+        unexpectedError: 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.'
       }
     }
   }

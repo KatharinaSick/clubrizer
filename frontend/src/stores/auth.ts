@@ -16,7 +16,6 @@ export const useAuthStore = defineStore('auth', {
     accessToken: useStorage<string>('auth.accessToken', ''),
     isAuthenticated: useStorage<boolean>('auth.isAuthenticated', false),
     isLoading: false,
-    error: null
   }),
   getters: {
     isLoggedIn: (state) => state.isAuthenticated,
@@ -25,22 +24,20 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     async login(idToken: string) {
       this.isLoading = true
-      this.error = null
       this.isAuthenticated = false
       try {
         const { user, accessToken } = await authService.login(idToken)
         this.user = user
         this.accessToken = accessToken
         this.isAuthenticated = true
-      } catch (error: any) {
-        this.error = error.response?.data || 'Unknown reason'
+      } catch {
+        // error is handled globally by the axios interceptor
       } finally {
         this.isLoading = false
       }
     },
     async refreshTokens() {
       this.isLoading = true
-      this.error = null
       this.isAuthenticated = false
       this.accessToken = ""
       try {
@@ -48,8 +45,8 @@ export const useAuthStore = defineStore('auth', {
         this.user = user
         this.accessToken = accessToken
         this.isAuthenticated = true
-      } catch (error: any) {
-        this.error = error.response?.data || 'Unknown reason'
+      } catch {
+        // error is handled globally by the axios interceptor
       } finally {
         this.isLoading = false
       }
@@ -64,7 +61,6 @@ export const useAuthStore = defineStore('auth', {
         this.isAuthenticated = false
         this.accessToken = ""
         this.isLoading = false
-        this.error = null
       }
     }
   }

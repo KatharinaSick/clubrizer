@@ -11,6 +11,7 @@ import IconError from '@/components/icons/IconError.vue'
 import IconCheckmark from '@/components/icons/IconCheckmark.vue'
 import IconMapMarker from '@/components/icons/IconMapMarker.vue'
 import Divider from '@/components/Divider.vue'
+import RequestError from '@/components/RequestError.vue'
 
 const route = useRoute()
 const eventId = route.params.id as string
@@ -50,6 +51,8 @@ const formattedStartTime = computed(() => {
     <Header
       left-action="back"
     />
+
+    <RequestError />
 
     <div v-if="event">
       <!-- Hero Image -->
@@ -144,7 +147,7 @@ const formattedStartTime = computed(() => {
 
 .eventDetailLocationIcon {
   flex-shrink: 0;
-  color: var(--blue)
+  color: var(--blue);
 }
 
 .eventDetailDivider {
