@@ -77,12 +77,9 @@ const createEvent = () => {
     location: eventToCreate.value.location!,
     categoryId: categoryId
   })
-    .then(() => {
+    .then(event => {
       createLoading.value = false;
-      // Redirect to the new event
-      // router.push(`/events/${response.data.id}`)
-      // For now, redirect to list until detail view is ready
-      router.push('/events')
+      router.push(`/events/${event.id}`)
     })
     .catch(error => {
       createLoading.value = false;
@@ -97,7 +94,6 @@ const createEvent = () => {
       :title="i18n.global.t('events.new.header')"
       show-divider
       left-action="back"
-      @back="router.back()"
     />
 
     <Input
@@ -152,12 +148,17 @@ const createEvent = () => {
       :title="i18n.global.t('events.new.create')"
       :loading="createLoading"
       @click="createEvent"
+      class="newEventButton"
     />
   </div>
 </template>
 
 <style scoped>
 .newEventAlert {
+  margin-top: 24px;
+}
+
+.newEventButton {
   margin-top: 24px;
 }
 </style>

@@ -86,6 +86,10 @@ const errorState = computed(() => {
   }
   return null
 })
+
+const openEvent = (id: string) => {
+  router.push({ name: 'event-detail', params: { id } })
+}
 </script>
 
 <template>
@@ -109,7 +113,13 @@ const errorState = computed(() => {
     />
 
     <div v-if="!eventsLoading && !eventsError">
-      <Event v-for="event in events" :event="event" />
+      <Event
+        v-for="event in events"
+        :key="event.id"
+        :event="event"
+        @click="openEvent(event.id)"
+        style="cursor: pointer;"
+      />
     </div>
 
     <FloatingActionButton :actions="categories" :loading="categoriesLoading" />

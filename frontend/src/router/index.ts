@@ -29,6 +29,12 @@ const router = createRouter({
       meta: { showNavigation: false, requiresAuth: true }
     },
     {
+      path: '/events/:id',
+      name: 'event-detail',
+      component: () => import('../views/EventDetailView.vue'),
+      meta: { showNavigation: true, requiresAuth: true }
+    },
+    {
       path: '/profile',
       name: 'profile',
       component: () => import('../views/ProfileView.vue'),

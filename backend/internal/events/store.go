@@ -78,6 +78,33 @@ func (s *store) getFutureEvents(ctx context.Context) ([]*Event, error) {
 	return events, nil
 }
 
+func (s *store) getEventById(ctx context.Context, id uuid.UUID) (*Event, error) {
+	row := s.conn.QueryRow(ctx, `
+		SELECT 
+			e.id, e.title, e.description, e.location, e.start_time, e.created_by, e.created_at, e.category,
+			c.id, c.name, c.color, c.picture, c.sort_order
+		FROM events e
+		LEFT JOIN event_categories c ON e.category = c.id
+		WHERE e.id = $1
+	`, id)
+
+	var e Event
+	var c Category
+	err := row.Scan(
+		&e.ID, &e.Title, &e.Description, &e.Location, &e.StartTime, &e.CreatedBy, &e.CreatedAt, &e.CategoryID,
+		&c.ID, &c.Name, &c.Color, &c.Picture, &c.SortOrder,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, apperrors.NewNotFound(fmt.Sprintf("event with id %s not found", id))
+		}
+		return nil, errors.New(fmt.Sprintf("failed to scan event: %s", err.Error()))
+	}
+	e.Category = c
+
+	return &e, nil
+}
+
 func (s *store) createEvent(ctx context.Context, e *Event) (uuid.UUID, error) {
 	var id uuid.UUID
 	err := s.conn.QueryRow(

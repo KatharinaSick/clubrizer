@@ -28,7 +28,7 @@
   - Add new keys to `frontend/src/plugins/i18n.ts`.
   - Structure keys hierarchically (e.g., `events.new.title`).
 - **Styling**: Use scoped CSS (`<style scoped>`).
-  - **CSS Variables**: Always use variables from `frontend/src/assets/base.css` when possible (colors, spacing, etc.).
+  - **CSS Variables**: Always use variables from `frontend/src/assets/base.css`. Never hardcode values for colors, font sizes, font weights, spacing, border radius, shadows, or any other design token — always use the corresponding CSS variable.
   - **Class Naming**: Use camelCase for CSS class names and always prefix them with the component name (e.g., `.myComponentHeader`).
 - **Error Handling**: Handle API errors gracefully and display user-friendly error messages (localized).
 

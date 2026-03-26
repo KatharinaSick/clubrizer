@@ -21,6 +21,7 @@ export default createI18n({
         header: 'Events',
         failedToLoad: 'Failed to load events',
         failedToLoadCategories: 'Failed to load categories',
+        back: 'Back',
         development: {
           title: 'Development Preview',
           message: 'This app is still in development. Please reach out to Kathi if you notice any bugs.'
@@ -37,6 +38,13 @@ export default createI18n({
           failedToCreate: 'Failed to create event',
           required: 'Required',
           pastDate: 'Date cannot be in the past'
+        },
+        detail: {
+          loading: 'Loading event...',
+          failedToLoad: 'Failed to load event details',
+          wontGo: 'Won\'t Go',
+          going: 'Going',
+          at: 'at',
         }
       },
       select: {
@@ -60,6 +68,7 @@ export default createI18n({
         header: 'Events',
         failedToLoad: 'Events konnten nicht geladen werden',
         failedToLoadCategories: 'Kategorien konnten nicht geladen werden',
+        back: 'Zurück',
         development: {
           title: 'Entwicklungs-Vorschau',
           message: 'Diese App ist in der Entwicklung. Bitte melde dich bei Kathi, wenn dir Fehler auffallen.'
@@ -76,6 +85,13 @@ export default createI18n({
           failedToCreate: 'Event konnte nicht erstellt werden',
           required: 'Pflichtfeld',
           pastDate: 'Datum darf nicht in der Vergangenheit liegen'
+        },
+        detail: {
+          loading: 'Event wird geladen...',
+          failedToLoad: 'Event-Details konnten nicht geladen werden',
+          wontGo: 'Absagen',
+          going: 'Zusagen',
+          at: 'um',
         }
       }
     }

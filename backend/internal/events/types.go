@@ -16,7 +16,7 @@ type Category struct {
 }
 
 type Event struct {
-	ID          uuid.UUID `db:"id" json:"-"`
+	ID          uuid.UUID `db:"id" json:"id"`
 	Title       string    `db:"title" json:"title" validate:"required"`
 	Description string    `db:"description" json:"description"`
 	Location    string    `db:"location" json:"location" validate:"required"`
