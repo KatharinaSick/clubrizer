@@ -20,6 +20,7 @@ type handlerWithIdAndReturnValue[Out any] func(context.Context, string) (*Out, e
 
 type handlerWithListReturn[Out any] func(context.Context) ([]*Out, error)
 
+type handlerWithIdAndBody[In any] func(context.Context, string, In) error
 type handlerWithInputAndRefreshTokenReturn[In any, Out any] func(context.Context, In) (*Out, *users.RefreshTokenInfo, error)
 type handlerWithRefreshToken[Out any] func(context.Context, users.RefreshTokenInfo) (*Out, *users.RefreshTokenInfo, error)
 
@@ -98,6 +99,30 @@ func handleWithIdAndReturnValue[Out any](f handlerWithIdAndReturnValue[Out]) htt
 		}
 
 		writeResponse(w, out)
+	})
+}
+
+func handleWithIdAndBody[In any](f handlerWithIdAndBody[In]) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		if id == "" {
+			http.Error(w, "missing id", http.StatusBadRequest)
+			return
+		}
+
+		in, err := getAndValidatePayload[In](r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		err = f(r.Context(), id, *in)
+		if err != nil {
+			http.Error(w, err.Error(), apperrors.HttpStatusCode(err))
+			return
+		}
+
+		ok(w)
 	})
 }
 

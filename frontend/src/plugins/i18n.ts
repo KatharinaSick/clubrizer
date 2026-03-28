@@ -40,6 +40,11 @@ export default createI18n({
           wontGo: 'Won\'t Go',
           going: 'Going',
           at: 'at',
+          attendees: {
+            going: '{count} going',
+            notGoing: '{count} not going',
+            noResponses: 'No responses yet',
+          }
         }
       },
       select: {
@@ -86,6 +91,11 @@ export default createI18n({
           wontGo: 'Absagen',
           going: 'Zusagen',
           at: 'um',
+          attendees: {
+            going: '{count} Zusagen',
+            notGoing: '{count} Absagen',
+            noResponses: 'Noch keine Rückmeldungen',
+          }
         }
       },
       request: {

@@ -24,6 +24,7 @@
 ### Frontend
 - **TypeScript**: Always use TypeScript. Avoid `any` where possible.
 - **Components**: Use Single File Components (SFC) with `<script setup>`.
+- **Design System**: Always prefer reusing existing components from `frontend/src/components` over native HTML elements. For example, use `<Button>` instead of `<button>`, and extend existing components with new props/themes when new variants are needed.
 - **I18n**: All user-facing text must be internationalized using `i18n.global.t()`. Do not hardcode strings in templates or scripts.
   - Add new keys to `frontend/src/plugins/i18n.ts`.
   - Structure keys hierarchically (e.g., `events.new.title`).

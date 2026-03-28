@@ -105,6 +105,57 @@ func (s *store) getEventById(ctx context.Context, id uuid.UUID) (*Event, error) 
 	return &e, nil
 }
 
+func (s *store) getEventResponses(ctx context.Context, eventId uuid.UUID, userId uuid.UUID) (*EventResponses, error) {
+	rows, err := s.conn.Query(ctx, `
+		SELECT u.id, u.given_name, u.family_name, u.nick_name, u.picture, r.response
+		FROM event_responses r
+		JOIN users u ON r.user_id = u.id
+		WHERE r.event_id = $1
+		ORDER BY r.created_at
+	`, eventId)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to query event responses: %s", err.Error()))
+	}
+	defer rows.Close()
+
+	responses := &EventResponses{Attendees: []*EventAttendee{}}
+	for rows.Next() {
+		var a EventAttendee
+		err := rows.Scan(&a.ID, &a.GivenName, &a.FamilyName, &a.NickName, &a.Picture, &a.Response)
+		if err != nil {
+			return nil, errors.New(fmt.Sprintf("failed to scan event response: %s", err.Error()))
+		}
+		if a.Response {
+			responses.Going++
+		} else {
+			responses.NotGoing++
+		}
+		if a.ID == userId {
+			r := a.Response
+			responses.CurrentUserResponse = &r
+		}
+		responses.Attendees = append(responses.Attendees, &a)
+	}
+
+	if rows.Err() != nil {
+		return nil, errors.New(fmt.Sprintf("rows error: %s", rows.Err().Error()))
+	}
+
+	return responses, nil
+}
+
+func (s *store) upsertEventResponse(ctx context.Context, eventId uuid.UUID, userId uuid.UUID, response bool) error {
+	_, err := s.conn.Exec(ctx, `
+		INSERT INTO event_responses (event_id, user_id, response)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (event_id, user_id) DO UPDATE SET response = EXCLUDED.response
+	`, eventId, userId, response)
+	if err != nil {
+		return errors.New(fmt.Sprintf("failed to upsert event response: %s", err.Error()))
+	}
+	return nil
+}
+
 func (s *store) createEvent(ctx context.Context, e *Event) (uuid.UUID, error) {
 	var id uuid.UUID
 	err := s.conn.QueryRow(

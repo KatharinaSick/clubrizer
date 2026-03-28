@@ -2,10 +2,12 @@
 import { useRoute } from 'vue-router'
 import { computed, onMounted, ref } from 'vue'
 import axios from '@/plugins/axios'
+import Avatar from '@/components/Avatar.vue'
 import Button from '@/components/Button.vue'
 import Header from '@/components/Header.vue'
 import EventTitle from '@/components/EventTitle.vue'
-import type { Event } from '@/service/events'
+import type { EventDetail } from '@/service/events'
+import { upsertEventResponse } from '@/service/events'
 import i18n from '@/plugins/i18n'
 import IconError from '@/components/icons/IconError.vue'
 import IconCheckmark from '@/components/icons/IconCheckmark.vue'
@@ -16,18 +18,35 @@ import RequestError from '@/components/RequestError.vue'
 const route = useRoute()
 const eventId = route.params.id as string
 
-const event = ref<Event | null>(null)
+const event = ref<EventDetail | null>(null)
+const pendingResponse = ref<boolean | null>(null)
 
 onMounted(() => {
   loadEvent()
 })
 
-const loadEvent = () => {
-  axios.get(`/events/${eventId}`)
-    .then(response => {
-      event.value = response.data
-    })
+const loadEvent = async () => {
+  const response = await axios.get(`/events/${eventId}`)
+  event.value = response.data
 }
+
+const isPastEvent = computed(() => {
+  if (!event.value?.startTime) return false
+  return new Date(event.value.startTime) <= new Date()
+})
+
+const submitResponse = async (response: boolean) => {
+  if (!event.value || isPastEvent.value || event.value.responses?.currentUserResponse === response || pendingResponse.value !== null) return
+  pendingResponse.value = response
+  try {
+    await upsertEventResponse(eventId, response)
+    // Reload the full event to keep counts and attendee list in sync with the server
+    await loadEvent()
+  } finally {
+    pendingResponse.value = null
+  }
+}
+
 
 const formattedStartTime = computed(() => {
   if (!event.value?.startTime) return ''
@@ -65,14 +84,26 @@ const formattedStartTime = computed(() => {
         <div class="eventDetailInfo">
           <!-- Attendance Buttons -->
           <div class="eventDetailAttendanceButtons">
-            <Button :title="i18n.global.t('events.detail.wontGo')" theme="secondary" disabled>
+            <Button
+              :title="i18n.global.t('events.detail.wontGo')"
+              :theme="event.responses?.currentUserResponse === false ? 'red' : 'secondary'"
+              :loading="pendingResponse === false"
+              :disabled="isPastEvent || pendingResponse !== null"
+              @click="submitResponse(false)"
+            >
               <template #icon>
-                <IconError style="color: var(--red)" />
+                <IconError :class="{ 'eventDetailIconNotGoing': event.responses?.currentUserResponse !== false }" />
               </template>
             </Button>
-            <Button :title="i18n.global.t('events.detail.going')" theme="secondary" disabled>
+            <Button
+              :title="i18n.global.t('events.detail.going')"
+              :theme="event.responses?.currentUserResponse === true ? 'green' : 'secondary'"
+              :loading="pendingResponse === true"
+              :disabled="isPastEvent || pendingResponse !== null"
+              @click="submitResponse(true)"
+            >
               <template #icon>
-                <IconCheckmark style="color: var(--green)" />
+                <IconCheckmark :class="{ 'eventDetailIconGoing': event.responses?.currentUserResponse !== true }" />
               </template>
             </Button>
           </div>
@@ -83,6 +114,40 @@ const formattedStartTime = computed(() => {
             <IconMapMarker class="eventDetailLocationIcon" />
             <span>{{ event.location }}</span>
           </div>
+
+          <!-- Attendees -->
+          <Divider class="eventDetailDivider" />
+          <template v-if="event.responses && (event.responses.going + event.responses.notGoing) > 0">
+            <p class="eventDetailAttendeeCounts">
+              {{ i18n.global.t('events.detail.attendees.going', { count: event.responses.going }) }}
+              &middot;
+              {{ i18n.global.t('events.detail.attendees.notGoing', { count: event.responses.notGoing }) }}
+            </p>
+            <div class="eventDetailAvatarGrid">
+              <div
+                v-for="attendee in event.responses.attendees"
+                :key="attendee.id"
+                class="eventDetailAvatarWrapper"
+              >
+                <Avatar
+                  :picture="attendee.picture"
+                  :given-name="attendee.givenName"
+                  :family-name="attendee.familyName"
+                  :nick-name="attendee.nickName"
+                  :label="attendee.nickName || attendee.givenName"
+                  size="md"
+                  :class="{ 'eventDetailAvatarNotGoing': !attendee.response }"
+                />
+                <span
+                  class="eventDetailAvatarBadge"
+                  :class="attendee.response ? 'eventDetailAvatarBadgeGoing' : 'eventDetailAvatarBadgeNotGoing'"
+                />
+              </div>
+            </div>
+          </template>
+          <p v-else class="eventDetailNoResponses">
+            {{ i18n.global.t('events.detail.attendees.noResponses') }}
+          </p>
 
           <!-- Description -->
           <template v-if="event.description">
@@ -129,8 +194,17 @@ const formattedStartTime = computed(() => {
   display: flex;
   flex-direction: row;
   gap: var(--gap);
-  margin: var(--padding) 0 var(--padding) 0;
+  margin: var(--padding) 0;
 }
+
+.eventDetailIconGoing {
+  color: var(--green);
+}
+
+.eventDetailIconNotGoing {
+  color: var(--red);
+}
+
 
 .eventDetailDate {
   padding-top: var(--padding);
@@ -152,6 +226,47 @@ const formattedStartTime = computed(() => {
 
 .eventDetailDivider {
   margin: var(--padding) 0;
+}
+
+.eventDetailAttendeeCounts {
+  font-weight: var(--font-weight-medium);
+  padding-bottom: var(--gap);
+}
+
+.eventDetailNoResponses {
+  color: var(--text-gray);
+}
+
+.eventDetailAvatarGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--padding);
+}
+
+.eventDetailAvatarWrapper {
+  position: relative;
+}
+
+.eventDetailAvatarNotGoing {
+  opacity: 0.4;
+}
+
+.eventDetailAvatarBadge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--background-color);
+}
+
+.eventDetailAvatarBadgeGoing {
+  background: var(--green);
+}
+
+.eventDetailAvatarBadgeNotGoing {
+  background: var(--red);
 }
 
 </style>

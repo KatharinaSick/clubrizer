@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { User } from '@/stores/auth'
+import Avatar from '@/components/Avatar.vue'
 
 defineProps<{
   user: User
@@ -8,9 +9,14 @@ defineProps<{
 
 <template>
   <div class="profileInfo">
-    <div class="profileInfoImageBorder">
-      <img :src="user.picture" :alt="user.nickName" class="profileInfoImage" />
-    </div>
+    <Avatar
+      :picture="user.picture"
+      :given-name="user.givenName"
+      :family-name="user.familyName"
+      :nick-name="user.nickName"
+      size="xl"
+      :gradient="true"
+    />
     <div class="profileInfoText">
       <strong>{{ user.nickName }}</strong>
       <p>{{ user.givenName }} {{ user.familyName }}</p>
@@ -28,23 +34,6 @@ defineProps<{
   gap: var(--padding);
   background-color: var(--white);
   margin: 0;
-}
-
-.profileInfoImageBorder {
-  height: 80px;
-  flex-basis: 80px;
-  flex-grow: 0;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: var(--gradient);
-  padding: 1px;
-}
-
-.profileInfoImage {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
 }
 
 .profileInfoText {

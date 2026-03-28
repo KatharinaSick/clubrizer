@@ -16,13 +16,34 @@ type Category struct {
 }
 
 type Event struct {
-	ID          uuid.UUID `db:"id" json:"id"`
-	Title       string    `db:"title" json:"title" validate:"required"`
-	Description string    `db:"description" json:"description"`
-	Location    string    `db:"location" json:"location" validate:"required"`
-	StartTime   time.Time `db:"start_time" json:"startTime" validate:"required"`
-	CreatedBy   uuid.UUID `db:"created_by" json:"-"`
-	CreatedAt   time.Time `db:"created_at" json:"-"`
-	CategoryID  uuid.UUID `db:"category" json:"categoryId" validate:"required"`
-	Category    Category  `db:"-" json:"category"`
+	ID          uuid.UUID      `db:"id" json:"id"`
+	Title       string         `db:"title" json:"title" validate:"required"`
+	Description string         `db:"description" json:"description"`
+	Location    string         `db:"location" json:"location" validate:"required"`
+	StartTime   time.Time      `db:"start_time" json:"startTime" validate:"required"`
+	CreatedBy   uuid.UUID      `db:"created_by" json:"-"`
+	CreatedAt   time.Time      `db:"created_at" json:"-"`
+	CategoryID  uuid.UUID      `db:"category" json:"categoryId" validate:"required"`
+	Category    Category       `db:"-" json:"category"`
+	Responses   *EventResponses `db:"-" json:"responses,omitempty"`
+}
+
+type EventAttendee struct {
+	ID         uuid.UUID `json:"id"`
+	GivenName  string    `json:"givenName"`
+	FamilyName string    `json:"familyName"`
+	NickName   string    `json:"nickName"`
+	Picture    *string   `json:"picture"`
+	Response   bool      `json:"response"`
+}
+
+type EventResponses struct {
+	Going               int              `json:"going"`
+	NotGoing            int              `json:"notGoing"`
+	CurrentUserResponse *bool            `json:"currentUserResponse"`
+	Attendees           []*EventAttendee `json:"attendees"`
+}
+
+type UpsertEventResponseRequest struct {
+	Response *bool `json:"response" validate:"required"`
 }

@@ -4,7 +4,7 @@ withDefaults(
     title: string
     loading?: boolean
     disabled?: boolean
-    theme?: 'primary' | 'secondary'
+    theme?: 'primary' | 'secondary' | 'green' | 'red'
   }>(),
   {
     theme: 'primary'
@@ -91,5 +91,37 @@ withDefaults(
   background: var(--light-gray);
   border-color: var(--text-gray);
   opacity: 0.5;
+}
+
+.button.green {
+  background: var(--green);
+  border: 1px solid var(--green);
+  color: var(--white);
+  box-shadow: var(--box-shadow);
+}
+
+.button.green:active {
+  opacity: 0.9;
+}
+
+.button.green:disabled {
+  opacity: 0.5;
+  background: var(--green);
+}
+
+.button.red {
+  background: var(--red);
+  border: 1px solid var(--red);
+  color: var(--white);
+  box-shadow: var(--box-shadow);
+}
+
+.button.red:active {
+  opacity: 0.9;
+}
+
+.button.red:disabled {
+  opacity: 0.5;
+  background: var(--red);
 }
 </style>
