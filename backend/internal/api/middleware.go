@@ -41,6 +41,11 @@ func authenticated(cfg app.Config, next http.Handler) http.Handler {
 			return
 		}
 
+		if claims.Status != "approved" {
+			http.Error(w, "account not approved", http.StatusForbidden)
+			return
+		}
+
 		// Add user claims to context for later use
 		ctx := context.WithValue(r.Context(), cfg.OAuth.User.Key, claims)
 		r = r.WithContext(ctx)

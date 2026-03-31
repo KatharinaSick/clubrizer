@@ -14,6 +14,10 @@ GitHub: `KatharinaSick/clubrizer`
 - **Users**: The end users of this app are not tech-savvy. Keep UX simple, friendly, and avoid technical language in any user-facing text.
 - **Full-stack security**: Always think about the full picture — this app has both a frontend and a backend. Hiding or restricting something only on the frontend is not sufficient security. Any access control must be properly enforced in the backend as well.
 
+## Git Commits
+- **Style**: Use [Conventional Commits](https://www.conventionalcommits.org/) (e.g. `feat:`, `fix:`, `chore:`, `docs:`).
+- **Closing issues**: Add `Closes #<issue-number>` in the commit body when a commit resolves a GitHub issue.
+
 ## GitHub Issues
 - **Labels**: Every issue must have at least one label. Never create an issue without labels. Always suggest labels and ask for confirmation before applying them — do not assume.
 - **Milestones**: Not every issue needs a milestone, but always suggest one if applicable and ask for confirmation before assigning — do not assume.

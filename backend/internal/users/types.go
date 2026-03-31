@@ -13,6 +13,7 @@ type User struct {
 	NickName   string    `db:"nick_name" json:"nickName"`
 	Picture    *string   `db:"picture" json:"picture"`
 	Issuer     string    `db:"issuer" json:"issuer"`
+	Status     string    `db:"status" json:"status"`
 }
 
 type googleTokenClaims struct {
@@ -32,4 +33,5 @@ type Claims struct {
 	GivenName  string    `json:"givenName"`
 	NickName   string    `json:"nickName"`
 	Picture    *string   `json:"picture"`
+	Status     string    `json:"status"`
 }

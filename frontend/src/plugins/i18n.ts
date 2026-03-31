@@ -50,6 +50,16 @@ export default createI18n({
       select: {
         loading: 'Loading...'
       },
+      pendingApproval: {
+        pending: {
+          title: 'Approval Pending',
+          message: 'Your account is pending approval. Hang tight — an admin will review it shortly.'
+        },
+        rejected: {
+          title: 'Account Declined',
+          message: 'Your account request was declined. If you think this was a mistake, please reach out directly to the club.'
+        }
+      },
       request: {
         errorTitle: 'Something went wrong',
         unexpectedError: 'An unexpected error occurred. Please try again.'
@@ -96,6 +106,16 @@ export default createI18n({
             notGoing: '{count} Absagen',
             noResponses: 'Noch keine Rückmeldungen',
           }
+        }
+      },
+      pendingApproval: {
+        pending: {
+          title: 'Ausstehende Genehmigung',
+          message: 'Dein Account wartet auf Genehmigung. Bleib dran – ein Administrator wird es in Kürze prüfen.'
+        },
+        rejected: {
+          title: 'Account abgelehnt',
+          message: 'Deine Account Erstellung wurde abgelehnt. Wenn du glaubst, dass das ein Fehler ist, wende dich direkt an den Verein.'
         }
       },
       request: {

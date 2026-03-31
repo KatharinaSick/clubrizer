@@ -44,18 +44,36 @@ const router = createRouter({
       path: '/signin',
       name: 'singin',
       component: () => import('../views/SignInView.vue')
+    },
+    {
+      path: '/pending-approval',
+      name: 'pending-approval',
+      component: () => import('../views/PendingApprovalView.vue')
     }
   ]
 })
 
 router.beforeEach((to) => {
   const auth = useAuthStore()
-  if (to.meta.requiresAuth && !auth.isLoggedIn) {
-    return {
-      path: '/signin',
-      query: { redirect: to.fullPath }
+  const isApproved = auth.user.status === 'approved'
+
+  if (!auth.isLoggedIn) {
+    if (to.meta.requiresAuth || to.path === '/pending-approval') {
+      return { path: '/signin', query: { redirect: to.fullPath } }
     }
-  } else if (!to.meta.requiresAuth && auth.isLoggedIn) {
+    return
+  }
+
+  if (!isApproved) {
+    // Guard against infinite redirect — let the user land on /pending-approval
+    if (to.path !== '/pending-approval') {
+      return { path: '/pending-approval' }
+    }
+    return
+  }
+
+  // User is logged in and approved — redirect away from auth-only pages
+  if (to.path === '/signin' || to.path === '/pending-approval') {
     return { path: '/events' }
   }
 })

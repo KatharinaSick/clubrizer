@@ -2,12 +2,15 @@ import { defineStore } from 'pinia'
 import authService from '@/service/auth'
 import { useStorage } from '@vueuse/core'
 
+export type UserStatus = 'pending' | 'approved' | 'rejected'
+
 export interface User {
   email: string,
   givenName: string,
   familyName: string,
   nickName: string,
   picture?: string,
+  status: UserStatus,
 }
 
 export const useAuthStore = defineStore('auth', {
@@ -71,5 +74,6 @@ const emptyUser: User = {
   givenName: '',
   familyName: '',
   nickName: '',
-  picture: undefined
+  picture: undefined,
+  status: 'pending',
 }

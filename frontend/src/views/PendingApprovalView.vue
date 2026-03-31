@@ -1,0 +1,65 @@
+<script setup lang="ts">
+import { useAuthStore } from '@/stores/auth'
+
+const auth = useAuthStore()
+</script>
+
+<template>
+  <div class="pendingApprovalContainer">
+    <div class="pendingApprovalCenter">
+      <img
+        alt="Clubrizer Logo"
+        class="pendingApprovalLogo"
+        src="@/assets/logo.svg"
+      />
+      <h1 class="pendingApprovalTitle">Clubrizer</h1>
+      <h3 class="pendingApprovalSlogan">Team Up!</h3>
+    </div>
+
+    <div class="pendingApprovalCenter">
+      <template v-if="auth.user.status === 'rejected'">
+        <h1>{{ $t('pendingApproval.rejected.title') }}</h1>
+        <p>{{ $t('pendingApproval.rejected.message') }}</p>
+      </template>
+      <template v-else>
+        <h1>{{ $t('pendingApproval.pending.title') }}</h1>
+        <p>{{ $t('pendingApproval.pending.message') }}</p>
+      </template>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.pendingApprovalContainer {
+  width: 100%;
+  margin-top: 64px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 48px;
+}
+
+.pendingApprovalCenter {
+  text-align: center;
+}
+
+.pendingApprovalLogo {
+  height: 100px;
+}
+
+.pendingApprovalTitle {
+  margin: 8px 0 0 0;
+  text-transform: uppercase;
+  letter-spacing: .1rem;
+}
+
+.pendingApprovalSlogan {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: .1rem;
+  background-image: var(--gradient);
+  color: transparent;
+  background-clip: text;
+}
+</style>
