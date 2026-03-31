@@ -1,10 +1,22 @@
 # AI Agent Instructions for Clubrizer
 
+## About
+Clubrizer is a platform for sports clubs to manage their club life — initially focused on events, with plans to expand to features like member management, records, protocols, and a forum.
+
+## Repository
+GitHub: `KatharinaSick/clubrizer`
+
 ## General Guidelines
 - **Approval**: Always ask for approval before implementing any changes.
 - **Task Breakdown**: Always break tasks into small, manageable chunks.
 - **Clarification**: Never guess. If anything is unclear, ask for clarification until the task is fully understood.
 - **Implementation**: Do not implement new features or significant changes without explicit approval. Planning should precede implementation.
+- **Users**: The end users of this app are not tech-savvy. Keep UX simple, friendly, and avoid technical language in any user-facing text.
+- **Full-stack security**: Always think about the full picture — this app has both a frontend and a backend. Hiding or restricting something only on the frontend is not sufficient security. Any access control must be properly enforced in the backend as well.
+
+## GitHub Issues
+- **Labels**: Every issue must have at least one label. Never create an issue without labels. Always suggest labels and ask for confirmation before applying them — do not assume.
+- **Milestones**: Not every issue needs a milestone, but always suggest one if applicable and ask for confirmation before assigning — do not assume.
 
 ## Frontend Tech Stack
 - **Framework**: Vue 3 (Composition API, `<script setup lang="ts">`), TypeScript, Vite.
