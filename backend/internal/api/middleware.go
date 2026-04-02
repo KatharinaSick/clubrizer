@@ -12,7 +12,7 @@ import (
 
 func authenticated(cfg app.Config, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		accessTokenString := r.Header.Get(cfg.OAuth.AccessToken.HeaderName)
+		accessTokenString := r.Header.Get(cfg.JWT.AccessToken.HeaderName)
 		if accessTokenString == "" {
 			http.Error(w, "no access token set", http.StatusUnauthorized)
 			return
@@ -23,7 +23,7 @@ func authenticated(cfg app.Config, next http.Handler) http.Handler {
 				http.Error(w, fmt.Sprintf("unexpected signing method: %v", token.Header["alg"]), http.StatusUnauthorized)
 			}
 
-			return []byte(cfg.OAuth.AccessToken.SecretKey), nil
+			return []byte(cfg.JWT.AccessToken.SecretKey), nil
 		})
 
 		if err != nil || !token.Valid {
@@ -47,7 +47,7 @@ func authenticated(cfg app.Config, next http.Handler) http.Handler {
 		}
 
 		// Add user claims to context for later use
-		ctx := context.WithValue(r.Context(), cfg.OAuth.User.Key, claims)
+		ctx := context.WithValue(r.Context(), cfg.JWT.User.Key, claims)
 		r = r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)

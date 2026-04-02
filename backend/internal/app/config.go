@@ -14,7 +14,7 @@ type Config struct {
 		Url string `yaml:"url"`
 	} `yaml:"database"`
 
-	OAuth struct {
+	JWT struct {
 		AccessToken struct {
 			Issuer     string `yaml:"issuer"`
 			HeaderName string `yaml:"headerName"`
@@ -30,11 +30,16 @@ type Config struct {
 		User struct {
 			Key string `yaml:"key"`
 		} `yaml:"user"`
-		Google struct {
-			ClientId     string `yaml:"clientId"`
-			ClientSecret string `yaml:"clientSecret"`
-		} `yaml:"google"`
-	} `yaml:"oauth"`
+	} `yaml:"jwt"`
+
+	Resend struct {
+		ApiKey      string `yaml:"apiKey"`
+		FromAddress string `yaml:"fromAddress"`
+	} `yaml:"resend"`
+
+	GCS struct {
+		ProfilePicturesBucketName string `yaml:"profilePicturesBucketName"`
+	} `yaml:"gcs"`
 
 	Cors struct {
 		AllowedOrigins []string `yaml:"allowedOrigins"`

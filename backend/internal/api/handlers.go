@@ -21,6 +21,8 @@ type handlerWithIdAndReturnValue[Out any] func(context.Context, string) (*Out, e
 type handlerWithListReturn[Out any] func(context.Context) ([]*Out, error)
 
 type handlerWithIdAndBody[In any] func(context.Context, string, In) error
+
+var validate = validator.New()
 type handlerWithInputAndRefreshTokenReturn[In any, Out any] func(context.Context, In) (*Out, *users.RefreshTokenInfo, error)
 type handlerWithRefreshToken[Out any] func(context.Context, users.RefreshTokenInfo) (*Out, *users.RefreshTokenInfo, error)
 
@@ -147,7 +149,7 @@ func handleWithBodyAndReturnRefreshToken[In any, Out any](cfg app.Config, f hand
 
 func handleWithRefreshToken[Out any](cfg app.Config, f handlerWithRefreshToken[Out]) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		c, err := r.Cookie(cfg.OAuth.RefreshToken.CookieName)
+		c, err := r.Cookie(cfg.JWT.RefreshToken.CookieName)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
@@ -178,19 +180,19 @@ func handleLogout(cfg app.Config) http.Handler {
 
 func setRefreshTokenCookie(w http.ResponseWriter, cfg app.Config, t *users.RefreshTokenInfo) {
 	sameSite := http.SameSiteStrictMode
-	if cfg.OAuth.RefreshToken.SameSite == "Lax" {
+	if cfg.JWT.RefreshToken.SameSite == "Lax" {
 		sameSite = http.SameSiteLaxMode
-	} else if cfg.OAuth.RefreshToken.SameSite == "None" {
+	} else if cfg.JWT.RefreshToken.SameSite == "None" {
 		sameSite = http.SameSiteNoneMode
 	}
 
 	http.SetCookie(w, &http.Cookie{
-		Name:     cfg.OAuth.RefreshToken.CookieName,
+		Name:     cfg.JWT.RefreshToken.CookieName,
 		Value:    t.Token,
 		Expires:  t.Expires,
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   cfg.OAuth.RefreshToken.Secure,
+		Secure:   cfg.JWT.RefreshToken.Secure,
 		SameSite: sameSite,
 	})
 }
@@ -202,7 +204,6 @@ func getAndValidatePayload[In any](r *http.Request) (*In, error) {
 		return nil, errors.New(fmt.Sprintf("failed to parse json: %s", err))
 	}
 
-	validate := validator.New()
 	if err := validate.Struct(in); err != nil {
 		return nil, errors.New(fmt.Sprintf("failed to validate payload: %s", err))
 	}

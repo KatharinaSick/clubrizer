@@ -54,16 +54,11 @@ func (s *store) getUserByMail(ctx context.Context, email string) (*User, error) 
 	return u, nil
 }
 
-func (s *store) createUser(ctx context.Context, c *googleTokenClaims) (*User, error) {
+func (s *store) createUser(ctx context.Context, email string) (*User, error) {
 	rows, err := s.conn.Query(
 		ctx,
-		"INSERT INTO users(email, family_name, given_name, nick_name, picture, issuer) VALUES($1, $2, $3, $4, $5, $6) RETURNING *",
-		c.Email,
-		c.FamilyName,
-		c.GivenName,
-		c.GivenName,
-		c.Picture,
-		c.Issuer,
+		"INSERT INTO users(email, status) VALUES($1, 'pending') RETURNING *",
+		email,
 	)
 
 	if err != nil {

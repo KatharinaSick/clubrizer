@@ -11,7 +11,7 @@ type Kind string
 const (
 	NotFound     Kind = "not_found"
 	Unauthorized Kind = "Unauthorized"
-	BadRequest   Kind = "back_request"
+	BadRequest   Kind = "bad_request"
 )
 
 // Error defines a standard application error.

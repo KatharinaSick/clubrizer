@@ -2,22 +2,24 @@ server:
   port: 8080
 database:
   url: ${DB_URL}
-oauth:
+jwt:
   accessToken:
     issuer: clubrizer.com
     headerName: Authorization
-    secretKey: ${OAUTH_ACCESS_TOKEN_SECRET_KEY}
+    secretKey: ${JWT_ACCESS_TOKEN_SECRET_KEY}
   refreshToken:
     issuer: clubrizer.com
     cookieName: clubrizer.refreshToken
-    secretKey: ${OAUTH_REFRESH_TOKEN_SECRET_KEY}
+    secretKey: ${JWT_REFRESH_TOKEN_SECRET_KEY}
     secure: false
     sameSite: Lax
   user:
     key: user
-  google:
-    clientId: ${OAUTH_GOOGLE_CLIENT_ID}
-    clientSecret: ${OAUTH_GOOGLE_CLIENT_SECRET}
+resend:
+  apiKey: ${RESEND_API_KEY}
+  fromAddress: ${RESEND_FROM_ADDRESS}
+gcs:
+  profilePicturesBucketName: ${GCS_PROFILE_PICTURES_BUCKET_NAME}
 cors:
   allowedOrigins:
     - http://localhost:5173
