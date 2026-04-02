@@ -9,9 +9,11 @@ import (
 type Kind string
 
 const (
-	NotFound     Kind = "not_found"
-	Unauthorized Kind = "Unauthorized"
-	BadRequest   Kind = "bad_request"
+	NotFound        Kind = "not_found"
+	Unauthorized    Kind = "unauthorized"
+	BadRequest      Kind = "bad_request"
+	TooManyRequests Kind = "too_many_requests"
+	Forbidden       Kind = "forbidden"
 )
 
 // Error defines a standard application error.
@@ -69,5 +71,21 @@ func NewBadRequest(message string, cause error) *Error {
 		message:        message,
 		cause:          cause,
 		httpStatusCode: http.StatusBadRequest,
+	}
+}
+
+func NewTooManyRequests(message string) *Error {
+	return &Error{
+		kind:           TooManyRequests,
+		message:        message,
+		httpStatusCode: http.StatusTooManyRequests,
+	}
+}
+
+func NewForbidden(message string) *Error {
+	return &Error{
+		kind:           Forbidden,
+		message:        message,
+		httpStatusCode: http.StatusForbidden,
 	}
 }

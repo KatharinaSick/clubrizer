@@ -1,14 +1,16 @@
 package main
 
 import (
-	"github.com/katharinasick/clubrizer/internal/api"
-	"github.com/katharinasick/clubrizer/internal/app"
-	"github.com/katharinasick/clubrizer/internal/events"
-	"github.com/katharinasick/clubrizer/internal/users"
 	"net"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/katharinasick/clubrizer/internal/api"
+	"github.com/katharinasick/clubrizer/internal/app"
+	"github.com/katharinasick/clubrizer/internal/email"
+	"github.com/katharinasick/clubrizer/internal/events"
+	"github.com/katharinasick/clubrizer/internal/users"
 )
 
 func main() {
@@ -26,11 +28,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	emailClient := email.NewClient(cfg.Resend.ApiKey, cfg.Resend.FromAddress)
+
 	httpServer := &http.Server{
 		Addr: net.JoinHostPort("", cfg.Server.Port),
 		Handler: api.NewHandler(
 			*cfg,
-			users.NewService(log, cfg, dbPool),
+			users.NewService(log, cfg, dbPool, emailClient),
 			events.NewService(log, cfg, dbPool),
 		),
 		IdleTimeout:  time.Minute,

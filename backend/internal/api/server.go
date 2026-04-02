@@ -47,6 +47,7 @@ func addRoutes(
 	eventsService eventsService,
 ) {
 	// Authentication & Users
+	mux.Handle("POST /auth/otp", handleWithBody(userService.RequestOTP))
 	mux.Handle("POST /signin", handleWithBodyAndReturnRefreshToken(cfg, userService.SignInOrRegister))
 	mux.Handle("POST /oauth/tokens", handleWithRefreshToken(cfg, userService.RefreshTokens))
 	mux.Handle("POST /logout", handleLogout(cfg))
@@ -61,6 +62,7 @@ func addRoutes(
 }
 
 type userService interface {
+	RequestOTP(ctx context.Context, req users.RequestOTPRequest) error
 	SignInOrRegister(ctx context.Context, r users.SignInOrRegisterRequest) (*users.SignInOrRegisterResponse, *users.RefreshTokenInfo, error)
 	RefreshTokens(ctx context.Context, t users.RefreshTokenInfo) (*users.RefreshTokensResponse, *users.RefreshTokenInfo, error)
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/katharinasick/clubrizer/internal/app"
@@ -52,6 +54,40 @@ func (s *store) getUserByMail(ctx context.Context, email string) (*User, error) 
 	}
 
 	return u, nil
+}
+
+func (s *store) countRecentOTPRequests(ctx context.Context, email string) (int, error) {
+	var count int
+	err := s.conn.QueryRow(ctx,
+		"SELECT COUNT(*) FROM otp_tokens WHERE email = $1 AND created_at > NOW() - INTERVAL '1 hour'",
+		email,
+	).Scan(&count)
+	if err != nil {
+		return 0, errors.New(fmt.Sprintf("failed to count OTP requests: %s", err.Error()))
+	}
+	return count, nil
+}
+
+func (s *store) invalidateActiveOTPs(ctx context.Context, email string) error {
+	_, err := s.conn.Exec(ctx,
+		"UPDATE otp_tokens SET invalidated_at = NOW() WHERE email = $1 AND invalidated_at IS NULL AND expires_at > NOW()",
+		email,
+	)
+	if err != nil {
+		return errors.New(fmt.Sprintf("failed to invalidate OTP tokens: %s", err.Error()))
+	}
+	return nil
+}
+
+func (s *store) createOTPToken(ctx context.Context, email, codeHash string, expiresAt time.Time) error {
+	_, err := s.conn.Exec(ctx,
+		"INSERT INTO otp_tokens(email, code_hash, expires_at) VALUES($1, $2, $3)",
+		email, codeHash, expiresAt,
+	)
+	if err != nil {
+		return errors.New(fmt.Sprintf("failed to create OTP token: %s", err.Error()))
+	}
+	return nil
 }
 
 func (s *store) createUser(ctx context.Context, email string) (*User, error) {
