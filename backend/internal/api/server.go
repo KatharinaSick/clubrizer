@@ -51,9 +51,8 @@ func addRoutes(
 	// Authentication & Users
 	mux.Handle("POST /auth/otp", handleWithBody(userService.RequestOTP))
 	mux.Handle("POST /auth/verify", handleWithBodyAndReturnRefreshToken(cfg, userService.VerifyOTP))
-	mux.Handle("POST /signin", handleWithBodyAndReturnRefreshToken(cfg, userService.SignInOrRegister))
-	mux.Handle("POST /oauth/tokens", handleWithRefreshToken(cfg, userService.RefreshTokens))
-	mux.Handle("POST /logout", handleLogout(cfg))
+	mux.Handle("POST /auth/refresh", handleWithRefreshToken(cfg, userService.RefreshTokens))
+	mux.Handle("POST /auth/logout", handleLogout(cfg))
 
 	// Users
 	mux.Handle("PATCH /users/me/profile", authenticated(cfg, handleWithBodyAndReturnRefreshToken(cfg, userService.UpdateProfile)))
@@ -73,7 +72,6 @@ type userService interface {
 	VerifyOTP(ctx context.Context, req users.VerifyOTPRequest) (*users.VerifyOTPResponse, *users.RefreshTokenInfo, error)
 	UpdateProfile(ctx context.Context, req users.UpdateProfileRequest) (*users.UpdateProfileResponse, *users.RefreshTokenInfo, error)
 	UpdateProfilePicture(ctx context.Context, contentType string, data io.Reader) error
-	SignInOrRegister(ctx context.Context, r users.SignInOrRegisterRequest) (*users.SignInOrRegisterResponse, *users.RefreshTokenInfo, error)
 	RefreshTokens(ctx context.Context, t users.RefreshTokenInfo) (*users.RefreshTokensResponse, *users.RefreshTokenInfo, error)
 }
 
