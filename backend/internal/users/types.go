@@ -1,6 +1,8 @@
 package users
 
 import (
+	"time"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
@@ -13,6 +15,16 @@ type User struct {
 	NickName   *string   `db:"nick_name" json:"nickName"`
 	Picture    *string   `db:"picture" json:"picture"`
 	Status     string    `db:"status" json:"status"`
+}
+
+type OTPToken struct {
+	ID            uuid.UUID  `db:"id"`
+	Email         string     `db:"email"`
+	CodeHash      string     `db:"code_hash"`
+	ExpiresAt     time.Time  `db:"expires_at"`
+	AttemptCount  int        `db:"attempt_count"`
+	InvalidatedAt *time.Time `db:"invalidated_at"`
+	CreatedAt     time.Time  `db:"created_at"`
 }
 
 type Claims struct {
