@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"time"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/katharinasick/clubrizer/internal/app"
 	"github.com/katharinasick/clubrizer/internal/apperrors"
 	"github.com/katharinasick/clubrizer/internal/users"
-	"net/http"
-	"time"
 )
 
 type handler[Out any] func(context.Context) (*Out, error)
@@ -163,6 +165,34 @@ func handleWithRefreshToken[Out any](cfg app.Config, f handlerWithRefreshToken[O
 
 		setRefreshTokenCookie(w, cfg, rt)
 		writeResponse(w, out)
+	})
+}
+
+func handleProfilePicture(f func(context.Context, string, io.Reader) error) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseMultipartForm(5 << 20); err != nil { // 5 MB max
+			http.Error(w, "file too large or invalid form", http.StatusBadRequest)
+			return
+		}
+
+		file, header, err := r.FormFile("picture")
+		if err != nil {
+			http.Error(w, "missing picture field", http.StatusBadRequest)
+			return
+		}
+		defer file.Close()
+
+		contentType := header.Header.Get("Content-Type")
+		if contentType == "" {
+			contentType = "application/octet-stream"
+		}
+
+		if err := f(r.Context(), contentType, file); err != nil {
+			http.Error(w, err.Error(), apperrors.HttpStatusCode(err))
+			return
+		}
+
+		ok(w)
 	})
 }
 

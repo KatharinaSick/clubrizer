@@ -140,6 +140,34 @@ func (s *store) createOTPToken(ctx context.Context, email, codeHash string, expi
 	return nil
 }
 
+func (s *store) updateUserProfile(ctx context.Context, id uuid.UUID, firstName, lastName string, nickName *string) (*User, error) {
+	rows, err := s.conn.Query(ctx,
+		"UPDATE users SET given_name = $1, family_name = $2, nick_name = $3 WHERE id = $4 RETURNING *",
+		firstName, lastName, nickName, id,
+	)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to update user profile: %s", err.Error()))
+	}
+
+	u, err := pgx.CollectOneRow(rows, pgx.RowToAddrOfStructByName[User])
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to scan user: %s", err.Error()))
+	}
+
+	return u, nil
+}
+
+func (s *store) updateUserPicture(ctx context.Context, id uuid.UUID, pictureURL string) error {
+	_, err := s.conn.Exec(ctx,
+		"UPDATE users SET picture = $1 WHERE id = $2",
+		pictureURL, id,
+	)
+	if err != nil {
+		return errors.New(fmt.Sprintf("failed to update user picture: %s", err.Error()))
+	}
+	return nil
+}
+
 func (s *store) createUser(ctx context.Context, email string) (*User, error) {
 	rows, err := s.conn.Query(
 		ctx,
