@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/auth'
+import Button from '@/components/Button.vue'
+import router from '@/router'
 
 const auth = useAuthStore()
+
+async function checkStatus() {
+  await auth.refreshTokens()
+  router.push('/')
+}
 </script>
 
 <template>
@@ -25,6 +32,10 @@ const auth = useAuthStore()
         <h1>{{ $t('pendingApproval.pending.title') }}</h1>
         <p>{{ $t('pendingApproval.pending.message') }}</p>
       </template>
+    </div>
+
+    <div v-if="auth.user.status !== 'rejected'" class="pendingApprovalCenter">
+      <Button :title="$t('pendingApproval.pending.checkStatus')" theme="secondary" @click="checkStatus" />
     </div>
   </div>
 </template>

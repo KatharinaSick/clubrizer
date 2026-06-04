@@ -56,7 +56,7 @@ func addRoutes(
 
 	// Users
 	mux.Handle("PATCH /users/me/profile", authenticated(cfg, handleWithBodyAndReturnRefreshToken(cfg, userService.UpdateProfile)))
-	mux.Handle("POST /users/me/picture", authenticated(cfg, handleProfilePicture(userService.UpdateProfilePicture)))
+	mux.Handle("POST /users/me/picture", authenticated(cfg, handleProfilePicture(cfg, userService.UpdateProfilePicture)))
 
 	// Events
 	mux.Handle("GET /events/categories", authenticated(cfg, handleAndReturnList(eventsService.ListCategories)))
@@ -71,7 +71,7 @@ type userService interface {
 	RequestOTP(ctx context.Context, req users.RequestOTPRequest) error
 	VerifyOTP(ctx context.Context, req users.VerifyOTPRequest) (*users.VerifyOTPResponse, *users.RefreshTokenInfo, error)
 	UpdateProfile(ctx context.Context, req users.UpdateProfileRequest) (*users.UpdateProfileResponse, *users.RefreshTokenInfo, error)
-	UpdateProfilePicture(ctx context.Context, contentType string, data io.Reader) error
+	UpdateProfilePicture(ctx context.Context, contentType string, data io.Reader) (*users.UpdateProfilePictureResponse, *users.RefreshTokenInfo, error)
 	RefreshTokens(ctx context.Context, t users.RefreshTokenInfo) (*users.RefreshTokensResponse, *users.RefreshTokenInfo, error)
 }
 

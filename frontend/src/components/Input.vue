@@ -1,13 +1,16 @@
 <script setup lang="ts">
 defineProps<{
   id: string
-  type: 'text' | 'date' | 'time'
+  type: 'text' | 'email' | 'date' | 'time'
 
   placeholder?: string
   multiLine?: boolean
   error?: string
   required?: boolean
   min?: string
+  inputMode?: string
+  maxLength?: number
+  theme?: 'default' | 'ghost'
 }>()
 
 const value = defineModel()
@@ -15,7 +18,7 @@ const value = defineModel()
 </script>
 
 <template>
-  <div class="inputWrapper">
+  <div class="inputWrapper" :class="{ inputWrapperGhost: theme === 'ghost' }">
     <textarea
       v-if="multiLine"
       class="input"
@@ -61,6 +64,8 @@ const value = defineModel()
       :type="type"
       v-model="value"
       required
+      :inputmode="inputMode"
+      :maxlength="maxLength"
     />
     <label
       :for="id"
@@ -127,5 +132,17 @@ const value = defineModel()
   font-size: var(--font-size-small);
   margin-top: 4px;
   margin-left: var(--padding);
+}
+
+.inputWrapperGhost .input {
+  background: var(--white);
+}
+
+.inputWrapperGhost .input:is(:focus, :valid) ~ .inputPlaceholder {
+  color: var(--white);
+}
+
+.inputWrapperGhost .input.inputError:is(:focus, :valid) ~ .inputPlaceholder {
+  color: var(--red);
 }
 </style>

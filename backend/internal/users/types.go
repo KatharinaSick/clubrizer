@@ -30,7 +30,6 @@ type OTPToken struct {
 type Claims struct {
 	jwt.RegisteredClaims
 	ID         uuid.UUID `json:"id"`
-	IsNew      bool      `json:"isNew"`
 	Email      string    `json:"email"`
 	FamilyName *string   `json:"familyName"`
 	GivenName  *string   `json:"givenName"`

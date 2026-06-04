@@ -4,7 +4,7 @@ withDefaults(
     title: string
     loading?: boolean
     disabled?: boolean
-    theme?: 'primary' | 'secondary' | 'green' | 'red'
+    theme?: 'primary' | 'secondary' | 'green' | 'red' | 'ghost'
   }>(),
   {
     theme: 'primary'
@@ -123,5 +123,19 @@ withDefaults(
 .button.red:disabled {
   opacity: 0.5;
   background: var(--red);
+}
+
+.button.ghost {
+  background: var(--white);
+  color: var(--blue);
+}
+
+.button.ghost:active {
+  background: var(--light-gray);
+}
+
+.button.ghost:disabled {
+  background: var(--light-gray);
+  opacity: 0.7;
 }
 </style>

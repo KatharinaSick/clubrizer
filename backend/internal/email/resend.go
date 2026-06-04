@@ -33,10 +33,11 @@ type sendEmailRequest struct {
 
 func (c *Client) SendOTP(ctx context.Context, to, code string) error {
 	body := sendEmailRequest{
-		From:    c.fromAddress,
-		To:      []string{to},
-		Subject: "Your Clubrizer sign-in code",
-		Text:    fmt.Sprintf("Your Clubrizer sign-in code is: %s\n\nThis code expires in 1 hour.", code),
+		From: c.fromAddress,
+		To:   []string{to},
+		// Hardcoded German until proper i18n is implemented: https://github.com/KatharinaSick/clubrizer/issues/15
+		Subject: "Dein Clubrizer Anmelde-Code",
+		Text:    fmt.Sprintf("Dein Clubrizer Anmelde-Code lautet: %s\n\nDieser Code ist 1 Stunde lang gültig.", code),
 	}
 
 	jsonBody, err := json.Marshal(body)

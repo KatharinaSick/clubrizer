@@ -3,7 +3,7 @@
   "packages": [
     "postgresql@17.7",
     "go-migrate@4.18.1",
-    "go@1.25.5",
+    "go@1.26.3",
     "parallel@20260122"
   ],
   "env": {

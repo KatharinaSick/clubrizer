@@ -1,7 +1,7 @@
 import { createI18n } from 'vue-i18n'
 
 export default createI18n({
-  locale: navigator.language,
+  locale: navigator.language.split('-')[0],
   fallbackLocale: 'en',
   messages: {
     en: {
@@ -9,13 +9,30 @@ export default createI18n({
       signIn: {
         welcomeTo: 'Welcome to',
         getStarted: 'Sign in to get started',
-        failedToSignIn: 'Failed to sign in',
-        failedToSignInWithGoogle: 'Failed to sign in with Google',
-        failedToParseGoogleToken: 'Failed to parse Google login token'
+        emailLabel: 'Email address',
+        emailNote: 'Please use the email address you registered with at your club.',
+        sendCode: 'Send Code',
+        codeTitle: 'Check your email!',
+        codeNote: 'We sent a 6-digit code to {email}. Enter it below.',
+        codeLabel: '6-digit code',
+        verify: 'Verify',
+        backToEmail: 'Back',
+        emailRequired: 'Please enter your email address',
+        codeInvalid: 'Please enter the 6-digit code from your email',
       },
       profile: {
         header: 'My Profile',
         logout: 'Logout'
+      },
+      profileSetup: {
+        header: 'Set Up Your Profile',
+        firstName: 'First Name',
+        lastName: 'Last Name',
+        nickName: 'Nickname (optional)',
+        picture: 'Profile Picture (optional)',
+        save: 'Save',
+        firstNameRequired: 'Please enter your first name',
+        lastNameRequired: 'Please enter your last name',
       },
       events: {
         header: 'Events',
@@ -53,7 +70,8 @@ export default createI18n({
       pendingApproval: {
         pending: {
           title: 'Approval Pending',
-          message: 'Your account is pending approval. Hang tight — an admin will review it shortly.'
+          message: 'Your account is pending approval. Hang tight — an admin will review it shortly.',
+          checkStatus: 'Check Approval Status'
         },
         rejected: {
           title: 'Account Declined',
@@ -70,13 +88,30 @@ export default createI18n({
       signIn: {
         welcomeTo: 'Willkommen bei',
         getStarted: 'Melde dich an, um loszulegen',
-        failedToSignIn: 'Anmeldung fehlgeschlagen',
-        failedToSignInWithGoogle: 'Google Anmeldung fehlgeschlagen',
-        failedToParseGoogleToken: 'Google-Anmelde-Token konnte nicht verarbeitet werden'
+        emailLabel: 'E-Mail-Adresse',
+        emailNote: 'Bitte verwende die E-Mail-Adresse, mit der du dich im Verein angemeldet hast.',
+        sendCode: 'Code senden',
+        codeTitle: 'Schau in deine E-Mails!',
+        codeNote: 'Wir haben einen 6-stelligen Code an {email} gesendet. Gib ihn hier ein.',
+        codeLabel: '6-stelliger Code',
+        verify: 'Bestätigen',
+        backToEmail: 'Zurück',
+        emailRequired: 'Bitte gib deine E-Mail-Adresse ein',
+        codeInvalid: 'Bitte gib den 6-stelligen Code aus deiner E-Mail ein',
       },
       profile: {
         header: 'Mein Profil',
         logout: 'Abmelden'
+      },
+      profileSetup: {
+        header: 'Profil einrichten',
+        firstName: 'Vorname',
+        lastName: 'Nachname',
+        nickName: 'Spitzname (optional)',
+        picture: 'Profilbild (optional)',
+        save: 'Speichern',
+        firstNameRequired: 'Bitte gib deinen Vornamen ein',
+        lastNameRequired: 'Bitte gib deinen Nachnamen ein',
       },
       events: {
         header: 'Events',
@@ -111,7 +146,8 @@ export default createI18n({
       pendingApproval: {
         pending: {
           title: 'Ausstehende Genehmigung',
-          message: 'Dein Account wartet auf Genehmigung. Bleib dran – ein Administrator wird es in Kürze prüfen.'
+          message: 'Dein Account wartet auf Genehmigung. Bleib dran – ein Administrator wird es in Kürze prüfen.',
+          checkStatus: 'Genehmigungsstatus prüfen'
         },
         rejected: {
           title: 'Account abgelehnt',

@@ -20,9 +20,8 @@ func authenticated(cfg app.Config, next http.Handler) http.Handler {
 
 		token, err := jwt.ParseWithClaims(accessTokenString, &users.Claims{}, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				http.Error(w, fmt.Sprintf("unexpected signing method: %v", token.Header["alg"]), http.StatusUnauthorized)
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
-
 			return []byte(cfg.JWT.AccessToken.SecretKey), nil
 		})
 

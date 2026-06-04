@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -25,6 +26,7 @@ type handlerWithListReturn[Out any] func(context.Context) ([]*Out, error)
 type handlerWithIdAndBody[In any] func(context.Context, string, In) error
 
 var validate = validator.New()
+
 type handlerWithInputAndRefreshTokenReturn[In any, Out any] func(context.Context, In) (*Out, *users.RefreshTokenInfo, error)
 type handlerWithRefreshToken[Out any] func(context.Context, users.RefreshTokenInfo) (*Out, *users.RefreshTokenInfo, error)
 
@@ -168,7 +170,7 @@ func handleWithRefreshToken[Out any](cfg app.Config, f handlerWithRefreshToken[O
 	})
 }
 
-func handleProfilePicture(f func(context.Context, string, io.Reader) error) http.Handler {
+func handleProfilePicture(cfg app.Config, f func(context.Context, string, io.Reader) (*users.UpdateProfilePictureResponse, *users.RefreshTokenInfo, error)) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseMultipartForm(5 << 20); err != nil { // 5 MB max
 			http.Error(w, "file too large or invalid form", http.StatusBadRequest)
@@ -183,16 +185,19 @@ func handleProfilePicture(f func(context.Context, string, io.Reader) error) http
 		defer file.Close()
 
 		contentType := header.Header.Get("Content-Type")
-		if contentType == "" {
-			contentType = "application/octet-stream"
+		if !strings.HasPrefix(contentType, "image/") {
+			http.Error(w, "only image files are accepted", http.StatusBadRequest)
+			return
 		}
 
-		if err := f(r.Context(), contentType, file); err != nil {
+		out, rt, err := f(r.Context(), contentType, file)
+		if err != nil {
 			http.Error(w, err.Error(), apperrors.HttpStatusCode(err))
 			return
 		}
 
-		ok(w)
+		setRefreshTokenCookie(w, cfg, rt)
+		writeResponse(w, out)
 	})
 }
 

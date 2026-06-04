@@ -4,10 +4,10 @@ import { computed, ref } from 'vue'
 const SIZES = { sm: 32, md: 48, lg: 64, xl: 80 }
 
 const props = withDefaults(defineProps<{
-  givenName: string
-  familyName: string
-  nickName?: string
-  picture?: string
+  givenName: string | null
+  familyName: string | null
+  nickName?: string | null
+  picture?: string | null
   size?: keyof typeof SIZES
   gradient?: boolean
   label?: string
@@ -17,7 +17,7 @@ const props = withDefaults(defineProps<{
 })
 
 const initials = computed(() => {
-  return `${props.givenName.charAt(0)}${props.familyName.charAt(0)}`.toUpperCase()
+  return `${(props.givenName ?? '').charAt(0)}${(props.familyName ?? '').charAt(0)}`.toUpperCase()
 })
 
 const sizeInPx = computed(() => `${SIZES[props.size]}px`)
@@ -36,7 +36,7 @@ const toggleLabel = () => {
     :style="{ '--avatarSize': sizeInPx }"
     @click="label && toggleLabel()"
   >
-    <img v-if="picture" :src="picture" :alt="givenName" class="avatarImage" />
+    <img v-if="picture" :src="picture" :alt="givenName ?? ''" class="avatarImage" />
     <div v-else class="avatarFallback">{{ initials }}</div>
     <span v-if="label" class="avatarLabel" :class="{ avatarLabelVisible: labelVisible }">
       {{ label }}

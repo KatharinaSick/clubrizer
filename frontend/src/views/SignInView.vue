@@ -1,95 +1,186 @@
 <script setup lang="ts">
-import { type CredentialResponse, GoogleSignInButton } from 'vue3-google-signin'
-import { useAuthStore } from '@/stores/auth'
-import Alert from '@/components/Alert.vue'
-import RequestError from '@/components/RequestError.vue'
 import { ref } from 'vue'
-import router from '@/router'
+import { useAuthStore } from '@/stores/auth'
+import { useRequestStore } from '@/stores/request'
 import { useRoute } from 'vue-router'
+import router from '@/router'
+import Input from '@/components/Input.vue'
+import Button from '@/components/Button.vue'
+import RequestError from '@/components/RequestError.vue'
 import i18n from '@/plugins/i18n'
 
 const auth = useAuthStore()
+const requestStore = useRequestStore()
 const route = useRoute()
-const googleSignInError = ref<string>('')
 
-const handleGoogleLoginSuccess = (response: CredentialResponse) => {
-  const { credential } = response
-  if (!credential) {
-    googleSignInError.value = i18n.global.t('signIn.failedToParseGoogleToken')
+type Step = 'email' | 'code'
+const step = ref<Step>('email')
+const email = ref('')
+const code = ref('')
+const emailError = ref('')
+const codeError = ref('')
+const isLoading = ref(false)
+
+async function submitEmail() {
+  emailError.value = ''
+  if (!email.value) {
+    emailError.value = i18n.global.t('signIn.emailRequired')
     return
   }
+  isLoading.value = true
+  try {
+    await auth.requestOTP(email.value)
+    step.value = 'code'
+  } catch {
+    // error shown globally via RequestError
+  } finally {
+    isLoading.value = false
+  }
+}
 
-  auth.login(credential)
-    .then(() => {
-      if (auth.isLoggedIn) {
-        router.replace({path: route.query.redirect as string ?? '/'})
-      }
-    })
+async function submitCode() {
+  codeError.value = ''
+  if (code.value.length !== 6) {
+    codeError.value = i18n.global.t('signIn.codeInvalid')
+    return
+  }
+  isLoading.value = true
+  try {
+    await auth.verifyOTP(email.value, code.value)
+    router.replace({ path: (route.query.redirect as string) ?? '/' })
+  } catch {
+    // error shown globally via RequestError
+  } finally {
+    isLoading.value = false
+  }
+}
+
+function backToEmail() {
+  step.value = 'email'
+  code.value = ''
+  codeError.value = ''
+  requestStore.clearError()
 }
 </script>
 
 <template>
-  <div class="container">
-    <div class="center">
-      <img
-        alt="Clubrizer Logo"
-        class="logo"
-        src="@/assets/logo.svg"
-      />
-      <h1 class="title">Clubrizer</h1>
-      <h3 class="slogan">Team Up!</h3>
+  <div class="signInContainer">
+    <div class="signInCard">
+
+      <template v-if="step === 'email'">
+        <div class="signInHeader">
+          <h1 class="signInWelcome">{{ $t('signIn.welcomeTo') }}<br />{{ $t('team') }}!</h1>
+        </div>
+        <form class="signInForm" @submit.prevent="submitEmail">
+          <p class="signInSubtitle">{{ $t('signIn.getStarted') }}</p>
+          <Input
+            id="email"
+            type="email"
+            :placeholder="$t('signIn.emailLabel')"
+            v-model="email"
+            :error="emailError"
+            required
+            theme="ghost"
+          />
+          <Button :title="$t('signIn.sendCode')" :loading="isLoading" theme="ghost" />
+        </form>
+        <p class="signInNote">{{ $t('signIn.emailNote') }}</p>
+        <RequestError />
+      </template>
+
+      <template v-else>
+        <div class="signInHeader">
+          <h1 class="signInWelcome">{{ $t('signIn.codeTitle') }}</h1>
+        </div>
+        <form class="signInForm" @submit.prevent="submitCode">
+          <p class="signInSubtitle">{{ $t('signIn.codeNote', { email }) }}</p>
+          <Input
+            id="code"
+            type="text"
+            inputMode="numeric"
+            :maxLength="6"
+            :placeholder="$t('signIn.codeLabel')"
+            v-model="code"
+            :error="codeError"
+            required
+            theme="ghost"
+          />
+          <Button :title="$t('signIn.verify')" :loading="isLoading" theme="ghost" />
+        </form>
+        <button type="button" class="signInBackLink" @click="backToEmail">
+          {{ $t('signIn.backToEmail') }}
+        </button>
+        <RequestError />
+      </template>
+
     </div>
-
-    <div class="center">
-      <h1>{{ $t('signIn.welcomeTo') }}<br />{{ $t('team') }}!</h1>
-      <p>{{ $t('signIn.getStarted') }}</p>
-    </div>
-
-    <GoogleSignInButton
-      @success="handleGoogleLoginSuccess"
-      @error="() => googleSignInError = i18n.global.t('signIn.failedToSignInWithGoogle')"
-      size="large"
-      shape="pill"
-
-    ></GoogleSignInButton>
-    <Alert v-if="googleSignInError" class="alert" :title="i18n.global.t('signIn.failedToSignIn')" :message="googleSignInError"/>
-    <RequestError class="alert" />
-
   </div>
 </template>
 
 <style scoped>
-.container {
-  width: 100%;
-  margin-top: 64px;
+.signInContainer {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: linear-gradient(45deg, var(--gradient-start-light), var(--gradient-end-light));
 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px var(--padding);
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.signInCard {
+  width: 100%;
+  max-width: 400px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 48px;
+  gap: 24px;
 }
 
-.center {
+.signInHeader {
   text-align: center;
 }
 
-.logo {
-  height: 100px;
-}
-
-.title {
-  margin: 8px 0 0 0;
-  text-transform: uppercase;
-  letter-spacing: .1rem;
-}
-
-.slogan {
+.signInWelcome {
   margin: 0;
-  text-transform: uppercase;
-  letter-spacing: .1rem;
-  background-image: var(--gradient);
-  color: transparent;
-  background-clip: text;
+  font-size: 28px;
+  font-weight: var(--font-weight-bold);
+  color: var(--white);
+  line-height: 1.2;
+}
+
+.signInSubtitle {
+  margin: 0 0 var(--gap) 0;
+  color: var(--white);
+  font-size: var(--font-size-medium);
+}
+
+.signInForm {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.signInNote {
+  margin: 0;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: var(--font-size-small);
+}
+
+.signInBackLink {
+  background: none;
+  border: none;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: var(--font-size-small);
+  cursor: pointer;
+  text-align: center;
+  text-decoration: underline;
 }
 </style>
-

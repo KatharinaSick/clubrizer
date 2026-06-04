@@ -23,7 +23,7 @@ func (s *Service) UpdateProfile(ctx context.Context, req UpdateProfileRequest) (
 		return nil, nil, err
 	}
 
-	accessToken, refreshToken, refreshTokenExpiresAt, err := s.generateTokens(u, false)
+	accessToken, refreshToken, refreshTokenExpiresAt, err := s.generateTokens(u)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -33,13 +33,29 @@ func (s *Service) UpdateProfile(ctx context.Context, req UpdateProfileRequest) (
 		nil
 }
 
-func (s *Service) UpdateProfilePicture(ctx context.Context, contentType string, data io.Reader) error {
+type UpdateProfilePictureResponse struct {
+	AccessToken string `json:"accessToken"`
+}
+
+func (s *Service) UpdateProfilePicture(ctx context.Context, contentType string, data io.Reader) (*UpdateProfilePictureResponse, *RefreshTokenInfo, error) {
 	claims := ctx.Value(s.cfg.JWT.User.Key).(*Claims)
 
 	url, err := s.storageClient.UploadProfilePicture(ctx, contentType, data)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	return s.store.updateUserPicture(ctx, claims.ID, url)
+	u, err := s.store.updateUserPicture(ctx, claims.ID, url)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	accessToken, refreshToken, refreshTokenExpiresAt, err := s.generateTokens(u)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return &UpdateProfilePictureResponse{AccessToken: accessToken},
+		&RefreshTokenInfo{Token: refreshToken, Expires: refreshTokenExpiresAt},
+		nil
 }

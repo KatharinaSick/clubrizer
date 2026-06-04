@@ -48,7 +48,7 @@ func (s *Service) RefreshTokens(ctx context.Context, t RefreshTokenInfo) (*Refre
 		return nil, nil, err
 	}
 
-	accessToken, refreshToken, refreshTokenExpiresAt, err := s.generateTokens(user, false)
+	accessToken, refreshToken, refreshTokenExpiresAt, err := s.generateTokens(user)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -61,13 +61,13 @@ func (s *Service) RefreshTokens(ctx context.Context, t RefreshTokenInfo) (*Refre
 		nil
 }
 
-func (s *Service) generateTokens(u *User, isNew bool) (string, string, time.Time, error) {
+func (s *Service) generateTokens(u *User) (string, string, time.Time, error) {
 	registeredClaims := jwt.RegisteredClaims{
 		Subject:  u.ID.String(),
 		IssuedAt: jwt.NewNumericDate(time.Now()),
 	}
 
-	accessToken, err := s.generateAccessToken(u, isNew, registeredClaims)
+	accessToken, err := s.generateAccessToken(u, registeredClaims)
 	if err != nil {
 		return "", "", time.Time{}, errors.New("failed to generate access token: " + err.Error())
 	}
@@ -78,14 +78,13 @@ func (s *Service) generateTokens(u *User, isNew bool) (string, string, time.Time
 	return accessToken, refreshToken, refreshTokenExpiresAt, nil
 }
 
-func (s *Service) generateAccessToken(u *User, isNew bool, registeredClaims jwt.RegisteredClaims) (string, error) {
+func (s *Service) generateAccessToken(u *User, registeredClaims jwt.RegisteredClaims) (string, error) {
 	registeredClaims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(15 * time.Minute))
 	registeredClaims.Issuer = s.cfg.JWT.AccessToken.Issuer
 
 	accessClaims := Claims{
 		RegisteredClaims: registeredClaims,
 		ID:               u.ID,
-		IsNew:            isNew,
 		Email:            u.Email,
 		GivenName:        u.GivenName,
 		FamilyName:       u.FamilyName,

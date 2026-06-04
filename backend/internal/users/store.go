@@ -157,15 +157,21 @@ func (s *store) updateUserProfile(ctx context.Context, id uuid.UUID, firstName, 
 	return u, nil
 }
 
-func (s *store) updateUserPicture(ctx context.Context, id uuid.UUID, pictureURL string) error {
-	_, err := s.conn.Exec(ctx,
-		"UPDATE users SET picture = $1 WHERE id = $2",
+func (s *store) updateUserPicture(ctx context.Context, id uuid.UUID, pictureURL string) (*User, error) {
+	rows, err := s.conn.Query(ctx,
+		"UPDATE users SET picture = $1 WHERE id = $2 RETURNING *",
 		pictureURL, id,
 	)
 	if err != nil {
-		return errors.New(fmt.Sprintf("failed to update user picture: %s", err.Error()))
+		return nil, errors.New(fmt.Sprintf("failed to update user picture: %s", err.Error()))
 	}
-	return nil
+
+	u, err := pgx.CollectOneRow(rows, pgx.RowToAddrOfStructByName[User])
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to scan user: %s", err.Error()))
+	}
+
+	return u, nil
 }
 
 func (s *store) createUser(ctx context.Context, email string) (*User, error) {

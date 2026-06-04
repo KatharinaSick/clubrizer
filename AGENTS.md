@@ -29,7 +29,7 @@ GitHub: `KatharinaSick/clubrizer`
 - **Internationalization**: vue-i18n.
 
 ## Backend Tech Stack
-- **Language**: Go (Golang) 1.25.5.
+- **Language**: Go (Golang) 1.26.3.
 - **Database Driver**: pgx/v5 (PostgreSQL).
 - **Validation**: go-playground/validator.
 - **Authentication**: golang-jwt/jwt/v5.
