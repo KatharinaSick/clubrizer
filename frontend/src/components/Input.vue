@@ -96,7 +96,7 @@ const value = defineModel()
   border-radius: var(--border-radius);
   border: 1px solid transparent;
 
-  padding: var(--input-padding);
+  padding: var(--padding-input);
   outline: none;
   font-size: var(--font-size-medium);
   font-family: inherit;

@@ -73,7 +73,7 @@ const toggleLabel = () => {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: var(--horizotal-gradient);
+  background: var(--horizontal-gradient);
   color: var(--white);
   display: flex;
   align-items: center;

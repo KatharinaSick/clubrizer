@@ -9,13 +9,12 @@
     --black: #000000;
 
     --blue: #0E6EF0;
-    --light-blue: #52E3FE;
     --green: #28E8A2;
-    --gray:#E2E0E0;
+    --gray: #E2E0E0;
     --light-gray: #F5F5F5;
 
     --red: #F3675E;
-    --light-red: #fcd7d4;
+    --light-red: #FCD7D4;
 
     --orange: #FF9F43;
     --light-orange: #FFF0DE;
@@ -28,8 +27,6 @@
     --gradient-end-light: #52E3FE;
     --active-gradient-start-light: #82B3FF;
     --active-gradient-end-light: #8FEDFF;
-
-    --gap: 8px;
 
     --modal-background-light: rgba(12, 29, 54, 0.30);
 }
@@ -47,12 +44,13 @@
     --box-shadow: var(--box-shadow-light);
     --border-radius: 12px;
 
-    --horizotal-gradient: linear-gradient(to right, var(--gradient-start-light), var(--gradient-end-light));
-    --horizotal-gradient-active: linear-gradient(to right, var(--active-gradient-start-light), var(--active-gradient-end-light));
+    --horizontal-gradient: linear-gradient(to right, var(--gradient-start-light), var(--gradient-end-light));
+    --horizontal-gradient-active: linear-gradient(to right, var(--active-gradient-start-light), var(--active-gradient-end-light));
 
     --gradient: linear-gradient(to top right, var(--gradient-start-light), var(--gradient-end-light));
 
-    --input-padding: 10px;
+    --gap: 8px;
+    --padding-input: 10px;
     --padding: 12px;
 
     --font-weight-regular: 300;
@@ -90,7 +88,7 @@ body {
 
 h1 {
     margin: 0 0 12px 0;
-    font-size: 20px;
+    font-size: var(--font-size-large);
 }
 
 p {

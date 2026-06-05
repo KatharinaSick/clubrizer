@@ -47,6 +47,12 @@ const router = createRouter({
       name: 'profile-setup',
       component: () => import('../views/ProfileSetupView.vue')
     },
+    {
+      path: '/design-system',
+      name: 'design-system',
+      component: () => import('../views/DesignSystemView.vue'),
+      meta: { showNavigation: false }
+    },
   ]
 })
 
