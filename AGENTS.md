@@ -58,6 +58,16 @@ GitHub: `KatharinaSick/clubrizer`
   - `internal/`: Private application and library code.
 - **Error Handling**: Use custom error types where appropriate.
 
+## Design System
+A living design system reference page lives at `/design-system` (`frontend/src/views/DesignSystemView.vue`). It documents all design tokens (colors, typography, spacing, shadows, border radius) and showcases every reusable component with usage notes and code references.
+
+**When to update it:**
+- A new component is added to `frontend/src/components` → add a section to the design system page demonstrating it.
+- An existing component gains a new prop, variant, or state → update its section.
+- A new CSS variable is added to `base.css` → add it to the relevant token section.
+
+The design system page uses the real components (not mocks), so it also acts as a smoke test that components render correctly.
+
 ## Project Structure
 - `frontend/src/components`: Reusable UI components.
 - `frontend/src/views`: Page views mapped to routes.

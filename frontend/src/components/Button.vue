@@ -33,7 +33,7 @@ withDefaults(
   width: 100%;
   padding: 12px;
 
-  background: var(--horizotal-gradient);
+  background: var(--horizontal-gradient);
   border-radius: var(--border-radius);
   border: 0;
 
@@ -64,13 +64,13 @@ withDefaults(
 }
 
 .button:active {
-  background: var(--horizotal-gradient-active);
+  background: var(--horizontal-gradient-active);
 }
 
 .button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
-  background: var(--horizotal-gradient-active);
+  background: var(--horizontal-gradient-active);
 }
 
 .button.secondary {
@@ -78,7 +78,7 @@ withDefaults(
   border: 1px solid var(--gray);
   color: var(--text-light);
   box-shadow: var(--box-shadow);
-  border-radius: var(--gap);
+  border-radius: var(--border-radius);
   font-size: var(--font-size-small);
 }
 

@@ -1,60 +1,18 @@
 <script setup lang="ts">
-import { type CredentialResponse, GoogleSignInButton } from 'vue3-google-signin'
-import { useAuthStore } from '@/stores/auth'
-import Alert from '@/components/Alert.vue'
-import RequestError from '@/components/RequestError.vue'
-import { ref } from 'vue'
-import router from '@/router'
-import { useRoute } from 'vue-router'
-import i18n from '@/plugins/i18n'
-
-const auth = useAuthStore()
-const route = useRoute()
-const googleSignInError = ref<string>('')
-
-const handleGoogleLoginSuccess = (response: CredentialResponse) => {
-  const { credential } = response
-  if (!credential) {
-    googleSignInError.value = i18n.global.t('signIn.failedToParseGoogleToken')
-    return
-  }
-
-  auth.login(credential)
-    .then(() => {
-      if (auth.isLoggedIn) {
-        router.replace({path: route.query.redirect as string ?? '/'})
-      }
-    })
-}
+// Sign-in is being replaced with OTP — placeholder view for now
 </script>
 
 <template>
   <div class="container">
     <div class="center">
-      <img
-        alt="Clubrizer Logo"
-        class="logo"
-        src="@/assets/logo.svg"
-      />
+      <img alt="Clubrizer Logo" class="logo" src="@/assets/logo.svg" />
       <h1 class="title">Clubrizer</h1>
       <h3 class="slogan">Team Up!</h3>
     </div>
-
     <div class="center">
       <h1>{{ $t('signIn.welcomeTo') }}<br />{{ $t('team') }}!</h1>
       <p>{{ $t('signIn.getStarted') }}</p>
     </div>
-
-    <GoogleSignInButton
-      @success="handleGoogleLoginSuccess"
-      @error="() => googleSignInError = i18n.global.t('signIn.failedToSignInWithGoogle')"
-      size="large"
-      shape="pill"
-
-    ></GoogleSignInButton>
-    <Alert v-if="googleSignInError" class="alert" :title="i18n.global.t('signIn.failedToSignIn')" :message="googleSignInError"/>
-    <RequestError class="alert" />
-
   </div>
 </template>
 

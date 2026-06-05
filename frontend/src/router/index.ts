@@ -49,6 +49,12 @@ const router = createRouter({
       path: '/pending-approval',
       name: 'pending-approval',
       component: () => import('../views/PendingApprovalView.vue')
+    },
+    {
+      path: '/design-system',
+      name: 'design-system',
+      component: () => import('../views/DesignSystemView.vue'),
+      meta: { showNavigation: false }
     }
   ]
 })
