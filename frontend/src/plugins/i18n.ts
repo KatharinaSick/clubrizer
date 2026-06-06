@@ -17,12 +17,16 @@ export default createI18n({
         codeLabel: '6-digit code',
         verify: 'Verify',
         backToEmail: 'Back',
+        resendCode: 'Resend Code',
+        codeSent: 'A new code was sent to your email.',
         emailRequired: 'Please enter your email address',
         codeInvalid: 'Please enter the 6-digit code from your email',
       },
       profile: {
         header: 'My Profile',
-        logout: 'Logout'
+        logout: 'Logout',
+        edit: 'Edit Profile',
+        cancel: 'Cancel',
       },
       profileSetup: {
         header: 'Set Up Your Profile',
@@ -37,6 +41,7 @@ export default createI18n({
       events: {
         header: 'Events',
         back: 'Back',
+        noEvents: 'No events yet.',
         development: {
           title: 'Development Preview',
           message: 'This app is still in development. Please reach out to Kathi if you notice any bugs.'
@@ -97,12 +102,16 @@ export default createI18n({
         codeLabel: '6-stelliger Code',
         verify: 'Bestätigen',
         backToEmail: 'Zurück',
+        resendCode: 'Code erneut senden',
+        codeSent: 'Ein neuer Code wurde an deine E-Mail geschickt.',
         emailRequired: 'Bitte gib deine E-Mail-Adresse ein',
         codeInvalid: 'Bitte gib den 6-stelligen Code aus deiner E-Mail ein',
       },
       profile: {
         header: 'Mein Profil',
-        logout: 'Abmelden'
+        logout: 'Abmelden',
+        edit: 'Profil bearbeiten',
+        cancel: 'Abbrechen',
       },
       profileSetup: {
         header: 'Profil einrichten',
@@ -117,6 +126,7 @@ export default createI18n({
       events: {
         header: 'Events',
         back: 'Zurück',
+        noEvents: 'Noch keine Events.',
         development: {
           title: 'Entwicklungs-Vorschau',
           message: 'Diese App ist noch in der Entwicklung. Wenn dir Fehler auffallen, melde dich gerne bei Kathi.'

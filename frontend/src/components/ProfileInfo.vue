@@ -18,7 +18,7 @@ defineProps<{
       :gradient="true"
     />
     <div class="profileInfoText">
-      <strong>{{ user.nickName }}</strong>
+      <strong class="profileInfoNickName">{{ user.nickName }}</strong>
       <p>{{ user.givenName }} {{ user.familyName }}</p>
       <p>{{ user.email }}</p>
     </div>
@@ -39,5 +39,10 @@ defineProps<{
 .profileInfoText {
   width: 100%;
   overflow: hidden;
+}
+
+.profileInfoNickName {
+  font-size: var(--font-size-large);
+  font-weight: var(--font-weight-bold);
 }
 </style>

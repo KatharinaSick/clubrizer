@@ -13,6 +13,7 @@ import RequestError from '@/components/RequestError.vue'
 const router = useRouter()
 
 const events = ref<EventProps[]>([])
+const eventsLoaded = ref(false)
 const categoriesLoading = ref(false)
 const categories = ref<Action[]>([])
 
@@ -25,9 +26,12 @@ const loadEvents = () => {
   axios
     .get('/events')
     .then(response => {
-      events.value = response.data
+      events.value = response.data ?? []
     })
     .catch(() => {})
+    .finally(() => {
+      eventsLoaded.value = true
+    })
 }
 
 const loadCategories = () => {
@@ -77,6 +81,19 @@ const openEvent = (id: string) => {
       style="cursor: pointer;"
     />
 
+    <p v-if="eventsLoaded && events.length === 0" class="eventsEmpty">
+      {{ $t('events.noEvents') }}
+    </p>
+
     <FloatingActionButton :actions="categories" :loading="categoriesLoading" />
   </div>
 </template>
+
+<style scoped>
+.eventsEmpty {
+  text-align: center;
+  color: var(--text-gray);
+  font-size: var(--font-size-small);
+  margin-top: 48px;
+}
+</style>

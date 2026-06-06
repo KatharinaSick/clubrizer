@@ -21,6 +21,8 @@ const code = ref('')
 const emailError = ref('')
 const codeError = ref('')
 const isLoading = ref(false)
+const isResending = ref(false)
+const codeSent = ref(false)
 
 async function submitEmail() {
   emailError.value = ''
@@ -56,10 +58,27 @@ async function submitCode() {
   }
 }
 
+async function resendCode() {
+  isResending.value = true
+  codeSent.value = false
+  codeError.value = ''
+  code.value = ''
+  requestStore.clearError()
+  try {
+    await auth.requestOTP(email.value)
+    codeSent.value = true
+  } catch {
+    // error shown globally via RequestError
+  } finally {
+    isResending.value = false
+  }
+}
+
 function backToEmail() {
   step.value = 'email'
   code.value = ''
   codeError.value = ''
+  codeSent.value = false
   requestStore.clearError()
 }
 </script>
@@ -113,6 +132,10 @@ function backToEmail() {
           <Button :title="$t('signIn.verify')" :loading="isLoading" theme="ghost" />
         </form>
         <RequestError />
+        <div class="signInResend">
+          <p v-if="codeSent" class="signInCodeSent">{{ $t('signIn.codeSent') }}</p>
+          <Button :title="$t('signIn.resendCode')" :loading="isResending" :disabled="isLoading" theme="tertiary" @click="resendCode" />
+        </div>
       </template>
 
     </div>
@@ -186,5 +209,26 @@ function backToEmail() {
 
 .signInCodeHeader :deep(.headerIcon) {
   color: var(--white);
+}
+
+.signInResend :deep(.button.tertiary) {
+  color: var(--white);
+  opacity: 0.8;
+}
+
+.signInResend {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.signInCodeSent {
+  margin: 0;
+  font-size: var(--font-size-small);
+  color: var(--white);
+  opacity: 0.8;
+  text-align: center;
 }
 </style>

@@ -21,7 +21,7 @@ func (s *Service) RequestOTP(ctx context.Context, req RequestOTPRequest) error {
 	if err != nil {
 		return err
 	}
-	if count >= 3 {
+	if count >= s.cfg.OTP.MaxRequestsPerWindow {
 		return apperrors.NewTooManyRequests("please wait before requesting a new code")
 	}
 
@@ -37,7 +37,8 @@ func (s *Service) RequestOTP(ctx context.Context, req RequestOTPRequest) error {
 	hash := sha256.Sum256([]byte(code))
 	codeHash := hex.EncodeToString(hash[:])
 
-	if err := s.store.createOTPToken(ctx, req.Email, codeHash, time.Now().Add(time.Hour)); err != nil {
+	expiry := time.Now().Add(time.Duration(s.cfg.OTP.WindowHours) * time.Hour)
+	if err := s.store.createOTPToken(ctx, req.Email, codeHash, expiry); err != nil {
 		return err
 	}
 

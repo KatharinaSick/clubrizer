@@ -37,9 +37,17 @@ type Config struct {
 		FromAddress string `yaml:"fromAddress"`
 	} `yaml:"resend"`
 
+	// GCS uses Application Default Credentials (ADC).
+	// Locally: run `gcloud auth application-default login`.
+	// On Cloud Run: the attached service account is used automatically.
 	GCS struct {
 		ProfilePicturesBucketName string `yaml:"profilePicturesBucketName"`
 	} `yaml:"gcs"`
+
+	OTP struct {
+		MaxRequestsPerWindow int `yaml:"maxRequestsPerWindow"`
+		WindowHours          int `yaml:"windowHours"`
+	} `yaml:"otp"`
 
 	Cors struct {
 		AllowedOrigins []string `yaml:"allowedOrigins"`

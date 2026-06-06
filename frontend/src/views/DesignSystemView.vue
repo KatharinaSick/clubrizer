@@ -254,6 +254,11 @@ const spacingDerived = [
           <code class="dsToken">theme="ghost"</code>
           <p class="dsColorLabel">White bg + blue text — use on gradient/coloured backgrounds (e.g. sign-in screen)</p>
         </div>
+        <div class="dsComponentItem">
+          <Button title="Resend Code" theme="tertiary" />
+          <code class="dsToken">theme="tertiary"</code>
+          <p class="dsColorLabel">No bg, no border, small muted text — tertiary / least prominent actions (e.g. resend, skip)</p>
+        </div>
       </div>
 
       <h3 class="dsSubsectionTitle">States</h3>

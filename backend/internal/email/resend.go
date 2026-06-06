@@ -28,16 +28,21 @@ type sendEmailRequest struct {
 	From    string   `json:"from"`
 	To      []string `json:"to"`
 	Subject string   `json:"subject"`
-	Text    string   `json:"text"`
+	Html    string   `json:"html"`
 }
 
 func (c *Client) SendOTP(ctx context.Context, to, code string) error {
+	// Hardcoded German until proper i18n is implemented: https://github.com/KatharinaSick/clubrizer/issues/15
 	body := sendEmailRequest{
-		From: c.fromAddress,
-		To:   []string{to},
-		// Hardcoded German until proper i18n is implemented: https://github.com/KatharinaSick/clubrizer/issues/15
+		From:    c.fromAddress,
+		To:      []string{to},
 		Subject: "Dein Clubrizer Anmelde-Code",
-		Text:    fmt.Sprintf("Dein Clubrizer Anmelde-Code lautet: %s\n\nDieser Code ist 1 Stunde lang gültig.", code),
+		Html: fmt.Sprintf(`<div style="font-family:sans-serif;max-width:480px;margin:0 auto">
+  <h2 style="margin-bottom:8px">Dein Anmelde-Code</h2>
+  <p style="color:#555;margin-bottom:24px">Gib diesen Code in Clubrizer ein, um dich anzumelden:</p>
+  <p style="font-size:36px;font-weight:bold;letter-spacing:12px;text-align:center;padding:20px;background:#f5f5f5;border-radius:8px;margin:0 0 24px">%s</p>
+  <p style="color:#888;font-size:13px">Dieser Code ist 1 Stunde lang gültig. Wenn du dich nicht angemeldet hast, kannst du diese E-Mail ignorieren.</p>
+</div>`, code),
 	}
 
 	jsonBody, err := json.Marshal(body)

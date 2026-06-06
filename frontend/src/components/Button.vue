@@ -4,7 +4,7 @@ withDefaults(
     title: string
     loading?: boolean
     disabled?: boolean
-    theme?: 'primary' | 'secondary' | 'green' | 'red' | 'ghost'
+    theme?: 'primary' | 'secondary' | 'green' | 'red' | 'ghost' | 'tertiary'
   }>(),
   {
     theme: 'primary'
@@ -137,6 +137,23 @@ withDefaults(
 .button.ghost:disabled {
   background: var(--light-gray);
   opacity: 0.7;
+}
+
+.button.tertiary {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: var(--text-gray);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-regular);
+}
+
+.button.tertiary:active {
+  opacity: 0.7;
+}
+
+.button.tertiary:disabled {
+  opacity: 0.4;
 }
 
 .buttonSpinner {

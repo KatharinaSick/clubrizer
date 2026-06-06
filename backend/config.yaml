@@ -20,6 +20,9 @@ resend:
   fromAddress: ${RESEND_FROM_ADDRESS}
 gcs:
   profilePicturesBucketName: ${GCS_PROFILE_PICTURES_BUCKET_NAME}
+otp:
+  maxRequestsPerWindow: 5
+  windowHours: 1
 cors:
   allowedOrigins:
     - http://localhost:5173
