@@ -161,7 +161,7 @@ func (s *store) createEvent(ctx context.Context, e *Event) (uuid.UUID, error) {
 	err := s.conn.QueryRow(
 		context.Background(),
 		"INSERT INTO events(title, category, description, location, start_time, created_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
-		e.Title, e.CategoryID, e.Description, e.Location, e.StartTime, ctx.Value(s.cfg.OAuth.User.Key).(*users.Claims).ID,
+		e.Title, e.CategoryID, e.Description, e.Location, e.StartTime, ctx.Value(s.cfg.JWT.User.Key).(*users.Claims).ID,
 	).Scan(&id)
 
 	if err != nil {

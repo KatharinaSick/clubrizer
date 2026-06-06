@@ -5,12 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"strings"
+	"time"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/katharinasick/clubrizer/internal/app"
 	"github.com/katharinasick/clubrizer/internal/apperrors"
 	"github.com/katharinasick/clubrizer/internal/users"
-	"net/http"
-	"time"
 )
 
 type handler[Out any] func(context.Context) (*Out, error)
@@ -21,6 +24,9 @@ type handlerWithIdAndReturnValue[Out any] func(context.Context, string) (*Out, e
 type handlerWithListReturn[Out any] func(context.Context) ([]*Out, error)
 
 type handlerWithIdAndBody[In any] func(context.Context, string, In) error
+
+var validate = validator.New()
+
 type handlerWithInputAndRefreshTokenReturn[In any, Out any] func(context.Context, In) (*Out, *users.RefreshTokenInfo, error)
 type handlerWithRefreshToken[Out any] func(context.Context, users.RefreshTokenInfo) (*Out, *users.RefreshTokenInfo, error)
 
@@ -147,13 +153,44 @@ func handleWithBodyAndReturnRefreshToken[In any, Out any](cfg app.Config, f hand
 
 func handleWithRefreshToken[Out any](cfg app.Config, f handlerWithRefreshToken[Out]) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		c, err := r.Cookie(cfg.OAuth.RefreshToken.CookieName)
+		c, err := r.Cookie(cfg.JWT.RefreshToken.CookieName)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
 
 		out, rt, err := f(r.Context(), users.RefreshTokenInfo{Token: c.Value, Expires: c.Expires})
+		if err != nil {
+			http.Error(w, err.Error(), apperrors.HttpStatusCode(err))
+			return
+		}
+
+		setRefreshTokenCookie(w, cfg, rt)
+		writeResponse(w, out)
+	})
+}
+
+func handleProfilePicture(cfg app.Config, f func(context.Context, string, io.Reader) (*users.UpdateProfilePictureResponse, *users.RefreshTokenInfo, error)) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseMultipartForm(5 << 20); err != nil { // 5 MB max
+			http.Error(w, "file too large or invalid form", http.StatusBadRequest)
+			return
+		}
+
+		file, header, err := r.FormFile("picture")
+		if err != nil {
+			http.Error(w, "missing picture field", http.StatusBadRequest)
+			return
+		}
+		defer file.Close()
+
+		contentType := header.Header.Get("Content-Type")
+		if !strings.HasPrefix(contentType, "image/") {
+			http.Error(w, "only image files are accepted", http.StatusBadRequest)
+			return
+		}
+
+		out, rt, err := f(r.Context(), contentType, file)
 		if err != nil {
 			http.Error(w, err.Error(), apperrors.HttpStatusCode(err))
 			return
@@ -178,19 +215,19 @@ func handleLogout(cfg app.Config) http.Handler {
 
 func setRefreshTokenCookie(w http.ResponseWriter, cfg app.Config, t *users.RefreshTokenInfo) {
 	sameSite := http.SameSiteStrictMode
-	if cfg.OAuth.RefreshToken.SameSite == "Lax" {
+	if cfg.JWT.RefreshToken.SameSite == "Lax" {
 		sameSite = http.SameSiteLaxMode
-	} else if cfg.OAuth.RefreshToken.SameSite == "None" {
+	} else if cfg.JWT.RefreshToken.SameSite == "None" {
 		sameSite = http.SameSiteNoneMode
 	}
 
 	http.SetCookie(w, &http.Cookie{
-		Name:     cfg.OAuth.RefreshToken.CookieName,
+		Name:     cfg.JWT.RefreshToken.CookieName,
 		Value:    t.Token,
 		Expires:  t.Expires,
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   cfg.OAuth.RefreshToken.Secure,
+		Secure:   cfg.JWT.RefreshToken.Secure,
 		SameSite: sameSite,
 	})
 }
@@ -202,7 +239,6 @@ func getAndValidatePayload[In any](r *http.Request) (*In, error) {
 		return nil, errors.New(fmt.Sprintf("failed to parse json: %s", err))
 	}
 
-	validate := validator.New()
 	if err := validate.Struct(in); err != nil {
 		return nil, errors.New(fmt.Sprintf("failed to validate payload: %s", err))
 	}

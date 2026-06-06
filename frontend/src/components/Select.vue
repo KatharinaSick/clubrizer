@@ -33,7 +33,7 @@ const value = defineModel()
   width: 100%;
 
   margin-top: 24px;
-  padding: var(--input-padding);
+  padding: var(--padding-input);
   font: inherit;
 
   border-radius: var(--border-radius);

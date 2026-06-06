@@ -12,6 +12,10 @@ interface RetryableRequest extends AxiosRequestConfig {
 let isRefreshingToken = false
 let refreshSubscribers: ((token: string) => void)[] = []
 
+// These endpoints are part of the auth flow itself — a 401 from them should
+// never trigger a token refresh attempt.
+const noRefreshUrls = ['/auth/refresh', '/auth/otp', '/auth/verify']
+
 const configureAxiosInterceptors = (): void => {
   setUpRefreshTokenInterceptors()
 }
@@ -21,9 +25,9 @@ const setUpRefreshTokenInterceptors = (): void => {
     (config) => {
       const { accessToken, isAuthenticated } = useAuthStore()
 
-      // The token refresh request (/oauth/tokens) is a silent background operation —
+      // The token refresh request is a silent background operation —
       // it's invisible to the user, so we don't want it to trigger the loading indicator.
-      if (config.url !== '/oauth/tokens') {
+      if (config.url !== '/auth/refresh') {
         useRequestStore().startRequest()
       }
 
@@ -33,34 +37,37 @@ const setUpRefreshTokenInterceptors = (): void => {
       return config
     },
     async (error: AxiosError) => {
-      if (error.config?.url !== '/oauth/tokens') {
+      if (error.config?.url !== '/auth/refresh') {
         useRequestStore().endRequest()
       }
       return Promise.reject(error)
-    }
+    },
   )
 
   axios.interceptors.response.use(
     (response: AxiosResponse) => {
-      if (response.config.url !== '/oauth/tokens') {
+      if (response.config.url !== '/auth/refresh') {
         useRequestStore().endRequest()
       }
       return response
     },
     async (error: AxiosError) => {
       const originalRequest = error.config as RetryableRequest
+      const isNoRefreshUrl = noRefreshUrls.includes(originalRequest.url ?? '')
 
-      if (error.response?.status !== 401 || originalRequest._retry) {
-        if (originalRequest.url !== '/oauth/tokens') {
+      if (error.response?.status !== 401 || originalRequest._retry || isNoRefreshUrl) {
+        if (originalRequest.url !== '/auth/refresh') {
           useRequestStore().endRequest()
         }
         // Show a global error for everything except:
-        // - 401: handled by the refresh flow above
+        // - 401 (handled by the refresh flow, unless it's a no-refresh URL)
         // - 422: form validation errors, handled locally by the component
         const status = error.response?.status
         if (status !== 422) {
           const rawData = error.response?.data
-          const message = (rawData != null && String(rawData).trim()) || i18n.global.t('request.unexpectedError')
+          const message =
+            (rawData != null && String(rawData).trim()) ||
+            i18n.global.t('request.unexpectedError')
           useRequestStore().setError(message)
         }
         return Promise.reject(error)
@@ -105,7 +112,7 @@ const setUpRefreshTokenInterceptors = (): void => {
         refreshSubscribers = []
         isRefreshingToken = false
       }
-    }
+    },
   )
 }
 export { configureAxiosInterceptors }

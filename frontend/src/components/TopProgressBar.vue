@@ -22,7 +22,7 @@ const requestStore = useRequestStore()
 
 .topProgressBarFill {
   height: 100%;
-  background: var(--horizotal-gradient);
+  background: var(--horizontal-gradient);
   animation: topProgressBarSlide 1.2s ease-in-out infinite;
 }
 

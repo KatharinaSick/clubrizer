@@ -14,7 +14,7 @@ type Config struct {
 		Url string `yaml:"url"`
 	} `yaml:"database"`
 
-	OAuth struct {
+	JWT struct {
 		AccessToken struct {
 			Issuer     string `yaml:"issuer"`
 			HeaderName string `yaml:"headerName"`
@@ -30,11 +30,24 @@ type Config struct {
 		User struct {
 			Key string `yaml:"key"`
 		} `yaml:"user"`
-		Google struct {
-			ClientId     string `yaml:"clientId"`
-			ClientSecret string `yaml:"clientSecret"`
-		} `yaml:"google"`
-	} `yaml:"oauth"`
+	} `yaml:"jwt"`
+
+	Resend struct {
+		ApiKey      string `yaml:"apiKey"`
+		FromAddress string `yaml:"fromAddress"`
+	} `yaml:"resend"`
+
+	// GCS uses Application Default Credentials (ADC).
+	// Locally: run `gcloud auth application-default login`.
+	// On Cloud Run: the attached service account is used automatically.
+	GCS struct {
+		ProfilePicturesBucketName string `yaml:"profilePicturesBucketName"`
+	} `yaml:"gcs"`
+
+	OTP struct {
+		MaxRequestsPerWindow int `yaml:"maxRequestsPerWindow"`
+		WindowHours          int `yaml:"windowHours"`
+	} `yaml:"otp"`
 
 	Cors struct {
 		AllowedOrigins []string `yaml:"allowedOrigins"`

@@ -4,7 +4,7 @@ withDefaults(
     title: string
     loading?: boolean
     disabled?: boolean
-    theme?: 'primary' | 'secondary' | 'green' | 'red'
+    theme?: 'primary' | 'secondary' | 'green' | 'red' | 'ghost' | 'tertiary'
   }>(),
   {
     theme: 'primary'
@@ -18,7 +18,7 @@ withDefaults(
     :class="theme"
     :disabled="disabled || loading"
   >
-    <span v-if="loading">Loading...</span>
+    <span v-if="loading" class="buttonSpinner" />
     <span v-else class="buttonContent">
       <span v-if="$slots.icon" class="buttonIconWrapper">
         <slot name="icon"></slot>
@@ -33,7 +33,7 @@ withDefaults(
   width: 100%;
   padding: 12px;
 
-  background: var(--horizotal-gradient);
+  background: var(--horizontal-gradient);
   border-radius: var(--border-radius);
   border: 0;
 
@@ -64,13 +64,13 @@ withDefaults(
 }
 
 .button:active {
-  background: var(--horizotal-gradient-active);
+  background: var(--horizontal-gradient-active);
 }
 
 .button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
-  background: var(--horizotal-gradient-active);
+  background: var(--horizontal-gradient-active);
 }
 
 .button.secondary {
@@ -78,7 +78,7 @@ withDefaults(
   border: 1px solid var(--gray);
   color: var(--text-light);
   box-shadow: var(--box-shadow);
-  border-radius: var(--gap);
+  border-radius: var(--border-radius);
   font-size: var(--font-size-small);
 }
 
@@ -123,5 +123,52 @@ withDefaults(
 .button.red:disabled {
   opacity: 0.5;
   background: var(--red);
+}
+
+.button.ghost {
+  background: var(--white);
+  color: var(--blue);
+}
+
+.button.ghost:active {
+  background: var(--light-gray);
+}
+
+.button.ghost:disabled {
+  background: var(--light-gray);
+  opacity: 0.7;
+}
+
+.button.tertiary {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: var(--text-gray);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-regular);
+}
+
+.button.tertiary:active {
+  opacity: 0.7;
+}
+
+.button.tertiary:disabled {
+  opacity: 0.4;
+}
+
+.buttonSpinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-right-color: currentColor;
+  border-radius: 50%;
+  animation: buttonSpin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes buttonSpin {
+  to { transform: rotate(360deg); }
 }
 </style>

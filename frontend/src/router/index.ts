@@ -8,14 +8,6 @@ const router = createRouter({
       path: '/',
       redirect: '/events'
     },
-    /*
-    {
-      path: '/',
-      name: 'home',
-      component: HomeView,
-      meta: { showNavigation: true, requiresAuth: true }
-    },
-    */
     {
       path: '/events',
       name: 'events',
@@ -42,38 +34,56 @@ const router = createRouter({
     },
     {
       path: '/signin',
-      name: 'singin',
+      name: 'signin',
       component: () => import('../views/SignInView.vue')
     },
     {
       path: '/pending-approval',
       name: 'pending-approval',
       component: () => import('../views/PendingApprovalView.vue')
-    }
+    },
+    {
+      path: '/profile-setup',
+      name: 'profile-setup',
+      component: () => import('../views/ProfileSetupView.vue')
+    },
+    {
+      path: '/design-system',
+      name: 'design-system',
+      component: () => import('../views/DesignSystemView.vue'),
+      meta: { showNavigation: false }
+    },
   ]
 })
 
 router.beforeEach((to) => {
   const auth = useAuthStore()
   const isApproved = auth.user.status === 'approved'
+  const needsProfileSetup = isApproved && auth.user.givenName === null
 
   if (!auth.isLoggedIn) {
-    if (to.meta.requiresAuth || to.path === '/pending-approval') {
+    if (to.meta.requiresAuth || to.path === '/pending-approval' || to.path === '/profile-setup') {
       return { path: '/signin', query: { redirect: to.fullPath } }
     }
     return
   }
 
   if (!isApproved) {
-    // Guard against infinite redirect — let the user land on /pending-approval
     if (to.path !== '/pending-approval') {
       return { path: '/pending-approval' }
     }
     return
   }
 
-  // User is logged in and approved — redirect away from auth-only pages
-  if (to.path === '/signin' || to.path === '/pending-approval') {
+  if (needsProfileSetup) {
+    if (to.path !== '/profile-setup') {
+      return { path: '/profile-setup' }
+    }
+    return
+  }
+
+  // User is logged in, approved, and has a complete profile — redirect away from auth-only pages
+  if (['/signin', '/pending-approval', '/profile-setup'].includes(to.path)) {
     return { path: '/events' }
   }
 })

@@ -27,7 +27,7 @@ func (s *Service) GetEvent(ctx context.Context, id string) (*Event, error) {
 		return nil, err
 	}
 
-	userId := ctx.Value(s.cfg.OAuth.User.Key).(*users.Claims).ID
+	userId := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims).ID
 	responses, err := s.store.getEventResponses(ctx, uuidId, userId)
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func (s *Service) UpsertEventResponse(ctx context.Context, eventId string, req U
 		return apperrors.NewBadRequest("this event has already taken place", nil)
 	}
 
-	userId := ctx.Value(s.cfg.OAuth.User.Key).(*users.Claims).ID
+	userId := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims).ID
 	return s.store.upsertEventResponse(ctx, uuidId, userId, *req.Response)
 }
 

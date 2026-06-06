@@ -2,11 +2,13 @@ package api
 
 import (
 	"context"
+	"io"
+	"net/http"
+
 	"github.com/katharinasick/clubrizer/internal/app"
 	"github.com/katharinasick/clubrizer/internal/events"
 	"github.com/katharinasick/clubrizer/internal/users"
 	"github.com/rs/cors"
-	"net/http"
 )
 
 func NewHandler(
@@ -47,9 +49,14 @@ func addRoutes(
 	eventsService eventsService,
 ) {
 	// Authentication & Users
-	mux.Handle("POST /signin", handleWithBodyAndReturnRefreshToken(cfg, userService.SignInOrRegister))
-	mux.Handle("POST /oauth/tokens", handleWithRefreshToken(cfg, userService.RefreshTokens))
-	mux.Handle("POST /logout", handleLogout(cfg))
+	mux.Handle("POST /auth/otp", handleWithBody(userService.RequestOTP))
+	mux.Handle("POST /auth/verify", handleWithBodyAndReturnRefreshToken(cfg, userService.VerifyOTP))
+	mux.Handle("POST /auth/refresh", handleWithRefreshToken(cfg, userService.RefreshTokens))
+	mux.Handle("POST /auth/logout", handleLogout(cfg))
+
+	// Users
+	mux.Handle("PATCH /users/me/profile", authenticated(cfg, handleWithBodyAndReturnRefreshToken(cfg, userService.UpdateProfile)))
+	mux.Handle("POST /users/me/picture", authenticated(cfg, handleProfilePicture(cfg, userService.UpdateProfilePicture)))
 
 	// Events
 	mux.Handle("GET /events/categories", authenticated(cfg, handleAndReturnList(eventsService.ListCategories)))
@@ -61,7 +68,10 @@ func addRoutes(
 }
 
 type userService interface {
-	SignInOrRegister(ctx context.Context, r users.SignInOrRegisterRequest) (*users.SignInOrRegisterResponse, *users.RefreshTokenInfo, error)
+	RequestOTP(ctx context.Context, req users.RequestOTPRequest) error
+	VerifyOTP(ctx context.Context, req users.VerifyOTPRequest) (*users.VerifyOTPResponse, *users.RefreshTokenInfo, error)
+	UpdateProfile(ctx context.Context, req users.UpdateProfileRequest) (*users.UpdateProfileResponse, *users.RefreshTokenInfo, error)
+	UpdateProfilePicture(ctx context.Context, contentType string, data io.Reader) (*users.UpdateProfilePictureResponse, *users.RefreshTokenInfo, error)
 	RefreshTokens(ctx context.Context, t users.RefreshTokenInfo) (*users.RefreshTokensResponse, *users.RefreshTokenInfo, error)
 }
 

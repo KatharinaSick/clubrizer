@@ -3,35 +3,25 @@ import { jwtDecode } from 'jwt-decode'
 import type { User } from '@/stores/auth'
 
 const authService = {
-  async login(idToken: string): Promise<{user: User, accessToken: string}> {
-    try {
-      const response = await axios.post('/signin', { idToken }, { withCredentials: true })
-      const { accessToken } = response.data
-
-      return {user: jwtDecode<User>(accessToken), accessToken}
-    } catch (error: any) {
-      throw error
-    }
+  async requestOTP(email: string): Promise<void> {
+    await axios.post('/auth/otp', { email })
   },
 
-  async refreshTokens(): Promise<{user: User, accessToken: string}> {
-    try {
-      const response = await axios.post('/oauth/tokens', undefined, { withCredentials: true })
-      const { accessToken } = response.data
+  async verifyOTP(email: string, code: string): Promise<{ user: User; accessToken: string }> {
+    const response = await axios.post('/auth/verify', { email, code }, { withCredentials: true })
+    const { accessToken } = response.data
+    return { user: jwtDecode<User>(accessToken), accessToken }
+  },
 
-      return {user: jwtDecode<User>(accessToken), accessToken}
-    } catch (error: any) {
-      throw error
-    }
+  async refreshTokens(): Promise<{ user: User; accessToken: string }> {
+    const response = await axios.post('/auth/refresh', undefined, { withCredentials: true })
+    const { accessToken } = response.data
+    return { user: jwtDecode<User>(accessToken), accessToken }
   },
 
   async logout(): Promise<void> {
-    try {
-      await axios.post('/logout', undefined, { withCredentials: true })
-    } catch (error: any) {
-      throw error
-    }
-  }
+    await axios.post('/auth/logout', undefined, { withCredentials: true })
+  },
 }
 
 export default authService
