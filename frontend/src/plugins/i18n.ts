@@ -58,6 +58,7 @@ export default createI18n({
           required: 'Required',
           pastDate: 'Date cannot be in the past'
         },
+        createdBy: 'by',
         detail: {
           wontGo: 'Won\'t Go',
           going: 'Going',
@@ -143,6 +144,7 @@ export default createI18n({
           required: 'Pflichtfeld',
           pastDate: 'Datum darf nicht in der Vergangenheit liegen'
         },
+        createdBy: 'von',
         detail: {
           wontGo: 'Absagen',
           going: 'Zusagen',

@@ -7,6 +7,13 @@ interface Category {
   name: string
   color: string
   picture?: string
+  customLabel?: string
+}
+
+interface Creator {
+  givenName: string
+  familyName: string
+  nickName: string
 }
 
 export interface EventProps {
@@ -16,6 +23,7 @@ export interface EventProps {
   category: Category
   location: string
   startTime: string | Date
+  creator: Creator
 }
 
 const props = defineProps<{
@@ -31,7 +39,10 @@ const handleClick = (event: MouseEvent) => {
 
 <template>
   <div class="event" @click="handleClick">
-    <img class="image" :src="event.category.picture" />
+    <div class="eventImageContainer">
+      <img class="eventImage" :src="event.category.picture" />
+      <span v-if="event.category.customLabel" class="eventImageBadge">{{ event.category.customLabel }}</span>
+    </div>
     <EventTitle class="details" :event="event" />
   </div>
 </template>
@@ -45,7 +56,11 @@ const handleClick = (event: MouseEvent) => {
   border-radius: var(--border-radius);
 }
 
-.image {
+.eventImageContainer {
+  position: relative;
+}
+
+.eventImage {
   width: 100%;
   height: 128px;
 
@@ -58,6 +73,17 @@ const handleClick = (event: MouseEvent) => {
 
   border-top-left-radius: var(--border-radius);
   border-top-right-radius: var(--border-radius);
+}
+
+.eventImageBadge {
+  position: absolute;
+  bottom: var(--gap);
+  left: var(--gap);
+  padding: 2px var(--gap);
+  border-radius: var(--border-radius);
+  background-color: var(--white);
+  color: var(--text-color);
+  font-size: var(--font-size-small);
 }
 
 .details {

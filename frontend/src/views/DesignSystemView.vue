@@ -30,7 +30,12 @@ const sampleEvent: EventProps = {
     picture: 'https://storage.googleapis.com/clubrizer-static-images/event-categories/skatetraining.png'
   },
   location: 'Skatepark Donauinsel',
-  startTime: new Date(2026, 5, 28, 17, 0).toISOString()
+  startTime: new Date(2026, 5, 28, 17, 0).toISOString(),
+  creator: {
+    givenName: 'Katharina',
+    familyName: 'Sick',
+    nickName: 'Kathi'
+  }
 }
 
 const selectOptions: Option[] = [

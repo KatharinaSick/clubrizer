@@ -77,7 +77,7 @@ const createEvent = () => {
   })
     .then(event => {
       createLoading.value = false;
-      router.push(`/events/${event.id}`)
+      router.replace(`/events/${event.id}`)
     })
     .catch(() => {
       createLoading.value = false;

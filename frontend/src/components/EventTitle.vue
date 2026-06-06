@@ -6,6 +6,13 @@ interface Category {
   name: string
   color: string
   picture?: string
+  customLabel?: string
+}
+
+interface Creator {
+  givenName: string
+  familyName: string
+  nickName: string
 }
 
 export interface EventProps {
@@ -15,6 +22,7 @@ export interface EventProps {
   category: Category
   location: string
   startTime: string | Date
+  creator: Creator
 }
 
 const props = defineProps<{

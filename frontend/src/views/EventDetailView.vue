@@ -75,7 +75,10 @@ const formattedStartTime = computed(() => {
 
     <div v-if="event">
       <!-- Hero Image -->
-      <img :src="event.category.picture" class="eventDetailImage" />
+      <div class="eventDetailHero">
+        <img :src="event.category.picture" class="eventDetailImage" />
+        <span v-if="event.category.customLabel" class="eventDetailBadge">{{ event.category.customLabel }}</span>
+      </div>
 
       <div class="eventDetailContent">
         <!-- Title & Category -->
@@ -113,6 +116,17 @@ const formattedStartTime = computed(() => {
           <div class="eventDetailLocation">
             <IconMapMarker class="eventDetailLocationIcon" />
             <span>{{ event.location }}</span>
+          </div>
+          <Divider class="eventDetailDivider" />
+          <div class="eventDetailCreator">
+            <Avatar
+              :picture="event.creator.picture"
+              :given-name="event.creator.givenName"
+              :family-name="event.creator.familyName"
+              :nick-name="event.creator.nickName"
+              size="sm"
+            />
+            <span>{{ i18n.global.t('events.createdBy') }} {{ event.creator.nickName || event.creator.givenName }}</span>
           </div>
 
           <!-- Attendees -->
@@ -161,14 +175,31 @@ const formattedStartTime = computed(() => {
 </template>
 
 <style scoped>
-.eventDetailImage {
+.eventDetailHero {
   position: absolute;
   top: 0;
   left: 0;
   width: 100vw;
   height: 180px;
-  object-fit: cover;
   z-index: -1;
+}
+
+.eventDetailImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.eventDetailBadge {
+  position: absolute;
+  bottom: var(--gap);
+  left: var(--padding);
+  padding: 2px var(--gap);
+  border-radius: var(--border-radius);
+  background-color: var(--white);
+  color: var(--text-color);
+  font-size: var(--font-size-small);
 }
 
 .eventDetailContent {
@@ -187,6 +218,13 @@ const formattedStartTime = computed(() => {
   width: 100%;
   padding: var(--padding);
   box-sizing: border-box;
+}
+
+.eventDetailCreator {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--gap);
 }
 
 .eventDetailAttendanceButtons {

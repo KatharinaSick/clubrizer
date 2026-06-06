@@ -6,6 +6,15 @@ export interface Category {
   color: string
   picture: string
   sortOrder: number
+  customLabel?: string
+}
+
+export interface Creator {
+  id: string
+  givenName: string
+  familyName: string
+  nickName: string
+  picture?: string
 }
 
 export interface Event {
@@ -15,6 +24,7 @@ export interface Event {
   startTime: Date
   location: string
   categoryId: string
+  creator: Creator
 }
 
 export interface EventAttendee {

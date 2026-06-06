@@ -41,11 +41,13 @@ func (s *store) getAllCategories(ctx context.Context) ([]*Category, error) {
 
 func (s *store) getFutureEvents(ctx context.Context) ([]*Event, error) {
 	rows, err := s.conn.Query(ctx, `
-		SELECT 
+		SELECT
 			e.id, e.title, e.description, e.location, e.start_time, e.created_by, e.created_at, e.category,
-			c.id, c.name, c.color, c.picture, c.sort_order
+			c.id, c.name, c.color, c.picture, c.sort_order, c.custom_label,
+			u.id, u.given_name, u.family_name, u.nick_name, u.picture
 		FROM events e
 		LEFT JOIN event_categories c ON e.category = c.id
+		LEFT JOIN users u ON e.created_by = u.id
 		WHERE e.start_time >= NOW()
 		ORDER BY e.start_time
 	`)
@@ -60,14 +62,17 @@ func (s *store) getFutureEvents(ctx context.Context) ([]*Event, error) {
 		var c Category
 		// We don't need created_by/at for category in the list view usually, or we can scan them if needed.
 		// For now, scanning the main fields.
+		var cr Creator
 		err := rows.Scan(
 			&e.ID, &e.Title, &e.Description, &e.Location, &e.StartTime, &e.CreatedBy, &e.CreatedAt, &e.CategoryID,
-			&c.ID, &c.Name, &c.Color, &c.Picture, &c.SortOrder,
+			&c.ID, &c.Name, &c.Color, &c.Picture, &c.SortOrder, &c.CustomLabel,
+			&cr.ID, &cr.GivenName, &cr.FamilyName, &cr.NickName, &cr.Picture,
 		)
 		if err != nil {
 			return nil, errors.New(fmt.Sprintf("failed to scan event: %s", err.Error()))
 		}
 		e.Category = c
+		e.Creator = cr
 		events = append(events, &e)
 	}
 
@@ -80,19 +85,23 @@ func (s *store) getFutureEvents(ctx context.Context) ([]*Event, error) {
 
 func (s *store) getEventById(ctx context.Context, id uuid.UUID) (*Event, error) {
 	row := s.conn.QueryRow(ctx, `
-		SELECT 
+		SELECT
 			e.id, e.title, e.description, e.location, e.start_time, e.created_by, e.created_at, e.category,
-			c.id, c.name, c.color, c.picture, c.sort_order
+			c.id, c.name, c.color, c.picture, c.sort_order, c.custom_label,
+			u.id, u.given_name, u.family_name, u.nick_name, u.picture
 		FROM events e
 		LEFT JOIN event_categories c ON e.category = c.id
+		LEFT JOIN users u ON e.created_by = u.id
 		WHERE e.id = $1
 	`, id)
 
 	var e Event
 	var c Category
+	var cr Creator
 	err := row.Scan(
 		&e.ID, &e.Title, &e.Description, &e.Location, &e.StartTime, &e.CreatedBy, &e.CreatedAt, &e.CategoryID,
-		&c.ID, &c.Name, &c.Color, &c.Picture, &c.SortOrder,
+		&c.ID, &c.Name, &c.Color, &c.Picture, &c.SortOrder, &c.CustomLabel,
+		&cr.ID, &cr.GivenName, &cr.FamilyName, &cr.NickName, &cr.Picture,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -101,6 +110,7 @@ func (s *store) getEventById(ctx context.Context, id uuid.UUID) (*Event, error) 
 		return nil, errors.New(fmt.Sprintf("failed to scan event: %s", err.Error()))
 	}
 	e.Category = c
+	e.Creator = cr
 
 	return &e, nil
 }
