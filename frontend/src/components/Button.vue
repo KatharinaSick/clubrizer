@@ -18,7 +18,7 @@ withDefaults(
     :class="theme"
     :disabled="disabled || loading"
   >
-    <span v-if="loading">Loading...</span>
+    <span v-if="loading" class="buttonSpinner" />
     <span v-else class="buttonContent">
       <span v-if="$slots.icon" class="buttonIconWrapper">
         <slot name="icon"></slot>
@@ -137,5 +137,21 @@ withDefaults(
 .button.ghost:disabled {
   background: var(--light-gray);
   opacity: 0.7;
+}
+
+.buttonSpinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-right-color: currentColor;
+  border-radius: 50%;
+  animation: buttonSpin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes buttonSpin {
+  to { transform: rotate(360deg); }
 }
 </style>

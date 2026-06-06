@@ -6,6 +6,7 @@ import { useRoute } from 'vue-router'
 import router from '@/router'
 import Input from '@/components/Input.vue'
 import Button from '@/components/Button.vue'
+import Header from '@/components/Header.vue'
 import RequestError from '@/components/RequestError.vue'
 import i18n from '@/plugins/i18n'
 
@@ -65,6 +66,10 @@ function backToEmail() {
 
 <template>
   <div class="signInContainer">
+    <div v-if="step === 'code'" class="signInCodeHeader">
+      <Header left-action="back" :back-fn="backToEmail" />
+    </div>
+
     <div class="signInCard">
 
       <template v-if="step === 'email'">
@@ -107,9 +112,6 @@ function backToEmail() {
           />
           <Button :title="$t('signIn.verify')" :loading="isLoading" theme="ghost" />
         </form>
-        <button type="button" class="signInBackLink" @click="backToEmail">
-          {{ $t('signIn.backToEmail') }}
-        </button>
         <RequestError />
       </template>
 
@@ -169,18 +171,20 @@ function backToEmail() {
 .signInNote {
   margin: 0;
   text-align: center;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--white);
+  opacity: 0.7;
   font-size: var(--font-size-small);
 }
 
-.signInBackLink {
-  background: none;
-  border: none;
-  padding: 0;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: var(--font-size-small);
-  cursor: pointer;
-  text-align: center;
-  text-decoration: underline;
+.signInCodeHeader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 4px var(--padding);
+}
+
+.signInCodeHeader :deep(.headerIcon) {
+  color: var(--white);
 }
 </style>

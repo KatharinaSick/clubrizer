@@ -1,13 +1,23 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import Button from '@/components/Button.vue'
 import router from '@/router'
 
 const auth = useAuthStore()
+const isChecking = ref(false)
+const checked = ref(false)
 
 async function checkStatus() {
+  isChecking.value = true
+  checked.value = false
   await auth.refreshTokens()
-  router.push('/')
+  isChecking.value = false
+  if (auth.user.status === 'approved') {
+    router.push('/')
+  } else {
+    checked.value = true
+  }
 }
 </script>
 
@@ -35,7 +45,8 @@ async function checkStatus() {
     </div>
 
     <div v-if="auth.user.status !== 'rejected'" class="pendingApprovalCenter">
-      <Button :title="$t('pendingApproval.pending.checkStatus')" theme="secondary" @click="checkStatus" />
+      <Button :title="$t('pendingApproval.pending.checkStatus')" :loading="isChecking" theme="secondary" @click="checkStatus" />
+      <p v-if="checked" class="pendingApprovalStillPending">{{ $t('pendingApproval.pending.stillPending') }}</p>
     </div>
   </div>
 </template>
@@ -72,5 +83,12 @@ async function checkStatus() {
   background-image: var(--gradient);
   color: transparent;
   background-clip: text;
+}
+
+.pendingApprovalStillPending {
+  margin: 12px 0 0 0;
+  font-size: var(--font-size-small);
+  color: var(--text-gray);
+  text-align: center;
 }
 </style>

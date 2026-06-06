@@ -247,6 +247,13 @@ const spacingDerived = [
           <code class="dsToken">theme="red"</code>
           <p class="dsColorLabel">Decline, delete, RSVP no</p>
         </div>
+        <div class="dsComponentItem">
+          <div class="dsGhostPreview">
+            <Button title="Send Code" theme="ghost" />
+          </div>
+          <code class="dsToken">theme="ghost"</code>
+          <p class="dsColorLabel">White bg + blue text — use on gradient/coloured backgrounds (e.g. sign-in screen)</p>
+        </div>
       </div>
 
       <h3 class="dsSubsectionTitle">States</h3>
@@ -258,7 +265,7 @@ const spacingDerived = [
         <div class="dsComponentItem">
           <Button title="Loading" theme="primary" :loading="true" />
           <code class="dsToken">:loading="true"</code>
-          <p class="dsColorLabel">Blocks re-submit — always use on async actions</p>
+          <p class="dsColorLabel">Shows spinner, disables button — always use on async actions to prevent double-submit</p>
         </div>
         <div class="dsComponentItem">
           <Button title="Disabled Secondary" theme="secondary" :disabled="true" />
@@ -416,6 +423,39 @@ const spacingDerived = [
     <section class="dsSection">
       <h2 class="dsSectionTitle">Navigation</h2>
 
+      <h3 class="dsSubsectionTitle">Page header bar</h3>
+      <p class="dsSectionDesc">
+        Use <code>&lt;Header&gt;</code> as the standard top bar for every view that needs a title or back navigation.
+        It handles title centering and optional back button — never build a custom title row or back button.
+      </p>
+      <div class="dsHeaderPreview">
+        <Header title="Events" :show-divider="true" />
+      </div>
+      <div class="dsHeaderPreview" style="margin-top: var(--gap)">
+        <Header title="Create Event" left-action="back" />
+      </div>
+      <div class="dsSpacingList" style="margin-top: 12px">
+        <div class="dsSpacingRow">
+          <code class="dsToken dsSpacingName">title</code>
+          <span class="dsColorLabel">Centered page or step title</span>
+        </div>
+        <div class="dsSpacingRow">
+          <code class="dsToken dsSpacingName">left-action="back"</code>
+          <span class="dsColorLabel">Shows the back arrow — calls <code>router.back()</code> by default</span>
+        </div>
+        <div class="dsSpacingRow">
+          <code class="dsToken dsSpacingName">:back-fn="fn"</code>
+          <span class="dsColorLabel">Override the back action — use when back steps within a multi-step view rather than the browser history (e.g. sign-in OTP flow)</span>
+        </div>
+        <div class="dsSpacingRow">
+          <code class="dsToken dsSpacingName">:show-divider="true"</code>
+          <span class="dsColorLabel">Adds a separator below — use on list/overview screens</span>
+        </div>
+      </div>
+      <div class="dsNote">
+        The icon and title inherit <code>color</code> from the parent — wrap in a container with <code>color: var(--white)</code> to use on gradient backgrounds.
+      </div>
+
       <h3 class="dsSubsectionTitle">Mobile — Bottom bar</h3>
       <p class="dsSectionDesc">
         The <code>&lt;Navigation&gt;</code> component is mounted in <code>App.vue</code> and controlled via
@@ -522,11 +562,14 @@ const spacingDerived = [
     <!-- ─── ALERTS & FEEDBACK ─── -->
     <section class="dsSection">
       <h2 class="dsSectionTitle">Alerts &amp; Feedback</h2>
+      <p class="dsSectionDesc">
+        See <strong>Automatic Request Handling</strong> above for when to use each component.
+        <code>&lt;Alert&gt;</code> is for local errors; <code>&lt;RequestError /&gt;</code> handles all other API errors automatically.
+      </p>
 
       <h3 class="dsSubsectionTitle">Alert</h3>
       <p class="dsSectionDesc">
-        Use <code>&lt;Alert&gt;</code> for local errors only — 422 validation responses and client-side errors
-        (e.g. a missing credential). Do <em>not</em> use it for general API errors.
+        Local errors only — 422 form validation and client-side errors (e.g. a missing credential).
       </p>
       <div class="dsAlertStack">
         <Alert title="Something went wrong" message="The email address is already in use. Please try a different one." variant="error" />
@@ -535,17 +578,8 @@ const spacingDerived = [
 
       <h3 class="dsSubsectionTitle">RequestError</h3>
       <p class="dsSectionDesc">
-        Place <code>&lt;RequestError /&gt;</code> once per view wherever you want API errors to appear.
-        It reads from <code>requestStore.error</code> automatically and shows/hides itself.
-        The Axios interceptor populates it on all non-401, non-422 errors, and clears it on navigation.
+        Place <code>&lt;RequestError /&gt;</code> once per view. It reads from <code>requestStore.error</code> and shows/hides itself automatically — no props or logic required.
       </p>
-      <div class="dsNote">
-        <strong>Error handling decision tree:</strong><br />
-        422 form validation → <code>&lt;Alert&gt;</code> locally in the form.<br />
-        Client-side error (no request) → <code>&lt;Alert&gt;</code> locally.<br />
-        Any other API error → <code>&lt;RequestError /&gt;</code> (handled automatically).<br />
-        401 Unauthorized → handled by the Axios interceptor (redirect to sign-in).
-      </div>
     </section>
 
     <!-- ─── MODAL ─── -->
@@ -575,21 +609,73 @@ const spacingDerived = [
       </div>
     </section>
 
+    <!-- ─── AUTOMATIC REQUEST HANDLING ─── -->
+    <section class="dsSection">
+      <h2 class="dsSectionTitle">Automatic Request Handling</h2>
+      <p class="dsSectionDesc">
+        Every Axios request is intercepted globally. Loading and errors are handled automatically — you rarely need to wire these up manually.
+      </p>
+
+      <h3 class="dsSubsectionTitle">Loading — Top Progress Bar</h3>
+      <p class="dsSectionDesc">
+        A 3px animated bar fixed at the very top of the viewport. Appears and disappears automatically with every request.
+        Mount <code>&lt;TopProgressBar /&gt;</code> once in <code>App.vue</code> — it's already there.
+      </p>
+      <div class="dsSpacingList">
+        <div class="dsSpacingRow">
+          <code class="dsToken dsSpacingName">requestStore</code>
+          <span class="dsColorLabel">Counter-based Pinia store — interceptors increment on request start, decrement on finish or error</span>
+        </div>
+        <div class="dsSpacingRow">
+          <code class="dsToken dsSpacingName">isLoading</code>
+          <span class="dsColorLabel">True while any request is in flight — the bar animates as long as this is true</span>
+        </div>
+      </div>
+
+      <h3 class="dsSubsectionTitle">Errors — RequestError</h3>
+      <p class="dsSectionDesc">
+        The Axios interceptor catches all non-401, non-422 errors and stores them in <code>requestStore.error</code>.
+        Place <code>&lt;RequestError /&gt;</code> once per view to display it — the component reads from the store and shows/hides itself automatically.
+        Errors clear automatically on navigation.
+      </p>
+      <div class="dsNote">
+        <strong>Error decision tree:</strong><br />
+        422 form validation → <code>&lt;Alert&gt;</code> locally in the form.<br />
+        Client-side error (no request) → <code>&lt;Alert&gt;</code> locally.<br />
+        Any other API error → <code>&lt;RequestError /&gt;</code> — interceptor handles it automatically.<br />
+        401 Unauthorized → interceptor redirects to sign-in automatically.
+      </div>
+
+      <h3 class="dsSubsectionTitle">Local spinners — Buttons &amp; FAB</h3>
+      <p class="dsSectionDesc">
+        The top bar covers global feedback, but always also set <code>:loading="true"</code> on the triggering button or FAB.
+        This disables the control and shows a spinner right at the interaction point — prevents double-submits and gives the user immediate tactile feedback before the bar appears.
+      </p>
+      <div class="dsButtonGrid" style="max-width: 500px">
+        <div class="dsComponentItem">
+          <Button title="Creating event…" theme="primary" :loading="true" />
+          <code class="dsToken">&lt;Button :loading="isLoading"&gt;</code>
+          <p class="dsColorLabel">Use on every async form submit</p>
+        </div>
+        <div class="dsComponentItem">
+          <div class="dsFabBox" style="width: 80px; height: 80px">
+            <div class="dsMockFab">
+              <div class="dsMockFabSpinner" />
+            </div>
+          </div>
+          <code class="dsToken">&lt;FloatingActionButton :loading="isLoading"&gt;</code>
+          <p class="dsColorLabel">Use on async FAB actions — e.g. creating an event from the list screen</p>
+        </div>
+      </div>
+      <div class="dsNote">
+        Both the top bar and a local spinner run simultaneously — that's correct and expected.
+        The top bar shows system-level progress; the local spinner anchors the feedback to where the user interacted.
+      </div>
+    </section>
+
     <!-- ─── OTHER COMPONENTS ─── -->
     <section class="dsSection">
       <h2 class="dsSectionTitle">Other Components</h2>
-
-      <h3 class="dsSubsectionTitle">Page Header</h3>
-      <p class="dsSectionDesc">
-        Use <code>&lt;Header&gt;</code> for page titles. Use <code>leftAction="back"</code> to show a back button that calls <code>router.back()</code>.
-        Add <code>:showDivider="true"</code> for a visual separator below the title.
-      </p>
-      <div class="dsHeaderPreview">
-        <Header title="Events" :show-divider="true" />
-      </div>
-      <div class="dsHeaderPreview" style="margin-top: var(--gap)">
-        <Header title="Create Event" left-action="back" />
-      </div>
 
       <h3 class="dsSubsectionTitle">Divider</h3>
       <p class="dsSectionDesc">
@@ -605,16 +691,6 @@ const spacingDerived = [
         <code>&lt;ProfileInfo :user="user" /&gt;</code> — avatar (xl, gradient ring) + nickname, full name, and email.
         Used at the top of the profile screen and profile menu.
       </p>
-
-      <h3 class="dsSubsectionTitle">Top Progress Bar</h3>
-      <p class="dsSectionDesc">
-        <code>&lt;TopProgressBar /&gt;</code> is mounted once in <code>App.vue</code>.
-        It animates automatically whenever any Axios request is in flight (<code>requestStore.isLoading</code>).
-        Never mount it more than once and never add local loading indicators for API requests.
-      </p>
-      <div class="dsNote">
-        The progress bar uses <code>--horizontal-gradient</code> and a sliding animation. It is always fixed at the very top of the viewport (<code>z-index: 9999</code>).
-      </div>
     </section>
 
     <!-- ─── LAYOUT PATTERNS ─── -->
@@ -652,6 +728,84 @@ const spacingDerived = [
       </div>
     </section>
 
+    <!-- ─── VOICE & TONE ─── -->
+    <section class="dsSection">
+      <h2 class="dsSectionTitle">Voice &amp; Tone</h2>
+      <p class="dsSectionDesc">
+        Clubrizer is a sports app. The people using it are teammates, coaches, and club members — not enterprise users filling out forms.
+        Every string should sound like it was written by a person on the team, not generated by a system.
+      </p>
+
+      <h3 class="dsSubsectionTitle">Principles</h3>
+      <div class="dsSpacingList">
+        <div class="dsSpacingRow">
+          <code class="dsToken dsSpacingName">Friendly</code>
+          <span class="dsColorLabel">Warm and approachable — like a message from a teammate, not a terms-of-service page</span>
+        </div>
+        <div class="dsSpacingRow">
+          <code class="dsToken dsSpacingName">Personal</code>
+          <span class="dsColorLabel">Always "du", never "Sie" or impersonal constructions. The user is a person, address them directly.</span>
+        </div>
+        <div class="dsSpacingRow">
+          <code class="dsToken dsSpacingName">Authentic</code>
+          <span class="dsColorLabel">Say what you mean, plainly. No corporate speak, no filler words, no over-explanation.</span>
+        </div>
+        <div class="dsSpacingRow">
+          <code class="dsToken dsSpacingName">Relaxed</code>
+          <span class="dsColorLabel">Sports context — keep it easy and light. Short sentences. No drama, even for errors.</span>
+        </div>
+        <div class="dsSpacingRow">
+          <code class="dsToken dsSpacingName">No emojis</code>
+          <span class="dsColorLabel">Ever. The design carries the personality — the text doesn't need decoration.</span>
+        </div>
+      </div>
+
+      <h3 class="dsSubsectionTitle">By context</h3>
+      <div class="dsToneGrid">
+        <div class="dsToneCard">
+          <p class="dsToneContext">Buttons &amp; actions</p>
+          <p class="dsToneRule">Short imperative verbs. Say what happens, nothing more.</p>
+          <div class="dsToneExamples">
+            <span class="dsToneBad">Event erstellen</span>
+            <span class="dsToneGood">Erstellen</span>
+            <span class="dsToneBad">Jetzt anmelden</span>
+            <span class="dsToneGood">Anmelden</span>
+          </div>
+        </div>
+        <div class="dsToneCard">
+          <p class="dsToneContext">Errors</p>
+          <p class="dsToneRule">Own it briefly, tell them what to do. Never blame the user, never be dramatic.</p>
+          <div class="dsToneExamples">
+            <span class="dsToneBad">Ein unerwarteter Fehler ist aufgetreten.</span>
+            <span class="dsToneGood">Etwas hat nicht geklappt. Bitte versuch es nochmal.</span>
+          </div>
+        </div>
+        <div class="dsToneCard">
+          <p class="dsToneContext">Validation</p>
+          <p class="dsToneRule">Helpful, not accusatory. Tell them what's needed, not what they did wrong.</p>
+          <div class="dsToneExamples">
+            <span class="dsToneBad">Das Pflichtfeld darf nicht leer sein.</span>
+            <span class="dsToneGood">Bitte gib deinen Vornamen ein.</span>
+          </div>
+        </div>
+        <div class="dsToneCard">
+          <p class="dsToneContext">Status &amp; waiting</p>
+          <p class="dsToneRule">Keep people calm and in the loop. Avoid bureaucratic nouns.</p>
+          <div class="dsToneExamples">
+            <span class="dsToneBad">Ausstehende Genehmigung</span>
+            <span class="dsToneGood">Dein Account wird geprüft</span>
+            <span class="dsToneBad">Sitzung abgelaufen</span>
+            <span class="dsToneGood">Meld dich kurz neu an</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="dsNote" style="margin-top: 20px">
+        When in doubt: say it out loud. If it sounds like something you'd actually say to a teammate before training, it's probably right.
+        If it sounds like a bank letter, rewrite it.
+      </div>
+    </section>
+
     <!-- ─── USAGE GUIDELINES ─── -->
     <section class="dsSection dsLastSection">
       <h2 class="dsSectionTitle">Usage Guidelines</h2>
@@ -661,8 +815,9 @@ const spacingDerived = [
           <ul class="dsGuidelineList">
             <li>Use CSS variables from <code>base.css</code> for all colors, sizes, and spacing</li>
             <li>Use <code>&lt;Button&gt;</code> instead of <code>&lt;button&gt;</code></li>
-            <li>Use <code>:loading="true"</code> on any button that triggers an async action</li>
-            <li>Place <code>&lt;RequestError /&gt;</code> once per view for API error display</li>
+            <li>Use <code>:loading="true"</code> on any button or FAB that triggers an async action</li>
+            <li>Place <code>&lt;RequestError /&gt;</code> once per view — the interceptor populates it automatically</li>
+            <li>Use <code>&lt;Header&gt;</code> for all page titles and back navigation</li>
             <li>Use scoped CSS with camelCase class names prefixed by component name</li>
             <li>Use <code>&lt;Input&gt;</code> floating labels — no separate <code>&lt;label&gt;</code> needed</li>
             <li>Design mobile-first, then extend with <code>@media (min-width: 768px)</code></li>
@@ -674,8 +829,8 @@ const spacingDerived = [
           <h4 class="dsGuidelineTitle">✗ Don't</h4>
           <ul class="dsGuidelineList">
             <li>Hardcode color hex values, pixel sizes, or spacing — use variables</li>
-            <li>Add per-component loading spinners for API requests — the top bar handles it</li>
-            <li>Use <code>&lt;Alert&gt;</code> for general API errors — use <code>&lt;RequestError /&gt;</code></li>
+            <li>Add per-component loading indicators for API requests other than button/FAB spinners</li>
+            <li>Use <code>&lt;Alert&gt;</code> for general API errors — use <code>&lt;RequestError /&gt;</code> instead</li>
             <li>Use native <code>&lt;select&gt;</code> or <code>&lt;button&gt;</code> directly</li>
             <li>Skip the <code>:loading</code> prop — users can double-submit without it</li>
             <li>Hide UI elements on the frontend as a security measure — backend must also check</li>
@@ -896,6 +1051,13 @@ const spacingDerived = [
   font-size: var(--font-size-small);
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+/* ── Ghost button preview ── */
+.dsGhostPreview {
+  background: var(--gradient);
+  border-radius: var(--border-radius);
+  padding: var(--padding);
 }
 
 /* ── Buttons ── */
@@ -1253,6 +1415,67 @@ const spacingDerived = [
   font-size: var(--font-size-small);
   color: var(--text-light);
   line-height: 1.4;
+}
+
+/* ── Voice & Tone ── */
+.dsToneGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--padding);
+  margin-top: 12px;
+}
+
+.dsToneCard {
+  background: var(--light-gray);
+  border-radius: var(--border-radius);
+  padding: var(--padding);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.dsToneContext {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-light);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dsToneRule {
+  font-size: var(--font-size-small);
+  color: var(--text-gray);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.dsToneExamples {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.dsToneBad,
+.dsToneGood {
+  font-size: var(--font-size-small);
+  padding: 6px var(--padding);
+  border-radius: 8px;
+  line-height: 1.4;
+}
+
+.dsToneBad {
+  background: rgba(243, 103, 94, 0.08);
+  color: var(--text-light);
+  text-decoration: line-through;
+  text-decoration-color: var(--red);
+}
+
+.dsToneGood {
+  background: rgba(40, 232, 162, 0.1);
+  color: var(--text-light);
+  font-weight: var(--font-weight-medium);
 }
 
 /* ── Shared helpers ── */

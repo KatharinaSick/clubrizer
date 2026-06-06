@@ -65,13 +65,14 @@ export default createI18n({
         }
       },
       select: {
-        loading: 'Loading...'
+        loading: 'Loading…'
       },
       pendingApproval: {
         pending: {
           title: 'Approval Pending',
           message: 'Your account is pending approval. Hang tight — an admin will review it shortly.',
-          checkStatus: 'Check Approval Status'
+          checkStatus: 'Check Status',
+          stillPending: 'Still pending — check back a little later.'
         },
         rejected: {
           title: 'Account Declined',
@@ -80,14 +81,14 @@ export default createI18n({
       },
       request: {
         errorTitle: 'Something went wrong',
-        unexpectedError: 'An unexpected error occurred. Please try again.'
+        unexpectedError: 'Something went wrong. Please try again.'
       }
     },
     de: {
       team: 'LISC-2010',
       signIn: {
         welcomeTo: 'Willkommen bei',
-        getStarted: 'Melde dich an, um loszulegen',
+        getStarted: 'Gib deine E-Mail Adresse ein, um einen Anmelde Code zu erhalten',
         emailLabel: 'E-Mail-Adresse',
         emailNote: 'Bitte verwende die E-Mail-Adresse, mit der du dich im Verein angemeldet hast.',
         sendCode: 'Code senden',
@@ -118,7 +119,7 @@ export default createI18n({
         back: 'Zurück',
         development: {
           title: 'Entwicklungs-Vorschau',
-          message: 'Diese App ist in der Entwicklung. Bitte melde dich bei Kathi, wenn dir Fehler auffallen.'
+          message: 'Diese App ist noch in der Entwicklung. Wenn dir Fehler auffallen, melde dich gerne bei Kathi.'
         },
         new: {
           header: 'Neues Event',
@@ -128,7 +129,7 @@ export default createI18n({
           location: 'Ort',
           category: 'Kategorie',
           description: 'Beschreibung',
-          create: 'Speichern',
+          create: 'Erstellen',
           required: 'Pflichtfeld',
           pastDate: 'Datum darf nicht in der Vergangenheit liegen'
         },
@@ -145,18 +146,22 @@ export default createI18n({
       },
       pendingApproval: {
         pending: {
-          title: 'Ausstehende Genehmigung',
-          message: 'Dein Account wartet auf Genehmigung. Bleib dran – ein Administrator wird es in Kürze prüfen.',
-          checkStatus: 'Genehmigungsstatus prüfen'
+          title: 'Dein Account wird geprüft',
+          message: 'Dein Account wird gerade geprüft. Ein Admin schaut sich das bald an.',
+          checkStatus: 'Status prüfen',
+          stillPending: 'Noch ausstehend — schau später nochmal vorbei.'
         },
         rejected: {
-          title: 'Account abgelehnt',
-          message: 'Deine Account Erstellung wurde abgelehnt. Wenn du glaubst, dass das ein Fehler ist, wende dich direkt an den Verein.'
+          title: 'Antrag abgelehnt',
+          message: 'Dein Antrag wurde leider abgelehnt. Wenn du denkst, dass das ein Fehler ist, melde dich direkt beim Verein.'
         }
+      },
+      select: {
+        loading: 'Wird geladen…'
       },
       request: {
         errorTitle: 'Etwas ist schiefgelaufen',
-        unexpectedError: 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.'
+        unexpectedError: 'Etwas hat nicht geklappt. Bitte versuch es nochmal.'
       }
     }
   }

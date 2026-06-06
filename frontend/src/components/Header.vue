@@ -3,10 +3,11 @@ import { useRouter } from 'vue-router'
 import IconBack from '@/components/icons/IconBack.vue'
 import Divider from '@/components/Divider.vue'
 
-defineProps<{
+const props = defineProps<{
   title?: string,
   showDivider?: boolean,
   leftAction?: 'back',
+  backFn?: () => void,
 }>()
 
 const router = useRouter()
@@ -16,7 +17,7 @@ const router = useRouter()
   <div class="header">
     <div class="headerTitleContainer">
       <div class="headerIcon">
-        <IconBack class="headerIcon" v-if="leftAction === 'back'" @click="router.back()" />
+        <IconBack class="headerIcon" v-if="leftAction === 'back'" @click="props.backFn ? props.backFn() : router.back()" />
       </div>
       <h1 class="headerTitle">{{ title }}</h1>
       <div class="headerIcon">
