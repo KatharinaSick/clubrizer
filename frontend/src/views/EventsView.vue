@@ -40,16 +40,18 @@ const loadCategories = () => {
     .get('/events/categories')
     .then(response => {
       categoriesLoading.value = false
-      categories.value = response.data.map((c: any) => ({
-        id: c.id,
-        label: c.name,
-        color: c.color,
-        onClick: () => router.push({
-          name: 'new-event',
-          params: { categoryId: c.id },
-          query: { categoryName: c.name }
-        })
-      }))
+      categories.value = response.data
+        .filter((c: any) => c.canCreate)
+        .map((c: any) => ({
+          id: c.id,
+          label: c.name,
+          color: c.color,
+          onClick: () => router.push({
+            name: 'new-event',
+            params: { categoryId: c.id },
+            query: { categoryName: c.name }
+          })
+        }))
     })
     .catch(() => {
       categoriesLoading.value = false
@@ -85,7 +87,11 @@ const openEvent = (id: string) => {
       {{ $t('events.noEvents') }}
     </p>
 
-    <FloatingActionButton :actions="categories" :loading="categoriesLoading" />
+    <FloatingActionButton
+      v-if="categoriesLoading || categories.length > 0"
+      :actions="categories"
+      :loading="categoriesLoading"
+    />
   </div>
 </template>
 

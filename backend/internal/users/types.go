@@ -27,6 +27,11 @@ type OTPToken struct {
 	CreatedAt     time.Time  `db:"created_at"`
 }
 
+type Role struct {
+	ID   string `db:"id" json:"id"`
+	Name string `db:"name" json:"name"`
+}
+
 type Claims struct {
 	jwt.RegisteredClaims
 	ID         uuid.UUID `json:"id"`

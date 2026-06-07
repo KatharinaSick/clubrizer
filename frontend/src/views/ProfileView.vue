@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRequestStore } from '@/stores/request'
 import { useRouter } from 'vue-router'
@@ -9,10 +9,17 @@ import Button from '@/components/Button.vue'
 import Input from '@/components/Input.vue'
 import RequestError from '@/components/RequestError.vue'
 import i18n from '@/plugins/i18n'
+import usersService, { type Role } from '@/service/users'
 
 const auth = useAuthStore()
 const requestStore = useRequestStore()
 const router = useRouter()
+
+const roles = ref<Role[]>([])
+
+onMounted(() => {
+  usersService.getMyRoles().then(r => { roles.value = r }).catch(() => {})
+})
 
 const isEditing = ref(false)
 const isLoading = ref(false)
@@ -83,7 +90,7 @@ const logout = async () => {
     <Header :title="i18n.global.t('profile.header')" />
 
     <template v-if="!isEditing">
-      <ProfileInfo :user="auth.user" />
+      <ProfileInfo :user="auth.user" :roles="roles" />
       <div class="profileActions">
         <Button :title="$t('profile.edit')" theme="secondary" @click="startEditing" />
         <Button :title="$t('profile.logout')" theme="red" @click="logout" />

@@ -61,13 +61,22 @@ func (s *Service) CreateEvent(ctx context.Context, e Event) (*Event, error) {
 		return nil, apperrors.NewBadRequest("start time must be in the future", nil)
 	}
 
+	userId := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims).ID
+
+	authorized, err := s.rbac.IsAuthorizedToCreateEvent(ctx, userId, e.CategoryID)
+	if err != nil {
+		return nil, err
+	}
+	if !authorized {
+		return nil, apperrors.NewForbidden("you are not allowed to create events in this category")
+	}
+
 	id, err := s.store.createEvent(ctx, &e)
 	if err != nil {
 		return nil, err
 	}
 	e.ID = id
 
-	userId := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims).ID
 	if err := s.store.upsertEventResponse(ctx, id, userId, true); err != nil {
 		return nil, err
 	}

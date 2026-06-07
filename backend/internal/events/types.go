@@ -12,6 +12,7 @@ type Category struct {
 	Picture     string    `db:"picture" json:"picture"`
 	SortOrder   int       `db:"sort_order" json:"sortOrder"`
 	CustomLabel *string   `db:"custom_label" json:"customLabel,omitempty"`
+	CanCreate   *bool     `db:"-" json:"canCreate,omitempty"`
 	CreatedBy   string    `db:"created_by" json:"-"`
 	CreatedAt   time.Time `db:"created_at" json:"-"`
 }
