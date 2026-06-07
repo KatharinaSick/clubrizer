@@ -66,5 +66,11 @@ func (s *Service) CreateEvent(ctx context.Context, e Event) (*Event, error) {
 		return nil, err
 	}
 	e.ID = id
+
+	userId := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims).ID
+	if err := s.store.upsertEventResponse(ctx, id, userId, true); err != nil {
+		return nil, err
+	}
+
 	return &e, nil
 }
