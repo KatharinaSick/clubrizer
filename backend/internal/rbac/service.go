@@ -53,6 +53,8 @@ func (s *Service) GetCreatableCategoryIDs(ctx context.Context, userID uuid.UUID)
 	} else {
 		ids, err = s.store.getCreatableCategoryIDs(ctx, userID)
 	}
+
+	ids, err := s.store.getCreatableCategoryIDs(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
