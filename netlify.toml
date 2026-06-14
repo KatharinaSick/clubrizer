@@ -1,0 +1,17 @@
+[build]
+  base    = "frontend"
+  command = "npm run build"
+  publish = "dist"
+
+# Proxy /api/* to Cloud Run (strips /api prefix)
+[[redirects]]
+  from   = "/api/*"
+  to     = "https://clubrizer-backend-281221302650.europe-west1.run.app/:splat"
+  status = 200
+  force  = true
+
+# SPA fallback — must come after the /api rule
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
