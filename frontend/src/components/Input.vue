@@ -8,12 +8,12 @@ defineProps<{
   error?: string
   required?: boolean
   min?: string
-  inputMode?: string
+  inputMode?: 'text' | 'search' | 'none' | 'tel' | 'url' | 'email' | 'numeric' | 'decimal'
   maxLength?: number
   theme?: 'default' | 'ghost'
 }>()
 
-const value = defineModel()
+const value = defineModel<string | number | null>()
 
 </script>
 
