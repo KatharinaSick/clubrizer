@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -249,9 +250,8 @@ func getAndValidatePayload[In any](r *http.Request) (*In, error) {
 func writeResponse[Out any](w http.ResponseWriter, out Out) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	err := json.NewEncoder(w).Encode(out)
-	if err != nil {
-		// TODO log error
+	if err := json.NewEncoder(w).Encode(out); err != nil {
+		slog.Error("failed to encode response", "error", err)
 	}
 }
 

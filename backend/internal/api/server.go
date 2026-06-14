@@ -4,6 +4,8 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/katharinasick/clubrizer/internal/app"
 	"github.com/katharinasick/clubrizer/internal/events"
@@ -12,34 +14,72 @@ import (
 )
 
 func NewHandler(
+	log app.Logger,
 	cfg app.Config,
 	userService userService,
 	eventsService eventsService,
 ) http.Handler {
 	mux := http.NewServeMux()
-	addRoutes(
-		mux,
-		cfg,
-		userService,
-		eventsService,
-	)
+	addRoutes(mux, cfg, userService, eventsService)
 
-	handler := cors.
-		New(cors.Options{
-			AllowedOrigins: cfg.Cors.AllowedOrigins,
-			AllowedHeaders: cfg.Cors.AllowedHeaders,
-			AllowedMethods: []string{
-				http.MethodHead,
-				http.MethodGet,
-				http.MethodPost,
-				http.MethodPut,
-				http.MethodPatch,
-				http.MethodDelete,
-			},
-			AllowCredentials: true,
-		}).
-		Handler(mux)
-	return handler
+	handler := cors.New(cors.Options{
+		AllowedOrigins: cfg.Cors.AllowedOrigins,
+		AllowedHeaders: cfg.Cors.AllowedHeaders,
+		AllowedMethods: []string{
+			http.MethodHead,
+			http.MethodGet,
+			http.MethodPost,
+			http.MethodPut,
+			http.MethodPatch,
+			http.MethodDelete,
+		},
+		AllowCredentials: true,
+	}).Handler(mux)
+
+	return requestLogger(log, handler)
+}
+
+type statusRecorder struct {
+	http.ResponseWriter
+	status int
+	errMsg strings.Builder
+}
+
+func (r *statusRecorder) WriteHeader(status int) {
+	r.status = status
+	r.ResponseWriter.WriteHeader(status)
+}
+
+func (r *statusRecorder) Write(b []byte) (int, error) {
+	if r.status >= 400 {
+		r.errMsg.Write(b)
+	}
+	return r.ResponseWriter.Write(b)
+}
+
+func requestLogger(log app.Logger, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
+		next.ServeHTTP(rec, r)
+
+		args := []any{
+			"method", r.Method,
+			"path", r.URL.Path,
+			"status", rec.status,
+			"duration_ms", time.Since(start).Milliseconds(),
+		}
+		if rec.status >= 400 {
+			args = append(args, "error", strings.TrimSpace(rec.errMsg.String()))
+		}
+		if rec.status >= 500 {
+			log.Error("request", args...)
+		} else if rec.status >= 400 {
+			log.Warn("request", args...)
+		} else {
+			log.Info("request", args...)
+		}
+	})
 }
 
 func addRoutes(

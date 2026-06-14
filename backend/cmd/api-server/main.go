@@ -42,6 +42,7 @@ func main() {
 	httpServer := &http.Server{
 		Addr: net.JoinHostPort("", cfg.Server.Port),
 		Handler: api.NewHandler(
+			log,
 			*cfg,
 			users.NewService(log, cfg, dbPool, emailClient, storageClient),
 			events.NewService(log, cfg, dbPool, rbac.NewService(dbPool)),
