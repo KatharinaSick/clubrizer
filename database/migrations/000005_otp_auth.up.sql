@@ -4,7 +4,7 @@ ALTER TABLE users ALTER COLUMN given_name DROP NOT NULL;
 ALTER TABLE users ALTER COLUMN nick_name DROP NOT NULL;
 
 -- Drop Google/OAuth-specific column
-ALTER TABLE users DROP COLUMN issuer;
+ALTER TABLE users DROP COLUMN IF EXISTS issuer;
 
 CREATE TABLE IF NOT EXISTS otp_tokens
 (
@@ -17,4 +17,4 @@ CREATE TABLE IF NOT EXISTS otp_tokens
     created_at     TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
-CREATE INDEX idx_otp_tokens_email ON otp_tokens (email);
+CREATE INDEX IF NOT EXISTS idx_otp_tokens_email ON otp_tokens (email);
