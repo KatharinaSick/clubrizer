@@ -59,9 +59,10 @@ func (s *store) getUserByMail(ctx context.Context, email string) (*User, error) 
 
 func (s *store) countRecentOTPRequests(ctx context.Context, email string) (int, error) {
 	var count int
+	cutoff := time.Now().Add(-time.Duration(s.cfg.OTP.WindowHours) * time.Hour)
 	err := s.conn.QueryRow(ctx,
-		"SELECT COUNT(*) FROM otp_tokens WHERE email = $1 AND created_at > NOW() - ($2 * INTERVAL '1 hour')",
-		email, s.cfg.OTP.WindowHours,
+		"SELECT COUNT(*) FROM otp_tokens WHERE email = $1 AND created_at > $2",
+		email, cutoff,
 	).Scan(&count)
 	if err != nil {
 		return 0, errors.New(fmt.Sprintf("failed to count OTP requests: %s", err.Error()))
