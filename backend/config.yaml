@@ -11,20 +11,21 @@ jwt:
     issuer: clubrizer.com
     cookieName: clubrizer.refreshToken
     secretKey: ${JWT_REFRESH_TOKEN_SECRET_KEY}
-    secure: false
+    secure: ${JWT_REFRESH_TOKEN_SECURE}
     sameSite: Lax
   user:
     key: user
 resend:
   apiKey: ${RESEND_API_KEY}
-  fromAddress: ${RESEND_FROM_ADDRESS}
+  fromAddress: noreply@clubrizer.com
 gcs:
-  profilePicturesBucketName: ${GCS_PROFILE_PICTURES_BUCKET_NAME}
+  profilePicturesBucketName: clubrizer_profile-pictures
 otp:
   maxRequestsPerWindow: 5
   windowHours: 1
 cors:
   allowedOrigins:
     - http://localhost:5173
+    - https://lisc-2010.clubrizer.com
   allowedHeaders:
     - '*'

@@ -58,6 +58,16 @@ GitHub: `KatharinaSick/clubrizer`
   - `internal/`: Private application and library code.
 - **Error Handling**: Use custom error types where appropriate.
 
+### Database Migrations
+Migrations run in CI **before** the new backend version is deployed. This means the old backend is still live and serving traffic while the migration executes. Every migration must therefore be backwards-compatible with the previous backend version.
+
+Follow the **expand/contract** pattern:
+1. **Expand**: add the new column/table (old code ignores it, new code uses it).
+2. **Migrate**: backfill data if needed.
+3. **Contract**: remove the old column/table in a *later, separate* release once the old code is no longer running.
+
+Never drop, rename, or change the type of a column/table in the same release that introduces its replacement.
+
 ## Design System
 A living design system reference page lives at `/design-system` (`frontend/src/views/DesignSystemView.vue`). It documents all design tokens (colors, typography, spacing, shadows, border radius) and showcases every reusable component with usage notes and code references.
 
