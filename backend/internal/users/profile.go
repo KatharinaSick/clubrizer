@@ -5,6 +5,18 @@ import (
 	"io"
 )
 
+func (s *Service) GetMyRoles(ctx context.Context) ([]*Role, error) {
+	userID := ctx.Value(s.cfg.JWT.User.Key).(*Claims).ID
+	roles, err := s.store.getRolesByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if roles == nil {
+		roles = []*Role{}
+	}
+	return roles, nil
+}
+
 type UpdateProfileRequest struct {
 	FirstName string  `json:"firstName" validate:"required"`
 	LastName  string  `json:"lastName" validate:"required"`

@@ -2,7 +2,17 @@ import axios from '@/plugins/axios'
 import { jwtDecode } from 'jwt-decode'
 import type { User } from '@/stores/auth'
 
+export interface Role {
+  id: string
+  name: string
+}
+
 const usersService = {
+  async getMyRoles(): Promise<Role[]> {
+    const response = await axios.get('/users/me/roles')
+    return response.data
+  },
+
   async updateProfile(
     firstName: string,
     lastName: string,

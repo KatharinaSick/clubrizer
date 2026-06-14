@@ -174,13 +174,45 @@ func (s *store) updateUserPicture(ctx context.Context, id uuid.UUID, pictureURL 
 	return u, nil
 }
 
+func (s *store) getRolesByUserID(ctx context.Context, userID uuid.UUID) ([]*Role, error) {
+	rows, err := s.conn.Query(ctx, `
+		SELECT r.id, r.name
+		FROM user_roles ur
+		JOIN roles r ON r.id = ur.role_id
+		WHERE ur.user_id = $1 AND r.name != 'member'
+		ORDER BY r.name
+	`, userID)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to query roles: %s", err.Error()))
+	}
+	defer rows.Close()
+
+	var roles []*Role
+	for rows.Next() {
+		var r Role
+		if err := rows.Scan(&r.ID, &r.Name); err != nil {
+			return nil, errors.New(fmt.Sprintf("failed to scan role: %s", err.Error()))
+		}
+		roles = append(roles, &r)
+	}
+	if rows.Err() != nil {
+		return nil, errors.New(fmt.Sprintf("rows error: %s", rows.Err().Error()))
+	}
+	return roles, nil
+}
+
 func (s *store) createUser(ctx context.Context, email string) (*User, error) {
-	rows, err := s.conn.Query(
+	tx, err := s.conn.Begin(ctx)
+	if err != nil {
+		return nil, errors.New("failed to begin transaction: " + err.Error())
+	}
+	defer tx.Rollback(ctx)
+
+	rows, err := tx.Query(
 		ctx,
 		"INSERT INTO users(email, status) VALUES($1, 'pending') RETURNING *",
 		email,
 	)
-
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("failed to insert user: %s", err.Error()))
 	}
@@ -188,6 +220,18 @@ func (s *store) createUser(ctx context.Context, email string) (*User, error) {
 	u, err := pgx.CollectOneRow(rows, pgx.RowToAddrOfStructByName[User])
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("failed to scan user: %s", err.Error()))
+	}
+
+	_, err = tx.Exec(ctx,
+		"INSERT INTO user_roles (user_id, role_id) SELECT $1, id FROM roles WHERE name = 'member'",
+		u.ID,
+	)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to grant member role: %s", err.Error()))
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to commit transaction: %s", err.Error()))
 	}
 
 	return u, nil

@@ -11,6 +11,7 @@ import (
 	"github.com/katharinasick/clubrizer/internal/app"
 	"github.com/katharinasick/clubrizer/internal/email"
 	"github.com/katharinasick/clubrizer/internal/events"
+	"github.com/katharinasick/clubrizer/internal/rbac"
 	"github.com/katharinasick/clubrizer/internal/storage"
 	"github.com/katharinasick/clubrizer/internal/users"
 )
@@ -43,7 +44,7 @@ func main() {
 		Handler: api.NewHandler(
 			*cfg,
 			users.NewService(log, cfg, dbPool, emailClient, storageClient),
-			events.NewService(log, cfg, dbPool),
+			events.NewService(log, cfg, dbPool, rbac.NewService(dbPool)),
 		),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
