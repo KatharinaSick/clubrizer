@@ -52,8 +52,7 @@ jobs:
           service: clubrizer-backend
           region: europe-west1
           image: europe-west1-docker.pkg.dev/clubrizer-gcloud/clubrizer/backend:${{ github.sha }}
-          service_account: clubrizer-backend@clubrizer-gcloud.iam.gserviceaccount.com
-          flags: --allow-unauthenticated
+          flags: --allow-unauthenticated --service-account=clubrizer-backend@clubrizer-gcloud.iam.gserviceaccount.com
           secrets: |
             DB_URL=DB_URL:latest
             JWT_ACCESS_TOKEN_SECRET_KEY=JWT_ACCESS_TOKEN_SECRET_KEY:latest
