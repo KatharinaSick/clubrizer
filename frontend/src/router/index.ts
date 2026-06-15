@@ -24,7 +24,7 @@ const router = createRouter({
       path: '/events/:id',
       name: 'event-detail',
       component: () => import('../views/EventDetailView.vue'),
-      meta: { showNavigation: true, requiresAuth: true }
+      meta: { showNavigation: false, fullBleed: true, requiresAuth: true }
     },
     {
       path: '/profile',

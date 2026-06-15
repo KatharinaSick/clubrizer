@@ -99,4 +99,10 @@ const handleClick = (event: MouseEvent) => {
   border-bottom-right-radius: var(--border-radius);
   overflow: hidden;
 }
+
+.details :deep(.eventTitleName) {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
 </style>

@@ -11,7 +11,7 @@ useRouter().afterEach(() => requestStore.clearError())
 <template>
   <div class="app">
     <TopProgressBar />
-    <div class="content">
+    <div class="content" :class="{ contentFullBleed: $route.meta.fullBleed }">
       <RouterView />
     </div>
     <Navigation v-if="$route.meta.showNavigation" class="navigation" />
@@ -34,6 +34,10 @@ useRouter().afterEach(() => requestStore.clearError())
   overflow-y: auto;
   padding: var(--padding);
   padding-bottom: var(--padding);
+}
+
+.contentFullBleed {
+  padding: 0;
 }
 
 .navigation {

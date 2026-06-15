@@ -34,10 +34,7 @@ const value = defineModel<string | number | null>()
       class="input"
       :class="{ 'inputError': error }"
       :id="id"
-      placeholder=""
-      type="text"
-      onfocus="(this.type = 'date')"
-      onblur="if(!this.value) this.type = 'text'"
+      type="date"
       v-model="value"
       :min="min"
       required
@@ -47,12 +44,8 @@ const value = defineModel<string | number | null>()
       class="input"
       :class="{ 'inputError': error }"
       :id="id"
-      placeholder=""
-      type="text"
-      onfocus="(this.type = 'time')"
-      onblur="if(!this.value) this.type = 'text'"
+      type="time"
       v-model="value"
-      :min="min"
       required
     />
     <input
@@ -125,6 +118,11 @@ const value = defineModel<string | number | null>()
 
 .input.inputError:is(:focus, :valid) ~ .inputPlaceholder {
   color: var(--red);
+}
+
+.input[type="date"]:not(:focus):not(:valid),
+.input[type="time"]:not(:focus):not(:valid) {
+  color: transparent;
 }
 
 .errorMessage {

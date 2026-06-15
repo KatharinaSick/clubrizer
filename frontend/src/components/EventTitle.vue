@@ -59,7 +59,7 @@ const parsedDate = computed(() => {
     </div>
     <div class="eventTitleText">
       <span class="eventTitleName">{{ event.title }}</span>
-      <span>{{ parsedDate.time }} | {{ event.location }}</span>
+      <span class="eventTitleMeta">{{ parsedDate.time }} | {{ event.location }}</span>
     </div>
   </div>
 </template>
@@ -76,7 +76,6 @@ const parsedDate = computed(() => {
 
 .eventTitleDate {
   width: 36px;
-  height: 36px;
   padding: var(--padding);
 
   display: flex;
@@ -98,8 +97,9 @@ const parsedDate = computed(() => {
 }
 
 .eventTitleText {
-  width: 100%;
-  padding-left: var(--padding);
+  min-width: 0;
+  flex: 1;
+  padding: 0 var(--padding);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -107,5 +107,11 @@ const parsedDate = computed(() => {
 
 .eventTitleName {
   font-weight: var(--font-weight-bold);
+}
+
+.eventTitleMeta {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 </style>
