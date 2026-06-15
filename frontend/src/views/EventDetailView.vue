@@ -321,7 +321,8 @@ const formattedStartTime = computed(() => {
   position: relative;
 }
 
-.eventDetailAvatarNotGoing {
+.eventDetailAvatarNotGoing :deep(.avatarImage),
+.eventDetailAvatarNotGoing :deep(.avatarFallback) {
   opacity: 0.4;
 }
 
