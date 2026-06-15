@@ -15,4 +15,5 @@ app.use(createPinia())
 app.use(router)
 app.use(i18n)
 
+document.documentElement.lang = navigator.language.split('-')[0] ?? 'en'
 app.mount('#app')

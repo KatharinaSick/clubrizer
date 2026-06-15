@@ -94,7 +94,7 @@ export default createI18n({
       team: 'LISC-2010',
       signIn: {
         welcomeTo: 'Willkommen bei',
-        getStarted: 'Gib deine E-Mail Adresse ein, um einen Anmelde Code zu erhalten',
+        getStarted: 'Gib deine E-Mail-Adresse ein, um einen Anmeldecode zu erhalten',
         emailLabel: 'E-Mail-Adresse',
         emailNote: 'Bitte verwende die E-Mail-Adresse, mit der du dich im Verein angemeldet hast.',
         sendCode: 'Code senden',
