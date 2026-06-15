@@ -1,4 +1,7 @@
 import './assets/main.css'
+import { registerSW } from 'virtual:pwa-register'
+
+registerSW({ immediate: true })
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
