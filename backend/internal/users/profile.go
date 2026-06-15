@@ -30,7 +30,12 @@ type UpdateProfileResponse struct {
 func (s *Service) UpdateProfile(ctx context.Context, req UpdateProfileRequest) (*UpdateProfileResponse, *RefreshTokenInfo, error) {
 	claims := ctx.Value(s.cfg.JWT.User.Key).(*Claims)
 
-	u, err := s.store.updateUserProfile(ctx, claims.ID, req.FirstName, req.LastName, req.NickName)
+	nickName := req.NickName
+	if nickName == nil || *nickName == "" {
+		nickName = &req.FirstName
+	}
+
+	u, err := s.store.updateUserProfile(ctx, claims.ID, req.FirstName, req.LastName, nickName)
 	if err != nil {
 		return nil, nil, err
 	}
