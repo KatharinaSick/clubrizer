@@ -44,7 +44,7 @@ func (s *store) getFutureEvents(ctx context.Context) ([]*Event, error) {
 		SELECT
 			e.id, e.title, e.description, e.location, e.start_time, e.created_by, e.created_at, e.category,
 			c.id, c.name, c.color, c.picture, c.sort_order, c.custom_label,
-			u.id, u.given_name, u.family_name, u.nick_name, u.picture
+			u.id, u.given_name, u.family_name, COALESCE(u.nick_name, u.given_name), u.picture
 		FROM events e
 		LEFT JOIN event_categories c ON e.category = c.id
 		LEFT JOIN users u ON e.created_by = u.id
@@ -88,7 +88,7 @@ func (s *store) getEventById(ctx context.Context, id uuid.UUID) (*Event, error) 
 		SELECT
 			e.id, e.title, e.description, e.location, e.start_time, e.created_by, e.created_at, e.category,
 			c.id, c.name, c.color, c.picture, c.sort_order, c.custom_label,
-			u.id, u.given_name, u.family_name, u.nick_name, u.picture
+			u.id, u.given_name, u.family_name, COALESCE(u.nick_name, u.given_name), u.picture
 		FROM events e
 		LEFT JOIN event_categories c ON e.category = c.id
 		LEFT JOIN users u ON e.created_by = u.id
@@ -117,7 +117,7 @@ func (s *store) getEventById(ctx context.Context, id uuid.UUID) (*Event, error) 
 
 func (s *store) getEventResponses(ctx context.Context, eventId uuid.UUID, userId uuid.UUID) (*EventResponses, error) {
 	rows, err := s.conn.Query(ctx, `
-		SELECT u.id, u.given_name, u.family_name, u.nick_name, u.picture, r.response
+		SELECT u.id, u.given_name, u.family_name, COALESCE(u.nick_name, u.given_name), u.picture, r.response
 		FROM event_responses r
 		JOIN users u ON r.user_id = u.id
 		WHERE r.event_id = $1
