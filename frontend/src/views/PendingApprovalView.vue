@@ -19,6 +19,11 @@ async function checkStatus() {
     checked.value = true
   }
 }
+
+async function cancel() {
+  await auth.logout()
+  router.push('/signin')
+}
 </script>
 
 <template>
@@ -48,18 +53,28 @@ async function checkStatus() {
       <Button :title="$t('pendingApproval.pending.checkStatus')" :loading="isChecking" theme="secondary" @click="checkStatus" />
       <p v-if="checked" class="pendingApprovalStillPending">{{ $t('pendingApproval.pending.stillPending') }}</p>
     </div>
+
+    <div class="pendingApprovalCenter pendingApprovalCancel">
+      <Button :title="$t('pendingApproval.cancel')" theme="red" @click="cancel" />
+    </div>
   </div>
 </template>
 
 <style scoped>
 .pendingApprovalContainer {
   width: 100%;
-  margin-top: 64px;
+  height: 100%;
+  box-sizing: border-box;
+  padding-top: 64px;
 
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 48px;
+}
+
+.pendingApprovalCancel {
+  margin-top: auto;
 }
 
 .pendingApprovalCenter {

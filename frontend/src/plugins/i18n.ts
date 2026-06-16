@@ -83,7 +83,8 @@ export default createI18n({
         rejected: {
           title: 'Account Declined',
           message: 'Your account request was declined. If you think this was a mistake, please reach out directly to the club.'
-        }
+        },
+        cancel: 'Cancel'
       },
       request: {
         errorTitle: 'Something went wrong',
@@ -166,7 +167,8 @@ export default createI18n({
         rejected: {
           title: 'Antrag abgelehnt',
           message: 'Dein Antrag wurde leider abgelehnt. Wenn du denkst, dass das ein Fehler ist, melde dich direkt beim Verein.'
-        }
+        },
+        cancel: 'Abbrechen'
       },
       select: {
         loading: 'Wird geladen…'
