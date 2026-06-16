@@ -44,6 +44,7 @@ GitHub: `KatharinaSick/clubrizer`
 - **I18n**: All user-facing text must be internationalized using `i18n.global.t()`. Do not hardcode strings in templates or scripts.
   - Add new keys to `frontend/src/plugins/i18n.ts`.
   - Structure keys hierarchically (e.g., `events.new.title`).
+  - **No cross-screen reuse**: Prefix every key with the screen/view it belongs to, even if the text is identical to a key used elsewhere (e.g. `pendingApproval.logout`, not a shared `profile.logout`). This keeps screens independent so editing text for one doesn't accidentally change wording on another.
 - **Styling**: Use scoped CSS (`<style scoped>`).
   - **CSS Variables**: Always use variables from `frontend/src/assets/base.css`. Never hardcode values for colors, font sizes, font weights, spacing, border radius, shadows, or any other design token — always use the corresponding CSS variable.
   - **Class Naming**: Use camelCase for CSS class names and always prefix them with the component name (e.g., `.myComponentHeader`).
