@@ -42,6 +42,7 @@ export default createI18n({
         header: 'Events',
         back: 'Back',
         noEvents: 'No events yet.',
+        fab: 'New Event',
         development: {
           title: 'Development Preview',
           message: 'This app is still in development. Please reach out to Kathi if you notice any bugs.'
@@ -56,7 +57,8 @@ export default createI18n({
           description: 'Description',
           create: 'Create',
           required: 'Required',
-          pastDate: 'Date cannot be in the past'
+          pastDate: 'Date cannot be in the past',
+          timeInvalid: 'Please enter a time in HH:MM format'
         },
         createdBy: 'by',
         detail: {
@@ -85,6 +87,10 @@ export default createI18n({
           message: 'Your account request was declined. If you think this was a mistake, please reach out directly to the club.'
         },
         cancel: 'Cancel'
+      },
+      navigation: {
+        events: 'Events',
+        profile: 'Profile',
       },
       request: {
         errorTitle: 'Something went wrong',
@@ -129,6 +135,7 @@ export default createI18n({
         header: 'Events',
         back: 'Zurück',
         noEvents: 'Noch keine Events.',
+        fab: 'Neues Event',
         development: {
           title: 'Entwicklungs-Vorschau',
           message: 'Diese App ist noch in der Entwicklung. Wenn dir Fehler auffallen, melde dich gerne bei Kathi.'
@@ -143,7 +150,8 @@ export default createI18n({
           description: 'Beschreibung',
           create: 'Erstellen',
           required: 'Pflichtfeld',
-          pastDate: 'Datum darf nicht in der Vergangenheit liegen'
+          pastDate: 'Datum darf nicht in der Vergangenheit liegen',
+          timeInvalid: 'Bitte gib eine Uhrzeit im Format HH:MM ein'
         },
         createdBy: 'von',
         detail: {
@@ -172,6 +180,10 @@ export default createI18n({
       },
       select: {
         loading: 'Wird geladen…'
+      },
+      navigation: {
+        events: 'Events',
+        profile: 'Profil',
       },
       request: {
         errorTitle: 'Etwas ist schiefgelaufen',

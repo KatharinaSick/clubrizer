@@ -64,7 +64,7 @@ const openEvent = (id: string) => {
 </script>
 
 <template>
-  <div>
+  <div class="eventsView">
     <Header :title="i18n.global.t('events.header')" />
     <Alert
       :title="i18n.global.t('events.development.title')"
@@ -75,13 +75,15 @@ const openEvent = (id: string) => {
 
     <RequestError style="margin-bottom: 12px;" />
 
-    <Event
-      v-for="event in events"
-      :key="event.id"
-      :event="event"
-      @click="openEvent(event.id)"
-      style="cursor: pointer;"
-    />
+    <div class="eventsGrid">
+      <Event
+        v-for="event in events"
+        :key="event.id"
+        :event="event"
+        @click="openEvent(event.id)"
+        style="cursor: pointer;"
+      />
+    </div>
 
     <p v-if="eventsLoaded && events.length === 0" class="eventsEmpty">
       {{ $t('events.noEvents') }}
@@ -91,6 +93,7 @@ const openEvent = (id: string) => {
       v-if="categoriesLoading || categories.length > 0"
       :actions="categories"
       :loading="categoriesLoading"
+      :label="$t('events.fab')"
     />
   </div>
 </template>
@@ -101,5 +104,18 @@ const openEvent = (id: string) => {
   color: var(--text-gray);
   font-size: var(--font-size-small);
   margin-top: 48px;
+}
+
+@media (min-width: 768px) {
+  .eventsView {
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+  }
+
+  .eventsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--gap);
+  }
 }
 </style>

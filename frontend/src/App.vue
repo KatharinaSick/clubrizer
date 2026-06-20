@@ -14,7 +14,7 @@ useRouter().afterEach(() => requestStore.clearError())
     <div class="content" :class="{ contentFullBleed: $route.meta.fullBleed }">
       <RouterView />
     </div>
-    <Navigation v-if="$route.meta.showNavigation" class="navigation" />
+    <Navigation class="navigation" :class="{ navigationMobileHidden: !$route.meta.showNavigation }" />
   </div>
 </template>
 
@@ -49,5 +49,21 @@ useRouter().afterEach(() => requestStore.clearError())
   margin-bottom: var(--padding);
 
   width: calc(100% - 2 * var(--padding));
+}
+
+.navigationMobileHidden {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .navigation {
+    order: -1;
+    margin: 0;
+    width: 100%;
+  }
+
+  .navigationMobileHidden {
+    display: flex;
+  }
 }
 </style>

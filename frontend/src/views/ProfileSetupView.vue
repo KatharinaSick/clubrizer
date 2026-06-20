@@ -55,55 +55,64 @@ async function submit() {
 </script>
 
 <template>
-  <div>
-    <Header :title="$t('profileSetup.header')" show-divider />
+  <div class="profileSetupView">
+    <div class="profileSetupCard">
+      <Header :title="$t('profileSetup.header')" show-divider />
 
-    <Input
-      id="firstName"
-      type="text"
-      :placeholder="$t('profileSetup.firstName')"
-      v-model="firstName"
-      :error="firstNameError"
-      required
-    />
-    <Input
-      id="lastName"
-      type="text"
-      :placeholder="$t('profileSetup.lastName')"
-      v-model="lastName"
-      :error="lastNameError"
-      required
-    />
-    <Input
-      id="nickName"
-      type="text"
-      :placeholder="$t('profileSetup.nickName')"
-      v-model="nickName"
-    />
+      <div class="profileSetupNameRow">
+        <Input
+          id="firstName"
+          type="text"
+          :placeholder="$t('profileSetup.firstName')"
+          v-model="firstName"
+          :error="firstNameError"
+          required
+        />
+        <Input
+          id="lastName"
+          type="text"
+          :placeholder="$t('profileSetup.lastName')"
+          v-model="lastName"
+          :error="lastNameError"
+          required
+        />
+      </div>
+      <Input
+        id="nickName"
+        type="text"
+        :placeholder="$t('profileSetup.nickName')"
+        v-model="nickName"
+      />
 
-    <div class="profileSetupFileWrapper">
-      <label for="picture" class="profileSetupFileLabel">{{ $t('profileSetup.picture') }}</label>
-      <input
-        id="picture"
-        type="file"
-        accept="image/*"
-        class="profileSetupFileInput"
-        @change="onPictureChange"
+      <div class="profileSetupFileWrapper">
+        <label for="picture" class="profileSetupFileLabel">{{ $t('profileSetup.picture') }}</label>
+        <input
+          id="picture"
+          type="file"
+          accept="image/*"
+          class="profileSetupFileInput"
+          @change="onPictureChange"
+        />
+      </div>
+
+      <RequestError class="profileSetupError" />
+
+      <Button
+        :title="$t('profileSetup.save')"
+        :loading="isLoading"
+        @click="submit"
+        class="profileSetupButton"
       />
     </div>
-
-    <RequestError class="profileSetupError" />
-
-    <Button
-      :title="$t('profileSetup.save')"
-      :loading="isLoading"
-      @click="submit"
-      class="profileSetupButton"
-    />
   </div>
 </template>
 
 <style scoped>
+.profileSetupNameRow {
+  display: flex;
+  flex-direction: column;
+}
+
 .profileSetupFileWrapper {
   margin-top: 24px;
   display: flex;
@@ -128,5 +137,36 @@ async function submit() {
 
 .profileSetupButton {
   margin-top: 24px;
+}
+
+@media (min-width: 768px) {
+  .profileSetupView {
+    padding: var(--padding);
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+  }
+
+  .profileSetupCard {
+    width: 100%;
+    max-width: var(--content-max-width);
+    background: var(--background-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: var(--padding);
+    box-sizing: border-box;
+  }
+
+  .profileSetupNameRow {
+    flex-direction: row;
+    gap: var(--gap);
+  }
+
+  .profileSetupButton {
+    width: auto;
+    padding-inline: calc(var(--padding) * 3);
+    display: block;
+    margin-left: auto;
+  }
 }
 </style>

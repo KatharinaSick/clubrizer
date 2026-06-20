@@ -66,6 +66,9 @@ const spacingDerived = [
   { name: '2× --padding', value: '24px', desc: 'Section spacing, label vertical offset' },
   { name: '4× --padding', value: '48px', desc: 'Large page section gaps' },
 ]
+const spacingLayout = [
+  { name: '--content-max-width', value: '1100px', desc: 'Max width for all main content areas — center with margin: 0 auto' },
+]
 </script>
 
 <template>
@@ -185,6 +188,15 @@ const spacingDerived = [
           <code class="dsToken dsSpacingName">--padding-input</code>
           <span class="dsSpacingValue">10px</span>
           <span class="dsColorLabel">Inner padding for <code class="dsToken">&lt;Input&gt;</code> and <code class="dsToken">&lt;Select&gt;</code> only — don't use elsewhere</span>
+        </div>
+      </div>
+
+      <p class="dsSpacingGroupLabel">Layout</p>
+      <div class="dsSpacingList">
+        <div v-for="s in spacingLayout" :key="s.name" class="dsSpacingRow">
+          <code class="dsToken dsSpacingName">{{ s.name }}</code>
+          <span class="dsSpacingValue">{{ s.value }}</span>
+          <span class="dsColorLabel">{{ s.desc }}</span>
         </div>
       </div>
 
@@ -468,8 +480,12 @@ const spacingDerived = [
 
       <h3 class="dsSubsectionTitle">Mobile — Bottom bar</h3>
       <p class="dsSectionDesc">
-        The <code>&lt;Navigation&gt;</code> component is mounted in <code>App.vue</code> and controlled via
-        <code>meta.showNavigation</code> in the router. Active tab uses <code>--blue</code>, inactive uses <code>--gray</code>.
+        The <code>&lt;Navigation&gt;</code> component is always mounted in <code>App.vue</code>.
+        Visibility on mobile is controlled via <code>meta: {'{'} showNavigation: false {'}'}</code> in the router — this adds
+        a CSS class that hides it, rather than a <code>v-if</code> (so it can remain visible on desktop even when hidden on mobile).
+        Active tab is tracked via <code>meta.activeNav</code> (not Vue Router's built-in <code>activeClass</code>, which doesn't
+        activate on child routes) — set <code>activeNav: 'events'</code> or <code>activeNav: 'profile'</code> in the router config
+        for each route. On mobile, active uses <code>--blue</code>, inactive uses <code>--gray</code>.
       </p>
       <div class="dsNavPreview">
         <div class="dsMockNav">
@@ -495,24 +511,22 @@ const spacingDerived = [
       </div>
       <div class="dsNote">
         Add a notification dot (<code>position: absolute</code>, 6px circle in <code>--blue</code>) on a tab icon to indicate unread items.
-        Hide the bottom nav with <code>meta: {'{'} showNavigation: false {'}'}</code> for full-screen flows (create event, sign in).
+        Set <code>meta: {'{'} showNavigation: false {'}'}</code> for full-screen flows (create event, sign in) — this hides the nav on mobile while keeping it visible on desktop.
       </div>
 
-      <h3 class="dsSubsectionTitle">Desktop — Top bar (pattern)</h3>
+      <h3 class="dsSubsectionTitle">Desktop — Top bar</h3>
       <p class="dsSectionDesc">
-        On desktop (<code>min-width: 768px</code>), replace the bottom bar with a persistent top navigation bar.
-        The bottom nav should be hidden at that breakpoint.
+        On desktop (<code>min-width: 768px</code>), the same <code>&lt;Navigation&gt;</code> component reflows into a full-width top bar.
+        Icons are hidden, text labels appear, and the active link gets a <code>--blue</code> bottom border instead of a coloured icon.
+        Inactive links use <code>--text-color</code> (not <code>--gray</code> as on mobile). The brand name is shown on the left.
+        Padding aligns with the content area using <code>max(var(--padding), calc((100% - var(--content-max-width)) / 2))</code>.
       </p>
       <div class="dsDesktopNavPreview">
         <div class="dsMockTopNav">
-          <span class="dsMockBrand">Clubrizer</span>
+          <span class="dsMockBrand">{{ $t('team') }}</span>
           <div class="dsMockTopNavLinks">
             <span class="dsMockTopNavLink dsMockNavActive">Events</span>
-            <span class="dsMockTopNavLink">Home</span>
             <span class="dsMockTopNavLink">Profile</span>
-          </div>
-          <div class="dsMockNavItem" style="margin-left: auto; color: var(--gray)">
-            <Avatar given-name="Kate" family-name="Poshuk" size="sm" />
           </div>
         </div>
       </div>
@@ -563,9 +577,25 @@ const spacingDerived = [
           <code class="dsToken">:loading="true"</code>
         </div>
       </div>
+      <div class="dsFabPreview" style="margin-top: 20px">
+        <div class="dsFabItem">
+          <p class="dsColorLabel">Desktop — extended pill with label</p>
+          <div class="dsFabBox" style="width: 160px">
+            <div class="dsMockFabPill">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              <span class="dsMockFabPillLabel">New Event</span>
+            </div>
+          </div>
+          <code class="dsToken">:label="$t('events.fab')"</code>
+          <p class="dsColorLabel">On <code>min-width: 768px</code>, becomes a pill shape — icon left, text right. Position right-aligns with content area.</p>
+        </div>
+      </div>
       <div class="dsNote">
         The FAB uses <code>position: absolute</code> so its container needs <code>position: relative</code>.
-        Default offset: <code>right: var(--padding)</code>, <code>bottom: calc(64px + var(--padding))</code> — sitting above the navigation bar.
+        Mobile offset: <code>right: var(--padding)</code>, <code>bottom: calc(64px + var(--padding))</code> — sitting above the nav bar.
+        Desktop offset: <code>right</code> aligns with the content area edge; <code>bottom: calc(var(--padding) * 2)</code> — no nav bar to clear.
       </div>
     </section>
 
@@ -730,11 +760,48 @@ const spacingDerived = [
       </div>
 
       <h3 class="dsSubsectionTitle">Desktop (768px+)</h3>
+      <div class="dsLayoutGrid">
+        <div class="dsMockDesktop">
+          <div class="dsMockDesktopNav">Navigation (top bar, full width)</div>
+          <div class="dsMockDesktopBody">
+            <div class="dsMockDesktopContent">RouterView · max-width: 1100px · margin: 0 auto · padding: 12px</div>
+          </div>
+        </div>
+        <div class="dsLayoutNotes">
+          <p><code>.app</code> — flex column, <code>height: 100dvh</code></p>
+          <p><code>.navigation</code> — <code>order: -1</code> (floats to top), full width, top bar layout</p>
+          <p><code>.content</code> — <code>flex-grow: 1</code>, <code>overflow-y: auto</code></p>
+          <p>Content max-width: <code>--content-max-width (1100px)</code>, centered with <code>margin: 0 auto</code></p>
+          <p>Horizontal page padding: <code>--padding (12px)</code></p>
+        </div>
+      </div>
+
+      <h3 class="dsSubsectionTitle">Desktop card pattern</h3>
+      <p class="dsSectionDesc">
+        On desktop, form and detail views wrap their content in a centered card.
+        Apply to the inner container — not the outer view wrapper (which handles padding and centering).
+      </p>
+      <div class="dsSpacingList" style="margin-bottom: 12px">
+        <div class="dsSpacingRow">
+          <code class="dsToken dsSpacingName">max-width</code>
+          <span class="dsColorLabel"><code>var(--content-max-width)</code> — consistent width across all detail/form screens</span>
+        </div>
+        <div class="dsSpacingRow">
+          <code class="dsToken dsSpacingName">border-radius</code>
+          <span class="dsColorLabel"><code>var(--border-radius)</code> on the card wrapper (partial on sub-elements if needed, e.g. hero image top corners)</span>
+        </div>
+        <div class="dsSpacingRow">
+          <code class="dsToken dsSpacingName">box-shadow</code>
+          <span class="dsColorLabel"><code>var(--box-shadow)</code> — lifts card off the background</span>
+        </div>
+        <div class="dsSpacingRow">
+          <code class="dsToken dsSpacingName">background</code>
+          <span class="dsColorLabel"><code>var(--background-color)</code> — matches page bg on mobile, looks like a card on desktop</span>
+        </div>
+      </div>
       <div class="dsNote">
-        Views that need desktop layouts should use <code>@media (min-width: 768px)</code> breakpoints.
-        Switch from stacked single-column to grid/flex multi-column.
-        The navigation should move from bottom to top at this breakpoint.
-        Content max-width: <strong>1100px</strong>, centered with <code>margin: 0 auto</code>.
+        Views currently using this pattern: EventDetailView, NewEventView, ProfileView, ProfileSetupView, PendingApprovalView.
+        Apply the same pattern to any new detail or form screen.
       </div>
     </section>
 
@@ -831,6 +898,8 @@ const spacingDerived = [
             <li>Use scoped CSS with camelCase class names prefixed by component name</li>
             <li>Use <code>&lt;Input&gt;</code> floating labels — no separate <code>&lt;label&gt;</code> needed</li>
             <li>Design mobile-first, then extend with <code>@media (min-width: 768px)</code></li>
+            <li>Use <code>--content-max-width</code> for centering content on desktop — define it once, use everywhere</li>
+            <li>Set <code>meta.activeNav</code> in the router for each route to drive nav active state</li>
             <li>Enforce access control in the backend — frontend-only restrictions are not secure</li>
             <li>Internationalize all user-facing strings with <code>i18n.global.t()</code></li>
           </ul>
@@ -1260,6 +1329,24 @@ const spacingDerived = [
   to { transform: rotate(360deg); }
 }
 
+.dsMockFabPill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--gradient);
+  border-radius: 28px;
+  padding: 0 20px 0 12px;
+  height: 56px;
+  box-shadow: var(--box-shadow);
+  white-space: nowrap;
+}
+
+.dsMockFabPillLabel {
+  color: white;
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-medium);
+}
+
 /* ── Alerts ── */
 .dsAlertStack {
   display: flex;
@@ -1366,6 +1453,46 @@ const spacingDerived = [
   padding: 6px 8px;
   text-align: center;
   color: var(--text-gray);
+}
+
+.dsMockDesktop {
+  width: 260px;
+  height: 160px;
+  border: 2px solid var(--gray);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-size: 9px;
+  flex-shrink: 0;
+}
+
+.dsMockDesktopNav {
+  background: var(--white);
+  border-bottom: 1px solid var(--gray);
+  padding: 5px 8px;
+  text-align: center;
+  color: var(--text-gray);
+  flex-shrink: 0;
+}
+
+.dsMockDesktopBody {
+  flex: 1;
+  background: var(--light-gray);
+  display: flex;
+  padding: 8px;
+}
+
+.dsMockDesktopContent {
+  flex: 1;
+  background: var(--white);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--text-gray);
+  padding: 4px;
 }
 
 .dsLayoutNotes {

@@ -12,25 +12,25 @@ const router = createRouter({
       path: '/events',
       name: 'events',
       component: () => import('../views/EventsView.vue'),
-      meta: { showNavigation: true, requiresAuth: true }
+      meta: { showNavigation: true, activeNav: 'events', requiresAuth: true }
     },
     {
       path: '/events/new/:categoryId',
       name: 'new-event',
       component: () => import('../views/NewEventView.vue'),
-      meta: { showNavigation: false, requiresAuth: true }
+      meta: { showNavigation: false, activeNav: 'events', requiresAuth: true }
     },
     {
       path: '/events/:id',
       name: 'event-detail',
       component: () => import('../views/EventDetailView.vue'),
-      meta: { showNavigation: false, fullBleed: true, requiresAuth: true }
+      meta: { showNavigation: false, fullBleed: true, activeNav: 'events', requiresAuth: true }
     },
     {
       path: '/profile',
       name: 'profile',
       component: () => import('../views/ProfileView.vue'),
-      meta: { showNavigation: true, requiresAuth: true }
+      meta: { showNavigation: true, activeNav: 'profile', requiresAuth: true }
     },
     {
       path: '/signin',

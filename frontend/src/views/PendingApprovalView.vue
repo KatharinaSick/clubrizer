@@ -30,11 +30,11 @@ async function cancel() {
   <div class="pendingApprovalContainer">
     <div class="pendingApprovalCenter">
       <img
-        alt="Clubrizer Logo"
+        :alt="$t('team')"
         class="pendingApprovalLogo"
         src="@/assets/logo.svg"
       />
-      <h1 class="pendingApprovalTitle">Clubrizer</h1>
+      <h1 class="pendingApprovalTitle">{{ $t('team') }}</h1>
       <h3 class="pendingApprovalSlogan">Team Up!</h3>
     </div>
 
@@ -105,5 +105,18 @@ async function cancel() {
   font-size: var(--font-size-small);
   color: var(--text-gray);
   text-align: center;
+}
+
+@media (min-width: 768px) {
+  .pendingApprovalContainer {
+    justify-content: center;
+    padding-top: 0;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .pendingApprovalCancel {
+    margin-top: -24px;
+  }
 }
 </style>

@@ -12,6 +12,7 @@ export interface Action {
 const props = defineProps<{
   actions?: Action[]
   loading?: boolean
+  label?: string
 }>()
 
 const emit = defineEmits<{
@@ -61,7 +62,10 @@ const handleAction = (action: Action) => {
       :class="{ fabButtonOpen: isOpen, fabButtonLoading: loading }"
     >
       <div v-if="loading" class="fabSpinner"></div>
-      <IconPlus v-else class="fabIcon" />
+      <template v-else>
+        <IconPlus class="fabIcon" />
+        <span v-if="label" class="fabLabel">{{ label }}</span>
+      </template>
     </div>
   </div>
 </template>
@@ -173,5 +177,44 @@ const handleAction = (action: Action) => {
 
 .fabActionLabel:active {
   transform: scale(0.95);
+}
+
+.fabLabel {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .fabContainer {
+    right: max(var(--padding), calc((100vw - var(--content-max-width)) / 2 + var(--padding)));
+    bottom: calc(var(--padding) * 2);
+  }
+
+  .fabButton {
+    width: auto;
+    border-radius: 28px;
+    padding: 0 20px 0 12px;
+    gap: var(--gap);
+  }
+
+  .fabIcon {
+    width: 24px;
+    height: 24px;
+    transition: transform 0.3s ease;
+  }
+
+  .fabButtonOpen {
+    transform: none;
+  }
+
+  .fabButtonOpen .fabIcon {
+    transform: rotate(45deg);
+  }
+
+  .fabLabel {
+    display: inline;
+    color: white;
+    font-weight: var(--font-weight-medium);
+    white-space: nowrap;
+  }
 }
 </style>

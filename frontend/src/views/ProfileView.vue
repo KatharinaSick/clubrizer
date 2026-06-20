@@ -86,60 +86,69 @@ const logout = async () => {
 </script>
 
 <template>
-  <div>
-    <Header :title="i18n.global.t('profile.header')" />
+  <div class="profileView">
+    <div class="profileCard">
+      <Header :title="i18n.global.t('profile.header')" />
 
-    <template v-if="!isEditing">
-      <ProfileInfo :user="auth.user" :roles="roles" />
-      <div class="profileActions">
-        <Button :title="$t('profile.edit')" theme="secondary" @click="startEditing" />
-        <Button :title="$t('profile.logout')" theme="red" @click="logout" />
-      </div>
-    </template>
+      <template v-if="!isEditing">
+        <ProfileInfo :user="auth.user" :roles="roles" />
+        <div class="profileActions">
+          <Button :title="$t('profile.edit')" theme="secondary" @click="startEditing" />
+          <Button :title="$t('profile.logout')" theme="red" @click="logout" />
+        </div>
+      </template>
 
-    <template v-else>
-      <Input
-        id="firstName"
-        type="text"
-        :placeholder="$t('profileSetup.firstName')"
-        v-model="firstName"
-        :error="firstNameError"
-        required
-      />
-      <Input
-        id="lastName"
-        type="text"
-        :placeholder="$t('profileSetup.lastName')"
-        v-model="lastName"
-        :error="lastNameError"
-        required
-      />
-      <Input
-        id="nickName"
-        type="text"
-        :placeholder="$t('profileSetup.nickName')"
-        v-model="nickName"
-      />
-      <div class="profileEditFileWrapper">
-        <label for="picture" class="profileEditFileLabel">{{ $t('profileSetup.picture') }}</label>
-        <input
-          id="picture"
-          type="file"
-          accept="image/*"
-          class="profileEditFileInput"
-          @change="onPictureChange"
+      <template v-else>
+        <div class="profileNameRow">
+          <Input
+            id="firstName"
+            type="text"
+            :placeholder="$t('profileSetup.firstName')"
+            v-model="firstName"
+            :error="firstNameError"
+            required
+          />
+          <Input
+            id="lastName"
+            type="text"
+            :placeholder="$t('profileSetup.lastName')"
+            v-model="lastName"
+            :error="lastNameError"
+            required
+          />
+        </div>
+        <Input
+          id="nickName"
+          type="text"
+          :placeholder="$t('profileSetup.nickName')"
+          v-model="nickName"
         />
-      </div>
-      <RequestError class="profileEditError" />
-      <div class="profileActions">
-        <Button :title="$t('profileSetup.save')" :loading="isLoading" @click="saveProfile" />
-        <Button :title="$t('profile.cancel')" theme="secondary" :disabled="isLoading" @click="cancelEditing" />
-      </div>
-    </template>
+        <div class="profileEditFileWrapper">
+          <label for="picture" class="profileEditFileLabel">{{ $t('profileSetup.picture') }}</label>
+          <input
+            id="picture"
+            type="file"
+            accept="image/*"
+            class="profileEditFileInput"
+            @change="onPictureChange"
+          />
+        </div>
+        <RequestError class="profileEditError" />
+        <div class="profileActions">
+          <Button :title="$t('profileSetup.save')" :loading="isLoading" @click="saveProfile" />
+          <Button :title="$t('profile.cancel')" theme="secondary" :disabled="isLoading" @click="cancelEditing" />
+        </div>
+      </template>
+    </div>
   </div>
 </template>
 
 <style scoped>
+.profileNameRow {
+  display: flex;
+  flex-direction: column;
+}
+
 .profileActions {
   display: flex;
   flex-direction: column;
@@ -167,5 +176,39 @@ const logout = async () => {
 
 .profileEditError {
   margin-top: 24px;
+}
+
+@media (min-width: 768px) {
+  .profileView {
+    padding: var(--padding);
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+  }
+
+  .profileCard {
+    width: 100%;
+    max-width: var(--content-max-width);
+    background: var(--background-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: var(--padding);
+    box-sizing: border-box;
+  }
+
+  .profileNameRow {
+    flex-direction: row;
+    gap: var(--gap);
+  }
+
+  .profileActions {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+
+  .profileActions :deep(.button) {
+    width: auto;
+    padding-inline: calc(var(--padding) * 3);
+  }
 }
 </style>

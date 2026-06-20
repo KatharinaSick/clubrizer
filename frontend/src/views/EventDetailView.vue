@@ -66,11 +66,11 @@ const formattedStartTime = computed(() => {
 
 <template>
   <div class="eventDetailPage">
-    <button class="eventDetailBackButton" @click="router.back()">
-      <IconBack class="eventDetailBackIcon" />
-    </button>
-
     <div class="eventDetailScroll">
+      <button class="eventDetailBackButton" @click="router.back()">
+        <IconBack class="eventDetailBackIcon" />
+      </button>
+
       <RequestError class="eventDetailRequestError" />
 
       <div v-if="event">
@@ -342,5 +342,36 @@ const formattedStartTime = computed(() => {
 
 .eventDetailAvatarBadgeNotGoing {
   background: var(--red);
+}
+
+@media (min-width: 768px) {
+  .eventDetailPage {
+    height: auto;
+    padding: var(--padding);
+    box-sizing: border-box;
+  }
+
+  .eventDetailScroll {
+    position: relative;
+    overflow-y: visible;
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+  }
+
+  .eventDetailHero {
+    height: 320px;
+  }
+
+  .eventDetailImage {
+    border-top-left-radius: var(--border-radius);
+    border-top-right-radius: var(--border-radius);
+  }
+
+  .eventDetailInfo {
+    border-bottom-left-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
+  }
 }
 </style>
