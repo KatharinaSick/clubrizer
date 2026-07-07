@@ -11,9 +11,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Clubrizer',
-        short_name: 'Clubrizer',
-        description: 'Manage your sports club life',
+        name: 'LISC-2010',
+        short_name: 'LISC-2010',
+        description: 'LISC-2010 club app',
         theme_color: '#ffffff',
         background_color: '#ffffff',
         display: 'standalone',
