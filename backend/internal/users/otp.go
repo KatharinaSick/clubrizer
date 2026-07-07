@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -66,7 +67,9 @@ func (s *Service) VerifyOTP(ctx context.Context, req VerifyOTPRequest) (*VerifyO
 	hash := sha256.Sum256([]byte(req.Code))
 	codeHash := hex.EncodeToString(hash[:])
 
-	if codeHash != otp.CodeHash {
+	// Constant-time comparison to avoid leaking how much of the code matched
+	// via response timing.
+	if subtle.ConstantTimeCompare([]byte(codeHash), []byte(otp.CodeHash)) != 1 {
 		newCount, err := s.store.incrementOTPAttempts(ctx, otp.ID)
 		if err != nil {
 			return nil, nil, err
@@ -77,7 +80,11 @@ func (s *Service) VerifyOTP(ctx context.Context, req VerifyOTPRequest) (*VerifyO
 		return nil, nil, apperrors.NewUnauthorized("invalid or expired code", nil)
 	}
 
-	if err := s.store.invalidateOTP(ctx, otp.ID); err != nil {
+	// Atomically consume the code. If a concurrent request with the same
+	// correct code already consumed it, we still proceed: it's the same user
+	// proving the same code, so issuing tokens is a legitimate, idempotent
+	// login rather than a spurious "invalid code" failure.
+	if _, err := s.store.consumeOTP(ctx, otp.ID); err != nil {
 		return nil, nil, err
 	}
 

@@ -25,6 +25,7 @@ const isResending = ref(false)
 const codeSent = ref(false)
 
 async function submitEmail() {
+  if (isLoading.value) return
   emailError.value = ''
   if (!email.value) {
     emailError.value = i18n.global.t('signIn.emailRequired')
@@ -42,6 +43,7 @@ async function submitEmail() {
 }
 
 async function submitCode() {
+  if (isLoading.value) return
   codeError.value = ''
   if (code.value.length !== 6) {
     codeError.value = i18n.global.t('signIn.codeInvalid')

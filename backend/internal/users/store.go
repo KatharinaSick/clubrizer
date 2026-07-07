@@ -119,6 +119,23 @@ func (s *store) incrementOTPAttempts(ctx context.Context, id uuid.UUID) (int, er
 	return newCount, nil
 }
 
+// consumeOTP atomically marks an OTP token as used. It reports whether this
+// call was the one that consumed it (true), or whether it had already been
+// consumed by a concurrent request (false). Callers may proceed in either case:
+// reaching this point means the correct code was presented for a token that was
+// active when it was read, so a concurrent consume is a duplicate of a
+// legitimate login rather than a reason to reject it.
+func (s *store) consumeOTP(ctx context.Context, id uuid.UUID) (bool, error) {
+	ct, err := s.conn.Exec(ctx,
+		"UPDATE otp_tokens SET invalidated_at = NOW() WHERE id = $1 AND invalidated_at IS NULL",
+		id,
+	)
+	if err != nil {
+		return false, errors.New(fmt.Sprintf("failed to consume OTP token: %s", err.Error()))
+	}
+	return ct.RowsAffected() > 0, nil
+}
+
 func (s *store) invalidateOTP(ctx context.Context, id uuid.UUID) error {
 	_, err := s.conn.Exec(ctx,
 		"UPDATE otp_tokens SET invalidated_at = NOW() WHERE id = $1",
@@ -211,7 +228,7 @@ func (s *store) createUser(ctx context.Context, email string) (*User, error) {
 
 	rows, err := tx.Query(
 		ctx,
-		"INSERT INTO users(email, status) VALUES($1, 'pending') RETURNING *",
+		"INSERT INTO users(email, status) VALUES($1, 'pending') ON CONFLICT (email) DO NOTHING RETURNING *",
 		email,
 	)
 	if err != nil {
@@ -220,6 +237,24 @@ func (s *store) createUser(ctx context.Context, email string) (*User, error) {
 
 	u, err := pgx.CollectOneRow(rows, pgx.RowToAddrOfStructByName[User])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			// A concurrent verify for the same email already created the user
+			// (e.g. a duplicate request during first-time registration). Load
+			// the existing user instead of failing — the member role was
+			// already granted by the request that won the insert.
+			existingRows, selErr := tx.Query(ctx, "SELECT * FROM users WHERE email = $1", email)
+			if selErr != nil {
+				return nil, errors.New(fmt.Sprintf("failed to query user: %s", selErr.Error()))
+			}
+			u, selErr = pgx.CollectOneRow(existingRows, pgx.RowToAddrOfStructByName[User])
+			if selErr != nil {
+				return nil, errors.New(fmt.Sprintf("failed to scan user: %s", selErr.Error()))
+			}
+			if err := tx.Commit(ctx); err != nil {
+				return nil, errors.New(fmt.Sprintf("failed to commit transaction: %s", err.Error()))
+			}
+			return u, nil
+		}
 		return nil, errors.New(fmt.Sprintf("failed to scan user: %s", err.Error()))
 	}
 
