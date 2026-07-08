@@ -111,6 +111,7 @@ function backToEmail() {
           <Button :title="$t('signIn.sendCode')" :loading="isLoading" theme="ghost" />
         </form>
         <p class="signInNote">{{ $t('signIn.emailNote') }}</p>
+        <RouterLink to="/getting-started" class="signInHowItWorks">{{ $t('signIn.howItWorks') }}</RouterLink>
         <RequestError />
       </template>
 
@@ -199,6 +200,17 @@ function backToEmail() {
   color: var(--white);
   opacity: 0.7;
   font-size: var(--font-size-small);
+}
+
+.signInHowItWorks {
+  color: var(--white);
+  opacity: 0.9;
+  font-size: var(--font-size-small);
+  text-decoration: underline;
+}
+
+.signInHowItWorks:active {
+  opacity: 0.6;
 }
 
 .signInCodeHeader {

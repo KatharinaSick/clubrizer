@@ -2,9 +2,10 @@
 import { computed } from 'vue'
 
 const props = defineProps<{
-  title: string
+  title?: string
   message: string
   variant?: 'error' | 'warning'
+  size?: 'small' | 'medium'
 }>()
 
 const variantClass = computed(() => {
@@ -16,9 +17,9 @@ const variantClass = computed(() => {
 </script>
 
 <template>
-  <div class="alert" :class="variantClass">
-    <p style="font-weight: var(--font-weight-bold)">{{title}}</p>
-    <p>{{message}}</p>
+  <div class="alert" :class="[variantClass, { alertSmall: size === 'small' }]">
+    <p v-if="title" class="alertTitle">{{ title }}</p>
+    <p class="alertMessage">{{ message }}</p>
   </div>
 </template>
 
@@ -28,6 +29,14 @@ const variantClass = computed(() => {
   padding: var(--padding);
   border-radius: var(--border-radius);
   box-sizing: border-box;
+}
+
+.alertSmall {
+  font-size: var(--font-size-small);
+}
+
+.alertTitle {
+  font-weight: var(--font-weight-bold);
 }
 
 .alertError {

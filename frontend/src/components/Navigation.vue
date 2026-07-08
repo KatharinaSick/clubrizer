@@ -1,8 +1,10 @@
 <script setup lang="ts">
 
 import { RouterLink, useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
+const auth = useAuthStore()
 import IconProfile from '@/components/icons/IconProfile.vue'
 import IconEvents from '@/components/icons/IconEvents.vue'
 </script>
@@ -10,13 +12,19 @@ import IconEvents from '@/components/icons/IconEvents.vue'
 <template>
   <nav class="navigation">
     <span class="navigationBrand">{{ $t('team') }}</span>
-    <RouterLink to="/events" :class="['navigationLink', { navigationActiveLink: route.meta.activeNav === 'events' }]">
-      <IconEvents class="navigationIcon" />
-      <span class="navigationLabel">{{ $t('navigation.events') }}</span>
-    </RouterLink>
-    <RouterLink to="/profile" :class="['navigationLink', { navigationActiveLink: route.meta.activeNav === 'profile' }]">
+    <template v-if="auth.isLoggedIn">
+      <RouterLink to="/events" :class="['navigationLink', { navigationActiveLink: route.meta.activeNav === 'events' }]">
+        <IconEvents class="navigationIcon" />
+        <span class="navigationLabel">{{ $t('navigation.events') }}</span>
+      </RouterLink>
+      <RouterLink to="/profile" :class="['navigationLink', { navigationActiveLink: route.meta.activeNav === 'profile' }]">
+        <IconProfile class="navigationIcon" />
+        <span class="navigationLabel">{{ $t('navigation.profile') }}</span>
+      </RouterLink>
+    </template>
+    <RouterLink v-else to="/signin" class="navigationLink">
       <IconProfile class="navigationIcon" />
-      <span class="navigationLabel">{{ $t('navigation.profile') }}</span>
+      <span class="navigationLabel">{{ $t('navigation.signIn') }}</span>
     </RouterLink>
   </nav>
 </template>

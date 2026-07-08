@@ -96,6 +96,9 @@ const logout = async () => {
           <Button :title="$t('profile.edit')" theme="secondary" @click="startEditing" />
           <Button :title="$t('profile.logout')" theme="red" @click="logout" />
         </div>
+        <div class="profileHowItWorks">
+          <RouterLink to="/getting-started" class="profileHowItWorksLink">{{ $t('profile.howItWorks') }}</RouterLink>
+        </div>
       </template>
 
       <template v-else>
@@ -154,6 +157,21 @@ const logout = async () => {
   flex-direction: column;
   gap: var(--gap);
   margin-top: 24px;
+}
+
+.profileHowItWorks {
+  margin-top: var(--padding);
+  text-align: center;
+}
+
+.profileHowItWorksLink {
+  color: var(--text-gray);
+  font-size: var(--font-size-small);
+  text-decoration: underline;
+}
+
+.profileHowItWorksLink:active {
+  opacity: 0.6;
 }
 
 .profileEditFileWrapper {

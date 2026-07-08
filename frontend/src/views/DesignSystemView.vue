@@ -610,10 +610,13 @@ const spacingLayout = [
       <h3 class="dsSubsectionTitle">Alert</h3>
       <p class="dsSectionDesc">
         Local errors only — 422 form validation and client-side errors (e.g. a missing credential).
+        <code>variant</code> is <code>error</code> or <code>warning</code>. <code>title</code> is optional.
+        <code>size</code> defaults to <code>medium</code>; use <code>small</code> for inline hints (matches small body text).
       </p>
       <div class="dsAlertStack">
         <Alert title="Something went wrong" message="The email address is already in use. Please try a different one." variant="error" />
         <Alert title="Heads up" message="This event is in the past. New attendees won't be able to sign up." variant="warning" />
+        <Alert message="No title, small size — for a quiet inline hint next to other content." variant="warning" size="small" />
       </div>
 
       <h3 class="dsSubsectionTitle">RequestError</h3>
