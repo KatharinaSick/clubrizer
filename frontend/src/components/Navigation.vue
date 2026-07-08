@@ -11,7 +11,7 @@ import IconEvents from '@/components/icons/IconEvents.vue'
 
 <template>
   <nav class="navigation">
-    <span class="navigationBrand">{{ $t('team') }}</span>
+    <RouterLink to="/" class="navigationBrand">{{ $t('team') }}</RouterLink>
     <template v-if="auth.isLoggedIn">
       <RouterLink to="/events" :class="['navigationLink', { navigationActiveLink: route.meta.activeNav === 'events' }]">
         <IconEvents class="navigationIcon" />
@@ -82,6 +82,8 @@ import IconEvents from '@/components/icons/IconEvents.vue'
     color: transparent;
     background-clip: text;
     -webkit-background-clip: text;
+    text-decoration: none;
+    cursor: pointer;
   }
 
   .navigationIcon {
