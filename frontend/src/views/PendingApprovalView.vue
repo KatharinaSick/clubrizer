@@ -35,7 +35,6 @@ async function cancel() {
         src="@/assets/logo.svg"
       />
       <h1 class="pendingApprovalTitle">{{ $t('team') }}</h1>
-      <h3 class="pendingApprovalSlogan">Team Up!</h3>
     </div>
 
     <div class="pendingApprovalCenter">
@@ -89,15 +88,10 @@ async function cancel() {
   margin: 8px 0 0 0;
   text-transform: uppercase;
   letter-spacing: .1rem;
-}
-
-.pendingApprovalSlogan {
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: .1rem;
   background-image: var(--gradient);
   color: transparent;
   background-clip: text;
+  -webkit-background-clip: text;
 }
 
 .pendingApprovalStillPending {
