@@ -48,6 +48,12 @@ const router = createRouter({
       component: () => import('../views/ProfileSetupView.vue')
     },
     {
+      path: '/getting-started',
+      name: 'getting-started',
+      component: () => import('../views/GettingStartedView.vue'),
+      meta: { showNavigation: false }
+    },
+    {
       path: '/design-system',
       name: 'design-system',
       component: () => import('../views/DesignSystemView.vue'),
