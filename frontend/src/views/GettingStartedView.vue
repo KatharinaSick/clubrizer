@@ -48,6 +48,16 @@ const installPlatforms: InstallPlatform[] = [
     ],
   },
 ]
+
+interface WhySource {
+  label: string
+  url: string
+}
+
+// Background reading for curious users about the Android install warning.
+const whySources: WhySource[] = [
+  { label: 'gettingStarted.install.whySource1', url: 'https://developers.google.com/android/play-protect/warning-dev-guidance' },
+]
 </script>
 
 <template>
@@ -127,6 +137,29 @@ const installPlatforms: InstallPlatform[] = [
           </ol>
         </div>
       </div>
+
+      <Alert
+        variant="info"
+        size="small"
+        :title="$t('gettingStarted.install.androidNoteTitle')"
+        :message="$t('gettingStarted.install.androidNote')"
+        class="gettingStartedInstallNote"
+      >
+        <details class="gettingStartedWhy">
+          <summary class="gettingStartedWhySummary">{{ $t('gettingStarted.install.whyTitle') }}</summary>
+          <p class="gettingStartedWhyText">{{ $t('gettingStarted.install.whyText') }}</p>
+          <ul class="gettingStartedWhySources">
+            <li v-for="source in whySources" :key="source.url">
+              <a
+                :href="source.url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="gettingStartedWhyLink"
+              >{{ $t(source.label) }}</a>
+            </li>
+          </ul>
+        </details>
+      </Alert>
     </section>
 
     <p class="gettingStartedFooter">{{ $t('gettingStarted.footer') }}</p>
@@ -301,6 +334,43 @@ const installPlatforms: InstallPlatform[] = [
   color: var(--text-light);
   font-size: var(--font-size-small);
   line-height: 1.5;
+}
+
+/* Why disclosure */
+.gettingStartedWhySummary {
+  cursor: pointer;
+  color: var(--blue);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-medium);
+}
+
+.gettingStartedWhySummary:active {
+  opacity: 0.7;
+}
+
+.gettingStartedWhyText {
+  margin: var(--padding) 0 0;
+  color: var(--text-light);
+  font-size: var(--font-size-small);
+  line-height: 1.5;
+}
+
+.gettingStartedWhySources {
+  margin: var(--gap) 0 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.gettingStartedWhyLink {
+  color: var(--blue);
+  font-size: var(--font-size-small);
+  text-decoration: underline;
+}
+
+.gettingStartedWhyLink:active {
+  opacity: 0.7;
 }
 
 /* Footer */

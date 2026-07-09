@@ -53,6 +53,7 @@ const selectOptions: Option[] = [
 
 const colors = [
   { name: '--blue', value: '#0E6EF0', label: 'Blue · Primary flat' },
+  { name: '--light-blue', value: '#E1EDFD', label: 'Light Blue · Info bg' },
   { name: '--green', value: '#28E8A2', label: 'Green · Success / confirm' },
   { name: '--red', value: '#F3675E', label: 'Red · Error / decline' },
   { name: '--light-red', value: '#FCD7D4', label: 'Light Red · Error bg' },
@@ -633,13 +634,18 @@ const spacingLayout = [
       <h3 class="dsSubsectionTitle">Alert</h3>
       <p class="dsSectionDesc">
         Local errors only — 422 form validation and client-side errors (e.g. a missing credential).
-        <code>variant</code> is <code>error</code> or <code>warning</code>. <code>title</code> is optional.
+        <code>variant</code> is <code>error</code> (red), <code>warning</code> (orange), or <code>info</code> (blue) — use <code>info</code> for helpful, non-alarming hints. <code>title</code> is optional.
         <code>size</code> defaults to <code>medium</code>; use <code>small</code> for inline hints (matches small body text).
+        The default slot renders extra content below the message — use it for richer content like a link or a collapsible detail.
       </p>
       <div class="dsAlertStack">
         <Alert title="Something went wrong" message="The email address is already in use. Please try a different one." variant="error" />
         <Alert title="Heads up" message="This event is in the past. New attendees won't be able to sign up." variant="warning" />
+        <Alert title="Good to know" message="Helpful, non-alarming guidance uses the info variant." variant="info" size="small" />
         <Alert message="No title, small size — for a quiet inline hint next to other content." variant="warning" size="small" />
+        <Alert title="With extra content" message="The default slot adds content below the message." variant="info" size="small">
+          <a href="#alerts" style="color: var(--blue); text-decoration: underline">Learn more</a>
+        </Alert>
       </div>
 
       <h3 class="dsSubsectionTitle">RequestError</h3>
