@@ -21,6 +21,7 @@ type handler[Out any] func(context.Context) (*Out, error)
 type handlerWithInput[In any] func(context.Context, In) error
 type handlerWithInputAndReturnValue[In any, Out any] func(context.Context, In) (*Out, error)
 type handlerWithIdAndReturnValue[Out any] func(context.Context, string) (*Out, error)
+type handlerWithId func(context.Context, string) error
 
 type handlerWithListReturn[Out any] func(context.Context) ([]*Out, error)
 
@@ -106,6 +107,23 @@ func handleWithIdAndReturnValue[Out any](f handlerWithIdAndReturnValue[Out]) htt
 		}
 
 		writeResponse(w, out)
+	})
+}
+
+func handleWithId(f handlerWithId) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		if id == "" {
+			http.Error(w, "missing id", http.StatusBadRequest)
+			return
+		}
+
+		if err := f(r.Context(), id); err != nil {
+			http.Error(w, err.Error(), apperrors.HttpStatusCode(err))
+			return
+		}
+
+		ok(w)
 	})
 }
 

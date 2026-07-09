@@ -37,6 +37,7 @@ type Event struct {
 	Category    Category        `db:"-" json:"category"`
 	Creator     Creator         `db:"-" json:"creator"`
 	Responses   *EventResponses `db:"-" json:"responses,omitempty"`
+	CanDelete   *bool           `db:"-" json:"canDelete,omitempty"`
 }
 
 type EventAttendee struct {

@@ -46,6 +46,7 @@ export interface EventResponses {
 export interface EventDetail extends Event {
   category: Category
   responses: EventResponses
+  canDelete?: boolean
 }
 
 export interface CreateEventRequest {
@@ -63,4 +64,8 @@ export const createEvent = async (event: CreateEventRequest): Promise<Event> => 
 
 export const upsertEventResponse = async (eventId: string, response: boolean): Promise<void> => {
   await axios.put(`/events/${eventId}/response`, { response })
+}
+
+export const deleteEvent = async (eventId: string): Promise<void> => {
+  await axios.delete(`/events/${eventId}`)
 }

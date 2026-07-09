@@ -9,6 +9,7 @@ import (
 )
 
 type rbacService interface {
+	IsAuthorized(ctx context.Context, userID uuid.UUID, permissionKey string) (bool, error)
 	IsAuthorizedToCreateEvent(ctx context.Context, userID uuid.UUID, categoryID uuid.UUID) (bool, error)
 	GetCreatableCategoryIDs(ctx context.Context, userID uuid.UUID) (map[uuid.UUID]bool, error)
 }

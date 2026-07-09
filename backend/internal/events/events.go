@@ -2,10 +2,12 @@ package events
 
 import (
 	"context"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/katharinasick/clubrizer/internal/apperrors"
+	"github.com/katharinasick/clubrizer/internal/rbac"
 	"github.com/katharinasick/clubrizer/internal/users"
-	"time"
 )
 
 func (s *Service) ListEvents(ctx context.Context) ([]*Event, error) {
@@ -34,7 +36,47 @@ func (s *Service) GetEvent(ctx context.Context, id string) (*Event, error) {
 	}
 	event.Responses = responses
 
+	canDelete, err := s.canDeleteEvent(ctx, userId, event.CreatedBy)
+	if err != nil {
+		return nil, err
+	}
+	event.CanDelete = &canDelete
+
 	return event, nil
+}
+
+// canDeleteEvent reports whether the user may delete the event with the given creator.
+// The event's owner can always delete it; everyone else needs the delete-any permission
+// (which admins bypass).
+func (s *Service) canDeleteEvent(ctx context.Context, userId, creatorId uuid.UUID) (bool, error) {
+	if userId == creatorId {
+		return true, nil
+	}
+	return s.rbac.IsAuthorized(ctx, userId, rbac.PermissionEventsDeleteAny)
+}
+
+func (s *Service) DeleteEvent(ctx context.Context, id string) error {
+	uuidId, err := uuid.Parse(id)
+	if err != nil {
+		return apperrors.NewBadRequest("invalid event id", err)
+	}
+
+	event, err := s.store.getEventById(ctx, uuidId)
+	if err != nil {
+		return err
+	}
+
+	userId := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims).ID
+
+	authorized, err := s.canDeleteEvent(ctx, userId, event.CreatedBy)
+	if err != nil {
+		return err
+	}
+	if !authorized {
+		return apperrors.NewForbidden("you are not allowed to delete this event")
+	}
+
+	return s.store.deleteEvent(ctx, uuidId)
 }
 
 func (s *Service) UpsertEventResponse(ctx context.Context, eventId string, req UpsertEventResponseRequest) error {

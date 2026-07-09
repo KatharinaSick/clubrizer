@@ -166,6 +166,26 @@ func (s *store) upsertEventResponse(ctx context.Context, eventId uuid.UUID, user
 	return nil
 }
 
+func (s *store) deleteEvent(ctx context.Context, id uuid.UUID) error {
+	tx, err := s.conn.Begin(ctx)
+	if err != nil {
+		return errors.New(fmt.Sprintf("failed to begin transaction: %s", err.Error()))
+	}
+	defer tx.Rollback(ctx)
+
+	if _, err := tx.Exec(ctx, "DELETE FROM event_responses WHERE event_id = $1", id); err != nil {
+		return errors.New(fmt.Sprintf("failed to delete event responses: %s", err.Error()))
+	}
+	if _, err := tx.Exec(ctx, "DELETE FROM events WHERE id = $1", id); err != nil {
+		return errors.New(fmt.Sprintf("failed to delete event: %s", err.Error()))
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return errors.New(fmt.Sprintf("failed to commit transaction: %s", err.Error()))
+	}
+	return nil
+}
+
 func (s *store) createEvent(ctx context.Context, e *Event) (uuid.UUID, error) {
 	var id uuid.UUID
 	err := s.conn.QueryRow(
