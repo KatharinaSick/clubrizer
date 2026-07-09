@@ -18,8 +18,8 @@ func (s *Service) GetMyRoles(ctx context.Context) ([]*Role, error) {
 }
 
 type UpdateProfileRequest struct {
-	FirstName string  `json:"firstName" validate:"required"`
-	LastName  string  `json:"lastName" validate:"required"`
+	FirstName string  `json:"firstName" validate:"required,notblank"`
+	LastName  string  `json:"lastName" validate:"required,notblank"`
 	NickName  *string `json:"nickName"`
 }
 

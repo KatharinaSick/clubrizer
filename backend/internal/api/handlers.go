@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	nonStandardValidators "github.com/go-playground/validator/v10/non-standard/validators"
 	"github.com/katharinasick/clubrizer/internal/app"
 	"github.com/katharinasick/clubrizer/internal/apperrors"
 	"github.com/katharinasick/clubrizer/internal/users"
@@ -21,12 +22,21 @@ type handler[Out any] func(context.Context) (*Out, error)
 type handlerWithInput[In any] func(context.Context, In) error
 type handlerWithInputAndReturnValue[In any, Out any] func(context.Context, In) (*Out, error)
 type handlerWithIdAndReturnValue[Out any] func(context.Context, string) (*Out, error)
+type handlerWithId func(context.Context, string) error
 
 type handlerWithListReturn[Out any] func(context.Context) ([]*Out, error)
 
 type handlerWithIdAndBody[In any] func(context.Context, string, In) error
 
 var validate = validator.New()
+
+func init() {
+	// "notblank" rejects strings that are empty or contain only whitespace, so the
+	// backend does not accept blank-only values even if the client fails to trim.
+	if err := validate.RegisterValidation("notblank", nonStandardValidators.NotBlank); err != nil {
+		panic(err)
+	}
+}
 
 type handlerWithInputAndRefreshTokenReturn[In any, Out any] func(context.Context, In) (*Out, *users.RefreshTokenInfo, error)
 type handlerWithRefreshToken[Out any] func(context.Context, users.RefreshTokenInfo) (*Out, *users.RefreshTokenInfo, error)
@@ -106,6 +116,23 @@ func handleWithIdAndReturnValue[Out any](f handlerWithIdAndReturnValue[Out]) htt
 		}
 
 		writeResponse(w, out)
+	})
+}
+
+func handleWithId(f handlerWithId) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		if id == "" {
+			http.Error(w, "missing id", http.StatusBadRequest)
+			return
+		}
+
+		if err := f(r.Context(), id); err != nil {
+			http.Error(w, err.Error(), apperrors.HttpStatusCode(err))
+			return
+		}
+
+		ok(w)
 	})
 }
 

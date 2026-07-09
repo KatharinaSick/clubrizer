@@ -27,9 +27,9 @@ type Creator struct {
 
 type Event struct {
 	ID          uuid.UUID       `db:"id" json:"id"`
-	Title       string          `db:"title" json:"title" validate:"required"`
+	Title       string          `db:"title" json:"title" validate:"required,notblank"`
 	Description string          `db:"description" json:"description"`
-	Location    string          `db:"location" json:"location" validate:"required"`
+	Location    string          `db:"location" json:"location" validate:"required,notblank"`
 	StartTime   time.Time       `db:"start_time" json:"startTime" validate:"required"`
 	CreatedBy   uuid.UUID       `db:"created_by" json:"-"`
 	CreatedAt   time.Time       `db:"created_at" json:"-"`
@@ -37,6 +37,7 @@ type Event struct {
 	Category    Category        `db:"-" json:"category"`
 	Creator     Creator         `db:"-" json:"creator"`
 	Responses   *EventResponses `db:"-" json:"responses,omitempty"`
+	CanDelete   *bool           `db:"-" json:"canDelete,omitempty"`
 }
 
 type EventAttendee struct {

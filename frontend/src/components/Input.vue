@@ -15,6 +15,15 @@ defineProps<{
 
 const value = defineModel<string | number | null>()
 
+// Trim leading/trailing whitespace when the field loses focus. Done on blur (not
+// while typing) so spaces inside the text are kept; a value of only blanks becomes
+// empty, so `required` checks treat it as empty.
+function trimOnBlur() {
+  if (typeof value.value === 'string') {
+    value.value = value.value.trim()
+  }
+}
+
 </script>
 
 <template>
@@ -28,6 +37,7 @@ const value = defineModel<string | number | null>()
       rows="5"
       v-model="value"
       required
+      @blur="trimOnBlur"
     ></textarea>
     <input
       v-else-if="type === 'date'"
@@ -59,6 +69,7 @@ const value = defineModel<string | number | null>()
       required
       :inputmode="inputMode"
       :maxlength="maxLength"
+      @blur="trimOnBlur"
     />
     <label
       :for="id"

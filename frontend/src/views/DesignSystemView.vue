@@ -11,6 +11,13 @@ import Divider from '@/components/Divider.vue'
 import Event from '@/components/Event.vue'
 import type { EventProps } from '@/components/EventTitle.vue'
 import Header from '@/components/Header.vue'
+import MenuButton from '@/components/MenuButton.vue'
+import type { MenuItem } from '@/components/MenuButton.vue'
+
+const menuItems: MenuItem[] = [
+  { label: 'Edit', onClick: () => {} },
+  { label: 'Delete', danger: true, onClick: () => {} },
+]
 
 const textInput = ref('')
 const errorInput = ref('')
@@ -599,6 +606,22 @@ const spacingLayout = [
       </div>
     </section>
 
+    <!-- ─── MENU BUTTON ─── -->
+    <section class="dsSection">
+      <h2 class="dsSectionTitle">Menu Button</h2>
+      <p class="dsSectionDesc">
+        A round overflow button (kebab icon) that opens a small dropdown of actions. Use it to tuck away
+        secondary or rarely-needed actions (e.g. deleting an event) instead of showing a prominent button.
+        Pass <code>items</code> as <code>{ label, danger?, onClick }</code>; mark destructive actions with
+        <code>danger</code>. While open it dims the rest of the screen with a backdrop that blocks other
+        clicks; tapping the backdrop, pressing <code>Esc</code>, or choosing an item closes it.
+      </p>
+      <div class="dsMenuButtonRow">
+        <MenuButton :items="menuItems" aria-label="More options" />
+        <span class="dsNote">Click it — the menu opens below, aligned to the right.</span>
+      </div>
+    </section>
+
     <!-- ─── ALERTS & FEEDBACK ─── -->
     <section class="dsSection">
       <h2 class="dsSectionTitle">Alerts &amp; Feedback</h2>
@@ -647,8 +670,10 @@ const spacingLayout = [
         </div>
       </div>
       <div class="dsNote">
-        The modal has a 1px gradient border ring (diagonal). The backdrop uses <code>--modal-background-color</code>
-        (<code>rgba(12,29,54,0.30)</code>). Always give the user a way to dismiss — add a close button in your slot content.
+        The modal has a 1px gradient border ring (diagonal) and animates in (fade + slight rise). It is centered,
+        capped at <code>400px</code> wide, and keeps a <code>--padding</code> margin from the screen edges on small
+        devices. The backdrop uses <code>--modal-background-color</code> (<code>rgba(12,29,54,0.30)</code>). Always
+        give the user a way to dismiss — add a close button in your slot content.
       </div>
     </section>
 
@@ -1359,6 +1384,12 @@ const spacingLayout = [
   margin-bottom: 12px;
 }
 
+.dsMenuButtonRow {
+  display: flex;
+  align-items: center;
+  gap: var(--padding);
+}
+
 /* ── Modal ── */
 .dsModalPreview {
   background: rgba(12, 29, 54, 0.15);
@@ -1375,12 +1406,12 @@ const spacingLayout = [
   background: var(--gradient);
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
-  max-width: 280px;
+  max-width: 320px;
   width: 100%;
 }
 
 .dsMockModalContent {
-  padding: var(--padding);
+  padding: calc(var(--padding) * 2);
   background: var(--white);
   border-radius: calc(var(--border-radius) - 1px);
 }

@@ -103,6 +103,16 @@ export default createI18n({
           wontGo: 'Won\'t Go',
           going: 'Going',
           at: 'at',
+          menu: {
+            label: 'More options',
+            delete: 'Delete event',
+          },
+          deleteConfirm: {
+            title: 'Delete this event?',
+            message: 'This permanently deletes the event for everyone. This cannot be undone.',
+            confirm: 'Delete',
+            cancel: 'Cancel',
+          },
           attendees: {
             going: '{count} going',
             notGoing: '{count} not going',
@@ -235,6 +245,16 @@ export default createI18n({
           wontGo: 'Absagen',
           going: 'Zusagen',
           at: 'um',
+          menu: {
+            label: 'Mehr Optionen',
+            delete: 'Event löschen',
+          },
+          deleteConfirm: {
+            title: 'Event wirklich löschen?',
+            message: 'Das Event wird für alle dauerhaft gelöscht. Das kann nicht rückgängig gemacht werden.',
+            confirm: 'Löschen',
+            cancel: 'Abbrechen',
+          },
           attendees: {
             going: '{count} Zusagen',
             notGoing: '{count} Absagen',

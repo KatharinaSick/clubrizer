@@ -6,7 +6,7 @@ import Avatar from '@/components/Avatar.vue'
 import Button from '@/components/Button.vue'
 import EventTitle from '@/components/EventTitle.vue'
 import type { EventDetail } from '@/service/events'
-import { upsertEventResponse } from '@/service/events'
+import { upsertEventResponse, deleteEvent } from '@/service/events'
 import i18n from '@/plugins/i18n'
 import IconBack from '@/components/icons/IconBack.vue'
 import IconError from '@/components/icons/IconError.vue'
@@ -14,6 +14,9 @@ import IconCheckmark from '@/components/icons/IconCheckMark.vue'
 import IconMapMarker from '@/components/icons/IconMapMarker.vue'
 import Divider from '@/components/Divider.vue'
 import RequestError from '@/components/RequestError.vue'
+import MenuButton from '@/components/MenuButton.vue'
+import type { MenuItem } from '@/components/MenuButton.vue'
+import Modal from '@/components/Modal.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -21,6 +24,30 @@ const eventId = route.params.id as string
 
 const event = ref<EventDetail | null>(null)
 const pendingResponse = ref<boolean | null>(null)
+const showDeleteConfirm = ref(false)
+const isDeleting = ref(false)
+
+const menuItems = computed<MenuItem[]>(() => [
+  {
+    label: i18n.global.t('events.detail.menu.delete'),
+    danger: true,
+    onClick: () => { showDeleteConfirm.value = true },
+  },
+])
+
+const confirmDelete = async () => {
+  if (isDeleting.value) return
+  isDeleting.value = true
+  try {
+    await deleteEvent(eventId)
+    router.replace('/events')
+  } catch {
+    // Reveal the global error banner behind the modal
+    showDeleteConfirm.value = false
+  } finally {
+    isDeleting.value = false
+  }
+}
 
 onMounted(() => {
   loadEvent()
@@ -70,6 +97,10 @@ const formattedStartTime = computed(() => {
       <button class="eventDetailBackButton" @click="router.back()">
         <IconBack class="eventDetailBackIcon" />
       </button>
+
+      <div v-if="event?.canDelete" class="eventDetailMenuButton">
+        <MenuButton :items="menuItems" :aria-label="i18n.global.t('events.detail.menu.label')" />
+      </div>
 
       <RequestError class="eventDetailRequestError" />
 
@@ -167,6 +198,27 @@ const formattedStartTime = computed(() => {
         </div>
       </div>
     </div>
+
+    <Modal v-if="showDeleteConfirm">
+      <div class="eventDetailDeleteConfirm">
+        <h2 class="eventDetailDeleteTitle">{{ i18n.global.t('events.detail.deleteConfirm.title') }}</h2>
+        <p class="eventDetailDeleteMessage">{{ i18n.global.t('events.detail.deleteConfirm.message') }}</p>
+        <div class="eventDetailDeleteActions">
+          <Button
+            :title="i18n.global.t('events.detail.deleteConfirm.confirm')"
+            theme="red"
+            :loading="isDeleting"
+            @click="confirmDelete"
+          />
+          <Button
+            :title="i18n.global.t('events.detail.deleteConfirm.cancel')"
+            theme="secondary"
+            :disabled="isDeleting"
+            @click="showDeleteConfirm = false"
+          />
+        </div>
+      </div>
+    </Modal>
   </div>
 </template>
 
@@ -205,6 +257,37 @@ const formattedStartTime = computed(() => {
   width: 22px;
   height: 22px;
   color: var(--text-color);
+}
+
+.eventDetailMenuButton {
+  position: absolute;
+  top: var(--padding);
+  right: var(--padding);
+  z-index: 10;
+}
+
+.eventDetailDeleteConfirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.eventDetailDeleteTitle {
+  margin: 0;
+  font-size: var(--font-size-large);
+  font-weight: var(--font-weight-bold);
+}
+
+.eventDetailDeleteMessage {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.eventDetailDeleteActions {
+  margin-top: var(--padding);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
 }
 
 .eventDetailRequestError {
