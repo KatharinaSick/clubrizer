@@ -27,6 +27,9 @@ const codeSent = ref(false)
 async function submitEmail() {
   if (isLoading.value) return
   emailError.value = ''
+  // This form can submit via Enter / the keyboard "Go" key without the field
+  // blurring, which skips Input's blur-trim — so trim here before validating.
+  email.value = email.value.trim()
   if (!email.value) {
     emailError.value = i18n.global.t('signIn.emailRequired')
     return
