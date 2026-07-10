@@ -17,6 +17,14 @@ import RequestError from '@/components/RequestError.vue'
 import MenuButton from '@/components/MenuButton.vue'
 import type { MenuItem } from '@/components/MenuButton.vue'
 import Modal from '@/components/Modal.vue'
+import UserProfileModal from '@/components/UserProfileModal.vue'
+
+type UserForModal = {
+  givenName: string
+  familyName: string
+  nickName: string | null
+  picture?: string | null
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -26,6 +34,7 @@ const event = ref<EventDetail | null>(null)
 const pendingResponse = ref<boolean | null>(null)
 const showDeleteConfirm = ref(false)
 const isDeleting = ref(false)
+const selectedUser = ref<UserForModal | null>(null)
 
 const menuItems = computed<MenuItem[]>(() => [
   {
@@ -149,13 +158,15 @@ const formattedStartTime = computed(() => {
           </div>
           <Divider class="eventDetailDivider" />
           <div class="eventDetailCreator">
-            <Avatar
-              :picture="event.creator.picture"
-              :given-name="event.creator.givenName"
-              :family-name="event.creator.familyName"
-              :nick-name="event.creator.nickName"
-              size="sm"
-            />
+            <button class="eventDetailAvatarButton" @click="selectedUser = event.creator">
+              <Avatar
+                :picture="event.creator.picture"
+                :given-name="event.creator.givenName"
+                :family-name="event.creator.familyName"
+                :nick-name="event.creator.nickName"
+                size="sm"
+              />
+            </button>
             <span>{{ i18n.global.t('events.createdBy') }} {{ event.creator.nickName || event.creator.givenName }}</span>
           </div>
 
@@ -171,17 +182,17 @@ const formattedStartTime = computed(() => {
               {{ i18n.global.t('events.detail.attendees.notGoing', { count: event.responses.notGoing }) }}
             </p>
             <div class="eventDetailAvatarGrid">
-              <div
+              <button
                 v-for="attendee in event.responses.attendees"
                 :key="attendee.id"
                 class="eventDetailAvatarWrapper"
+                @click="selectedUser = attendee"
               >
                 <Avatar
                   :picture="attendee.picture"
                   :given-name="attendee.givenName"
                   :family-name="attendee.familyName"
                   :nick-name="attendee.nickName"
-                  :label="attendee.nickName || attendee.givenName"
                   size="md"
                   :class="{ 'eventDetailAvatarNotGoing': !attendee.response }"
                 />
@@ -189,7 +200,7 @@ const formattedStartTime = computed(() => {
                   class="eventDetailAvatarBadge"
                   :class="attendee.response ? 'eventDetailAvatarBadgeGoing' : 'eventDetailAvatarBadgeNotGoing'"
                 />
-              </div>
+              </button>
             </div>
           </template>
           <p v-else class="eventDetailNoResponses">
@@ -198,6 +209,15 @@ const formattedStartTime = computed(() => {
         </div>
       </div>
     </div>
+
+    <UserProfileModal
+      v-if="selectedUser"
+      :given-name="selectedUser.givenName"
+      :family-name="selectedUser.familyName"
+      :nick-name="selectedUser.nickName"
+      :picture="selectedUser.picture"
+      @close="selectedUser = null"
+    />
 
     <Modal v-if="showDeleteConfirm">
       <div class="eventDetailDeleteConfirm">
@@ -400,8 +420,22 @@ const formattedStartTime = computed(() => {
   gap: var(--padding);
 }
 
+.eventDetailAvatarButton {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+}
+
 .eventDetailAvatarWrapper {
   position: relative;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 50%;
 }
 
 .eventDetailAvatarNotGoing :deep(.avatarImage),

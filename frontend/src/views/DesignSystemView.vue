@@ -7,12 +7,15 @@ import Select from '@/components/Select.vue'
 import type { Option } from '@/components/Select.vue'
 import Alert from '@/components/Alert.vue'
 import Avatar from '@/components/Avatar.vue'
+import UserProfileModal from '@/components/UserProfileModal.vue'
 import Divider from '@/components/Divider.vue'
 import Event from '@/components/Event.vue'
 import type { EventProps } from '@/components/EventTitle.vue'
 import Header from '@/components/Header.vue'
 import MenuButton from '@/components/MenuButton.vue'
 import type { MenuItem } from '@/components/MenuButton.vue'
+
+const showProfileModal = ref(false)
 
 const menuItems: MenuItem[] = [
   { label: 'Edit', onClick: () => {} },
@@ -441,11 +444,34 @@ const spacingLayout = [
           <code class="dsToken">:gradient="true"</code>
           <p class="dsColorLabel">Gradient ring — used on the profile screen</p>
         </div>
-        <div class="dsComponentItem dsComponentItemCenter">
-          <Avatar given-name="Kate" family-name="Poshuk" size="lg" label="Kate Poshuk" />
-          <code class="dsToken">label="name"</code>
-          <p class="dsColorLabel">Tap to reveal — used in event attendee lists</p>
-        </div>
+      </div>
+    </section>
+
+    <!-- ─── USER PROFILE MODAL ─── -->
+    <section class="dsSection">
+      <h2 class="dsSectionTitle">User Profile Modal</h2>
+      <p class="dsSectionDesc">
+        Use <code>&lt;UserProfileModal&gt;</code> whenever the user taps a profile picture.
+        Pass the user's name and optional picture; listen for <code>@close</code> to hide it.
+        Clicking outside the card (on the backdrop) emits <code>close</code> automatically.
+      </p>
+      <div class="dsModalPreview">
+        <button class="dsProfileModalTrigger" @click="showProfileModal = true">
+          <Avatar given-name="Kate" family-name="Poshuk" picture="https://i.pravatar.cc/150?img=47" size="md" />
+          <span class="dsColorLabel">Click avatar to preview</span>
+        </button>
+      </div>
+      <UserProfileModal
+        v-if="showProfileModal"
+        given-name="Kate"
+        family-name="Poshuk"
+        nick-name="Katze"
+        picture="https://i.pravatar.cc/150?img=47"
+        @close="showProfileModal = false"
+      />
+      <div class="dsNote">
+        Always set <code>selectedUser = null</code> (or equivalent) in the <code>@close</code> handler to dismiss the modal.
+        The backdrop click is handled internally — no extra logic needed.
       </div>
     </section>
 
@@ -1379,6 +1405,17 @@ const spacingLayout = [
   color: white;
   font-size: var(--font-size-small);
   font-weight: var(--font-weight-medium);
+}
+
+/* ── User Profile Modal ── */
+.dsProfileModalTrigger {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gap);
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 
 /* ── Alerts ── */

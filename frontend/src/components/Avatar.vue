@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 
 const SIZES = { sm: 32, md: 48, lg: 64, xl: 80 }
 
@@ -10,7 +10,6 @@ const props = withDefaults(defineProps<{
   picture?: string | null
   size?: keyof typeof SIZES
   gradient?: boolean
-  label?: string
 }>(), {
   size: 'md',
   gradient: false
@@ -21,26 +20,16 @@ const initials = computed(() => {
 })
 
 const sizeInPx = computed(() => `${SIZES[props.size]}px`)
-
-const labelVisible = ref(false)
-
-const toggleLabel = () => {
-  labelVisible.value = !labelVisible.value
-}
 </script>
 
 <template>
   <div
     class="avatar"
-    :class="{ avatarGradient: gradient, avatarClickable: !!label }"
+    :class="{ avatarGradient: gradient }"
     :style="{ '--avatarSize': sizeInPx }"
-    @click="label && toggleLabel()"
   >
     <img v-if="picture" :src="picture" :alt="givenName ?? ''" class="avatarImage" />
     <div v-else class="avatarFallback">{{ initials }}</div>
-    <span v-if="label" class="avatarLabel" :class="{ avatarLabelVisible: labelVisible }">
-      {{ label }}
-    </span>
   </div>
 </template>
 
@@ -51,10 +40,6 @@ const toggleLabel = () => {
   border-radius: 50%;
   flex-shrink: 0;
   position: relative;
-}
-
-.avatarClickable {
-  cursor: pointer;
 }
 
 .avatarGradient {
@@ -82,21 +67,4 @@ const toggleLabel = () => {
   font-weight: var(--font-weight-medium);
 }
 
-.avatarLabel {
-  display: none;
-  position: absolute;
-  bottom: calc(100% + var(--gap));
-  left: 0;
-  background: var(--text-light);
-  color: var(--white);
-  font-size: var(--font-size-small);
-  padding: calc(var(--gap) / 2) var(--gap);
-  border-radius: var(--gap);
-  white-space: nowrap;
-  z-index: 1;
-}
-
-.avatarLabelVisible {
-  display: block;
-}
 </style>
