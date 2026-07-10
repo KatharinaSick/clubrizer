@@ -83,6 +83,11 @@ const submitResponse = async (response: boolean) => {
   }
 }
 
+const sortedAttendees = computed(() => {
+  const attendees = event.value?.responses?.attendees ?? []
+  return [...attendees].sort((a, b) => (b.response ? 1 : 0) - (a.response ? 1 : 0))
+})
+
 const formattedStartTime = computed(() => {
   if (!event.value?.startTime) return ''
   const date = new Date(event.value.startTime)
@@ -183,7 +188,7 @@ const formattedStartTime = computed(() => {
             </p>
             <div class="eventDetailAvatarGrid">
               <button
-                v-for="attendee in event.responses.attendees"
+                v-for="attendee in sortedAttendees"
                 :key="attendee.id"
                 class="eventDetailAvatarWrapper"
                 @click="selectedUser = attendee"
@@ -194,7 +199,7 @@ const formattedStartTime = computed(() => {
                   :family-name="attendee.familyName"
                   :nick-name="attendee.nickName"
                   size="md"
-                  :class="{ 'eventDetailAvatarNotGoing': !attendee.response }"
+                  :class="{ 'eventDetailAvatarGoing': attendee.response, 'eventDetailAvatarNotGoing': !attendee.response }"
                 />
                 <span
                   class="eventDetailAvatarBadge"
@@ -438,9 +443,14 @@ const formattedStartTime = computed(() => {
   border-radius: 50%;
 }
 
+.eventDetailAvatarGoing :deep(.avatarImage),
+.eventDetailAvatarGoing :deep(.avatarFallback) {
+  box-shadow: 0 0 0 2px var(--gray);
+}
+
 .eventDetailAvatarNotGoing :deep(.avatarImage),
 .eventDetailAvatarNotGoing :deep(.avatarFallback) {
-  opacity: 0.4;
+  filter: grayscale(1) opacity(0.5);
 }
 
 .eventDetailAvatarBadge {
