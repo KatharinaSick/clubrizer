@@ -8,4 +8,7 @@ const (
 	// PermissionEventsDeleteAny allows deleting events created by other users.
 	// Admins bypass this check; event owners can always delete their own events.
 	PermissionEventsDeleteAny = "events.delete_any"
+	// PermissionEventsCancelAny allows cancelling events created by other users.
+	// Admins bypass this check; event owners can always cancel their own events.
+	PermissionEventsCancelAny = "events.cancel_any"
 )

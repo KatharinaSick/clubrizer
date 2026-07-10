@@ -42,7 +42,7 @@ func (s *store) getAllCategories(ctx context.Context) ([]*Category, error) {
 func (s *store) getFutureEvents(ctx context.Context) ([]*Event, error) {
 	rows, err := s.conn.Query(ctx, `
 		SELECT
-			e.id, e.title, e.description, e.location, e.start_time, e.created_by, e.created_at, e.category,
+			e.id, e.title, e.description, e.location, e.start_time, e.created_by, e.created_at, e.category, e.cancelled_at,
 			c.id, c.name, c.color, c.picture, c.sort_order, c.custom_label,
 			u.id, u.given_name, u.family_name, COALESCE(u.nick_name, u.given_name), u.picture
 		FROM events e
@@ -60,11 +60,9 @@ func (s *store) getFutureEvents(ctx context.Context) ([]*Event, error) {
 	for rows.Next() {
 		var e Event
 		var c Category
-		// We don't need created_by/at for category in the list view usually, or we can scan them if needed.
-		// For now, scanning the main fields.
 		var cr Creator
 		err := rows.Scan(
-			&e.ID, &e.Title, &e.Description, &e.Location, &e.StartTime, &e.CreatedBy, &e.CreatedAt, &e.CategoryID,
+			&e.ID, &e.Title, &e.Description, &e.Location, &e.StartTime, &e.CreatedBy, &e.CreatedAt, &e.CategoryID, &e.CancelledAt,
 			&c.ID, &c.Name, &c.Color, &c.Picture, &c.SortOrder, &c.CustomLabel,
 			&cr.ID, &cr.GivenName, &cr.FamilyName, &cr.NickName, &cr.Picture,
 		)
@@ -86,7 +84,7 @@ func (s *store) getFutureEvents(ctx context.Context) ([]*Event, error) {
 func (s *store) getEventById(ctx context.Context, id uuid.UUID) (*Event, error) {
 	row := s.conn.QueryRow(ctx, `
 		SELECT
-			e.id, e.title, e.description, e.location, e.start_time, e.created_by, e.created_at, e.category,
+			e.id, e.title, e.description, e.location, e.start_time, e.created_by, e.created_at, e.category, e.cancelled_at,
 			c.id, c.name, c.color, c.picture, c.sort_order, c.custom_label,
 			u.id, u.given_name, u.family_name, COALESCE(u.nick_name, u.given_name), u.picture
 		FROM events e
@@ -99,7 +97,7 @@ func (s *store) getEventById(ctx context.Context, id uuid.UUID) (*Event, error) 
 	var c Category
 	var cr Creator
 	err := row.Scan(
-		&e.ID, &e.Title, &e.Description, &e.Location, &e.StartTime, &e.CreatedBy, &e.CreatedAt, &e.CategoryID,
+		&e.ID, &e.Title, &e.Description, &e.Location, &e.StartTime, &e.CreatedBy, &e.CreatedAt, &e.CategoryID, &e.CancelledAt,
 		&c.ID, &c.Name, &c.Color, &c.Picture, &c.SortOrder, &c.CustomLabel,
 		&cr.ID, &cr.GivenName, &cr.FamilyName, &cr.NickName, &cr.Picture,
 	)
@@ -182,6 +180,22 @@ func (s *store) deleteEvent(ctx context.Context, id uuid.UUID) error {
 
 	if err := tx.Commit(ctx); err != nil {
 		return errors.New(fmt.Sprintf("failed to commit transaction: %s", err.Error()))
+	}
+	return nil
+}
+
+func (s *store) cancelEvent(ctx context.Context, id uuid.UUID) error {
+	_, err := s.conn.Exec(ctx, "UPDATE events SET cancelled_at = NOW() WHERE id = $1", id)
+	if err != nil {
+		return errors.New(fmt.Sprintf("failed to cancel event: %s", err.Error()))
+	}
+	return nil
+}
+
+func (s *store) uncancelEvent(ctx context.Context, id uuid.UUID) error {
+	_, err := s.conn.Exec(ctx, "UPDATE events SET cancelled_at = NULL WHERE id = $1", id)
+	if err != nil {
+		return errors.New(fmt.Sprintf("failed to uncancel event: %s", err.Error()))
 	}
 	return nil
 }

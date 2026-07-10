@@ -25,6 +25,7 @@ export interface Event {
   location: string
   categoryId: string
   creator: Creator
+  cancelledAt?: string
 }
 
 export interface EventAttendee {
@@ -47,6 +48,7 @@ export interface EventDetail extends Event {
   category: Category
   responses: EventResponses
   canDelete?: boolean
+  canCancel?: boolean
 }
 
 export interface CreateEventRequest {
@@ -68,4 +70,12 @@ export const upsertEventResponse = async (eventId: string, response: boolean): P
 
 export const deleteEvent = async (eventId: string): Promise<void> => {
   await axios.delete(`/events/${eventId}`)
+}
+
+export const cancelEvent = async (eventId: string): Promise<void> => {
+  await axios.post(`/events/${eventId}/cancel`)
+}
+
+export const uncancelEvent = async (eventId: string): Promise<void> => {
+  await axios.post(`/events/${eventId}/uncancel`)
 }

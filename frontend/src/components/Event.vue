@@ -24,6 +24,7 @@ export interface EventProps {
   location: string
   startTime: string | Date
   creator: Creator
+  cancelledAt?: string
 }
 
 const props = defineProps<{
@@ -40,10 +41,11 @@ const handleClick = (event: MouseEvent) => {
 <template>
   <div class="event" @click="handleClick">
     <div class="eventImageContainer">
-      <img class="eventImage" :src="event.category.picture" />
-      <span v-if="event.category.customLabel" class="eventImageBadge">{{ event.category.customLabel }}</span>
+      <img class="eventImage" :class="{ eventImageCancelled: event.cancelledAt }" :src="event.category.picture" />
+      <span v-if="event.cancelledAt" class="eventImageBadge eventImageBadgeCancelled">{{ $t('events.cancelled') }}</span>
+      <span v-else-if="event.category.customLabel" class="eventImageBadge">{{ event.category.customLabel }}</span>
     </div>
-    <EventTitle class="details" :event="event" />
+    <EventTitle class="details" :class="{ eventDetailsCancelled: event.cancelledAt }" :event="event" />
   </div>
 </template>
 
@@ -75,6 +77,14 @@ const handleClick = (event: MouseEvent) => {
   border-top-right-radius: var(--border-radius);
 }
 
+.eventImageCancelled {
+  filter: grayscale(1) opacity(0.6);
+}
+
+.eventDetailsCancelled {
+  opacity: 0.6;
+}
+
 .eventImageBadge {
   position: absolute;
   bottom: var(--gap);
@@ -84,6 +94,11 @@ const handleClick = (event: MouseEvent) => {
   background-color: var(--white);
   color: var(--text-color);
   font-size: var(--font-size-small);
+}
+
+.eventImageBadgeCancelled {
+  background-color: var(--red);
+  color: var(--white);
 }
 
 .details {

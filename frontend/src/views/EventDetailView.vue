@@ -2,11 +2,12 @@
 import { useRoute, useRouter } from 'vue-router'
 import { computed, onMounted, ref } from 'vue'
 import axios from '@/plugins/axios'
+import Alert from '@/components/Alert.vue'
 import Avatar from '@/components/Avatar.vue'
 import Button from '@/components/Button.vue'
 import EventTitle from '@/components/EventTitle.vue'
 import type { EventDetail } from '@/service/events'
-import { upsertEventResponse, deleteEvent } from '@/service/events'
+import { upsertEventResponse, deleteEvent, cancelEvent, uncancelEvent } from '@/service/events'
 import i18n from '@/plugins/i18n'
 import IconBack from '@/components/icons/IconBack.vue'
 import IconError from '@/components/icons/IconError.vue'
@@ -34,15 +35,65 @@ const event = ref<EventDetail | null>(null)
 const pendingResponse = ref<boolean | null>(null)
 const showDeleteConfirm = ref(false)
 const isDeleting = ref(false)
+const showCancelConfirm = ref(false)
+const isCancelling = ref(false)
+const showRestoreConfirm = ref(false)
+const isRestoring = ref(false)
 const selectedUser = ref<UserForModal | null>(null)
 
-const menuItems = computed<MenuItem[]>(() => [
-  {
-    label: i18n.global.t('events.detail.menu.delete'),
-    danger: true,
-    onClick: () => { showDeleteConfirm.value = true },
-  },
-])
+const isCancelled = computed(() => !!event.value?.cancelledAt)
+
+const menuItems = computed<MenuItem[]>(() => {
+  const items: MenuItem[] = []
+  if (event.value?.canCancel && !isCancelled.value) {
+    items.push({
+      label: i18n.global.t('events.detail.menu.cancel'),
+      onClick: () => { showCancelConfirm.value = true },
+    })
+  }
+  if (event.value?.canCancel && isCancelled.value) {
+    items.push({
+      label: i18n.global.t('events.detail.menu.restore'),
+      onClick: () => { showRestoreConfirm.value = true },
+    })
+  }
+  if (event.value?.canDelete) {
+    items.push({
+      label: i18n.global.t('events.detail.menu.delete'),
+      danger: true,
+      onClick: () => { showDeleteConfirm.value = true },
+    })
+  }
+  return items
+})
+
+const confirmRestore = async () => {
+  if (isRestoring.value) return
+  isRestoring.value = true
+  try {
+    await uncancelEvent(eventId)
+    await loadEvent()
+    showRestoreConfirm.value = false
+  } catch {
+    showRestoreConfirm.value = false
+  } finally {
+    isRestoring.value = false
+  }
+}
+
+const confirmCancel = async () => {
+  if (isCancelling.value) return
+  isCancelling.value = true
+  try {
+    await cancelEvent(eventId)
+    await loadEvent()
+    showCancelConfirm.value = false
+  } catch {
+    showCancelConfirm.value = false
+  } finally {
+    isCancelling.value = false
+  }
+}
 
 const confirmDelete = async () => {
   if (isDeleting.value) return
@@ -112,7 +163,7 @@ const formattedStartTime = computed(() => {
         <IconBack class="eventDetailBackIcon" />
       </button>
 
-      <div v-if="event?.canDelete" class="eventDetailMenuButton">
+      <div v-if="menuItems.length > 0" class="eventDetailMenuButton">
         <MenuButton :items="menuItems" :aria-label="i18n.global.t('events.detail.menu.label')" />
       </div>
 
@@ -121,16 +172,25 @@ const formattedStartTime = computed(() => {
       <div v-if="event">
         <!-- Hero Image -->
         <div class="eventDetailHero">
-          <img :src="event.category.picture" class="eventDetailImage" />
+          <img :src="event.category.picture" class="eventDetailImage" :class="{ eventDetailImageCancelled: isCancelled }" />
           <span v-if="event.category.customLabel" class="eventDetailBadge">{{ event.category.customLabel }}</span>
         </div>
 
         <!-- Title & Category -->
-        <EventTitle class="eventDetailTitle" :event="event" />
+        <EventTitle class="eventDetailTitle" :class="{ eventDetailTitleCancelled: isCancelled }" :event="event" />
 
         <div class="eventDetailInfo">
+          <!-- Cancelled banner -->
+          <Alert
+            v-if="isCancelled"
+            :message="i18n.global.t('events.detail.cancelledBanner')"
+            variant="error"
+            class="eventDetailCancelledBanner"
+          />
+
+          <div :class="{ eventDetailInfoBodyCancelled: isCancelled }">
           <!-- Attendance Buttons -->
-          <div class="eventDetailAttendanceButtons">
+          <div v-if="!isCancelled" class="eventDetailAttendanceButtons">
             <Button
               :title="i18n.global.t('events.detail.wontGo')"
               :theme="event.responses?.currentUserResponse === false ? 'red' : 'secondary'"
@@ -211,6 +271,7 @@ const formattedStartTime = computed(() => {
           <p v-else class="eventDetailNoResponses">
             {{ i18n.global.t('events.detail.attendees.noResponses') }}
           </p>
+          </div>
         </div>
       </div>
     </div>
@@ -223,6 +284,48 @@ const formattedStartTime = computed(() => {
       :picture="selectedUser.picture"
       @close="selectedUser = null"
     />
+
+    <Modal v-if="showCancelConfirm">
+      <div class="eventDetailCancelConfirm">
+        <h2 class="eventDetailDeleteTitle">{{ i18n.global.t('events.detail.cancelConfirm.title') }}</h2>
+        <p class="eventDetailDeleteMessage">{{ i18n.global.t('events.detail.cancelConfirm.message') }}</p>
+        <div class="eventDetailDeleteActions">
+          <Button
+            :title="i18n.global.t('events.detail.cancelConfirm.confirm')"
+            theme="red"
+            :loading="isCancelling"
+            @click="confirmCancel"
+          />
+          <Button
+            :title="i18n.global.t('events.detail.cancelConfirm.back')"
+            theme="secondary"
+            :disabled="isCancelling"
+            @click="showCancelConfirm = false"
+          />
+        </div>
+      </div>
+    </Modal>
+
+    <Modal v-if="showRestoreConfirm">
+      <div class="eventDetailRestoreConfirm">
+        <h2 class="eventDetailDeleteTitle">{{ i18n.global.t('events.detail.restoreConfirm.title') }}</h2>
+        <p class="eventDetailDeleteMessage">{{ i18n.global.t('events.detail.restoreConfirm.message') }}</p>
+        <div class="eventDetailDeleteActions">
+          <Button
+            :title="i18n.global.t('events.detail.restoreConfirm.confirm')"
+            theme="primary"
+            :loading="isRestoring"
+            @click="confirmRestore"
+          />
+          <Button
+            :title="i18n.global.t('events.detail.restoreConfirm.back')"
+            theme="secondary"
+            :disabled="isRestoring"
+            @click="showRestoreConfirm = false"
+          />
+        </div>
+      </div>
+    </Modal>
 
     <Modal v-if="showDeleteConfirm">
       <div class="eventDetailDeleteConfirm">
@@ -291,10 +394,23 @@ const formattedStartTime = computed(() => {
   z-index: 10;
 }
 
-.eventDetailDeleteConfirm {
+.eventDetailDeleteConfirm,
+.eventDetailRestoreConfirm {
   display: flex;
   flex-direction: column;
   gap: var(--gap);
+}
+
+.eventDetailImageCancelled {
+  filter: grayscale(1) opacity(0.5);
+}
+
+.eventDetailTitleCancelled {
+  opacity: 0.5;
+}
+
+.eventDetailInfoBodyCancelled {
+  opacity: 0.5;
 }
 
 .eventDetailDeleteTitle {
@@ -365,6 +481,16 @@ const formattedStartTime = computed(() => {
   display: flex;
   flex-direction: row;
   align-items: center;
+  gap: var(--gap);
+}
+
+.eventDetailCancelledBanner {
+  margin-top: var(--padding);
+}
+
+.eventDetailCancelConfirm {
+  display: flex;
+  flex-direction: column;
   gap: var(--gap);
 }
 

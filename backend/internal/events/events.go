@@ -42,6 +42,12 @@ func (s *Service) GetEvent(ctx context.Context, id string) (*Event, error) {
 	}
 	event.CanDelete = &canDelete
 
+	canCancel, err := s.canCancelEvent(ctx, userId, event.CreatedBy)
+	if err != nil {
+		return nil, err
+	}
+	event.CanCancel = &canCancel
+
 	return event, nil
 }
 
@@ -53,6 +59,72 @@ func (s *Service) canDeleteEvent(ctx context.Context, userId, creatorId uuid.UUI
 		return true, nil
 	}
 	return s.rbac.IsAuthorized(ctx, userId, rbac.PermissionEventsDeleteAny)
+}
+
+// canCancelEvent reports whether the user may cancel the event with the given creator.
+// The event's owner can always cancel it; everyone else needs the cancel-any permission
+// (which admins bypass).
+func (s *Service) canCancelEvent(ctx context.Context, userId, creatorId uuid.UUID) (bool, error) {
+	if userId == creatorId {
+		return true, nil
+	}
+	return s.rbac.IsAuthorized(ctx, userId, rbac.PermissionEventsCancelAny)
+}
+
+func (s *Service) CancelEvent(ctx context.Context, id string) error {
+	uuidId, err := uuid.Parse(id)
+	if err != nil {
+		return apperrors.NewBadRequest("invalid event id", err)
+	}
+
+	event, err := s.store.getEventById(ctx, uuidId)
+	if err != nil {
+		return err
+	}
+
+	if event.CancelledAt != nil {
+		return apperrors.NewBadRequest("event is already cancelled", nil)
+	}
+
+	userId := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims).ID
+
+	authorized, err := s.canCancelEvent(ctx, userId, event.CreatedBy)
+	if err != nil {
+		return err
+	}
+	if !authorized {
+		return apperrors.NewForbidden("you are not allowed to cancel this event")
+	}
+
+	return s.store.cancelEvent(ctx, uuidId)
+}
+
+func (s *Service) UncancelEvent(ctx context.Context, id string) error {
+	uuidId, err := uuid.Parse(id)
+	if err != nil {
+		return apperrors.NewBadRequest("invalid event id", err)
+	}
+
+	event, err := s.store.getEventById(ctx, uuidId)
+	if err != nil {
+		return err
+	}
+
+	if event.CancelledAt == nil {
+		return apperrors.NewBadRequest("event is not cancelled", nil)
+	}
+
+	userId := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims).ID
+
+	authorized, err := s.canCancelEvent(ctx, userId, event.CreatedBy)
+	if err != nil {
+		return err
+	}
+	if !authorized {
+		return apperrors.NewForbidden("you are not allowed to restore this event")
+	}
+
+	return s.store.uncancelEvent(ctx, uuidId)
 }
 
 func (s *Service) DeleteEvent(ctx context.Context, id string) error {

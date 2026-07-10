@@ -86,6 +86,7 @@ export default createI18n({
         back: 'Back',
         noEvents: 'No events yet.',
         fab: 'New Event',
+        cancelled: 'Cancelled',
         development: {
           title: 'Development Preview',
           message: 'This app is still in development. Please reach out to Kathi if you notice any bugs.'
@@ -111,6 +112,8 @@ export default createI18n({
           menu: {
             label: 'More options',
             delete: 'Delete event',
+            cancel: 'Cancel event',
+            restore: 'Restore event',
           },
           deleteConfirm: {
             title: 'Delete this event?',
@@ -118,6 +121,19 @@ export default createI18n({
             confirm: 'Delete',
             cancel: 'Cancel',
           },
+          cancelConfirm: {
+            title: 'Cancel this event?',
+            message: 'The event stays visible for everyone but will be marked as cancelled.',
+            confirm: 'Yes, cancel it',
+            back: 'Keep event',
+          },
+          restoreConfirm: {
+            title: 'Restore this event?',
+            message: 'The event will be active again and no longer shown as cancelled.',
+            confirm: 'Yes, restore it',
+            back: 'Keep as cancelled',
+          },
+          cancelledBanner: 'This event has been cancelled.',
           attendees: {
             going: '{count} going',
             notGoing: '{count} not going',
@@ -233,6 +249,7 @@ export default createI18n({
         back: 'Zurück',
         noEvents: 'Noch keine Events.',
         fab: 'Neues Event',
+        cancelled: 'Abgesagt',
         development: {
           title: 'Entwicklungs-Vorschau',
           message: 'Diese App ist noch in der Entwicklung. Wenn dir Fehler auffallen, melde dich gerne bei Kathi.'
@@ -258,6 +275,8 @@ export default createI18n({
           menu: {
             label: 'Mehr Optionen',
             delete: 'Event löschen',
+            cancel: 'Event absagen',
+            restore: 'Event wiederherstellen',
           },
           deleteConfirm: {
             title: 'Event wirklich löschen?',
@@ -265,6 +284,19 @@ export default createI18n({
             confirm: 'Löschen',
             cancel: 'Abbrechen',
           },
+          cancelConfirm: {
+            title: 'Event absagen?',
+            message: 'Das Event bleibt für alle sichtbar, wird aber als abgesagt markiert.',
+            confirm: 'Ja, absagen',
+            back: 'Event behalten',
+          },
+          restoreConfirm: {
+            title: 'Event wiederherstellen?',
+            message: 'Das Event ist dann wieder aktiv und wird nicht mehr als abgesagt angezeigt.',
+            confirm: 'Ja, wiederherstellen',
+            back: 'Abgesagt lassen',
+          },
+          cancelledBanner: 'Dieses Event wurde abgesagt.',
           attendees: {
             going: '{count} Zusagen',
             notGoing: '{count} Absagen',

@@ -36,8 +36,10 @@ type Event struct {
 	CategoryID  uuid.UUID       `db:"category" json:"categoryId" validate:"required"`
 	Category    Category        `db:"-" json:"category"`
 	Creator     Creator         `db:"-" json:"creator"`
+	CancelledAt *time.Time      `db:"cancelled_at" json:"cancelledAt,omitempty"`
 	Responses   *EventResponses `db:"-" json:"responses,omitempty"`
 	CanDelete   *bool           `db:"-" json:"canDelete,omitempty"`
+	CanCancel   *bool           `db:"-" json:"canCancel,omitempty"`
 }
 
 type EventAttendee struct {
