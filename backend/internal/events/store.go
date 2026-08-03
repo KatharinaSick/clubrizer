@@ -210,10 +210,16 @@ func (s *store) getEventResponses(ctx context.Context, eventId uuid.UUID, r resp
 }
 
 func (s *store) upsertEventResponse(ctx context.Context, eventId uuid.UUID, userId uuid.UUID, response bool) error {
+	// The WHERE predicate is required to match the unique index on (event_id, user_id):
+	// since user_id became nullable (migration 000010, for kid responses), that index is
+	// partial — WHERE user_id IS NOT NULL — on CockroachDB, which rewrites a unique index
+	// over a nullable column as partial. Without the predicate the arbiter doesn't match
+	// (SQLSTATE 42P10). Mirrors the kid upsert. Safe on Postgres too: a predicate may infer
+	// a non-partial index there.
 	_, err := s.conn.Exec(ctx, `
 		INSERT INTO event_responses (event_id, user_id, response)
 		VALUES ($1, $2, $3)
-		ON CONFLICT (event_id, user_id) DO UPDATE SET response = EXCLUDED.response
+		ON CONFLICT (event_id, user_id) WHERE user_id IS NOT NULL DO UPDATE SET response = EXCLUDED.response
 	`, eventId, userId, response)
 	if err != nil {
 		return errors.New(fmt.Sprintf("failed to upsert event response: %s", err.Error()))
