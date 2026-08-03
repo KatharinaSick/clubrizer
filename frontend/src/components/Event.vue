@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useI18n } from 'vue-i18n'
 import EventTitle from '@/components/EventTitle.vue'
 
 interface Category {
@@ -27,7 +25,7 @@ export interface EventProps {
   cancelledAt?: string
 }
 
-const props = defineProps<{
+defineProps<{
   event: EventProps
 }>()
 

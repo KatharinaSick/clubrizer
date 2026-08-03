@@ -16,4 +16,12 @@ export default [
   ...pluginVue.configs['flat/essential'],
   ...vueTsEslintConfig(),
   skipFormatting,
+
+  {
+    name: 'app/rule-overrides',
+    rules: {
+      // Design-system components are intentionally single-word (Button, Alert, …).
+      'vue/multi-word-component-names': 'off',
+    },
+  },
 ]

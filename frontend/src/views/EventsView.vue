@@ -12,6 +12,13 @@ import RequestError from '@/components/RequestError.vue'
 
 const router = useRouter()
 
+interface EventCategory {
+  id: string
+  name: string
+  color: string
+  canCreate: boolean
+}
+
 const events = ref<EventProps[]>([])
 const eventsLoaded = ref(false)
 const categoriesLoading = ref(false)
@@ -40,9 +47,9 @@ const loadCategories = () => {
     .get('/events/categories')
     .then(response => {
       categoriesLoading.value = false
-      categories.value = response.data
-        .filter((c: any) => c.canCreate)
-        .map((c: any) => ({
+      categories.value = (response.data as EventCategory[])
+        .filter(c => c.canCreate)
+        .map(c => ({
           id: c.id,
           label: c.name,
           color: c.color,
