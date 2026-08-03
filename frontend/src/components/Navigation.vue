@@ -2,9 +2,11 @@
 
 import { RouterLink, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useApprovalsStore } from '@/stores/approvals'
 
 const route = useRoute()
 const auth = useAuthStore()
+const approvals = useApprovalsStore()
 import IconProfile from '@/components/icons/IconProfile.vue'
 import IconEvents from '@/components/icons/IconEvents.vue'
 </script>
@@ -20,6 +22,7 @@ import IconEvents from '@/components/icons/IconEvents.vue'
       <RouterLink to="/profile" :class="['navigationLink', { navigationActiveLink: route.meta.activeNav === 'profile' }]">
         <IconProfile class="navigationIcon" />
         <span class="navigationLabel">{{ $t('navigation.profile') }}</span>
+        <span v-if="approvals.hasPending" class="navigationBadge" aria-hidden="true" />
       </RouterLink>
     </template>
     <RouterLink v-else to="/signin" class="navigationLink">
@@ -51,6 +54,19 @@ import IconEvents from '@/components/icons/IconEvents.vue'
   padding: 0;
   margin: 0;
   color: var(--gray);
+  position: relative;
+}
+
+.navigationBadge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--blue);
+  border: 2px solid var(--background-color);
+  box-sizing: content-box;
 }
 
 .navigationActiveLink {

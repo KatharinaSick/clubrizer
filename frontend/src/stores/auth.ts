@@ -5,6 +5,11 @@ import { useStorage } from '@vueuse/core'
 
 export type UserStatus = 'onboarding' | 'pending' | 'approved' | 'rejected'
 
+// Permission key that gates the member-management screen. Mirrors the backend's
+// rbac.PermissionUsersApprove — the backend is always the source of truth; the permission
+// in the token is only used to show or hide UI.
+export const PERMISSION_MANAGE_MEMBERS = 'users.approve'
+
 export interface User {
   email: string
   givenName: string | null
@@ -15,6 +20,8 @@ export interface User {
   // Whether the account holder participates in events themselves. false = a guardian
   // account ("only my kids") that only manages kids and never RSVPs for itself.
   selfParticipates: boolean
+  // Effective permission keys from the JWT — a UI hint only (see PERMISSION_MANAGE_MEMBERS).
+  permissions: string[]
 }
 
 export const useAuthStore = defineStore('auth', {
@@ -26,6 +33,9 @@ export const useAuthStore = defineStore('auth', {
   }),
   getters: {
     isLoggedIn: (state) => state.isAuthenticated,
+    // Whether the account may manage members (review the approval queue). Backend-enforced;
+    // this only decides UI visibility.
+    canManageMembers: (state) => (state.user.permissions ?? []).includes(PERMISSION_MANAGE_MEMBERS),
   },
   actions: {
     async requestOTP(email: string) {
@@ -95,4 +105,5 @@ const emptyUser: User = {
   picture: undefined,
   status: 'pending',
   selfParticipates: true,
+  permissions: [],
 }

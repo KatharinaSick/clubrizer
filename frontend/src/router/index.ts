@@ -39,6 +39,12 @@ const router = createRouter({
       meta: { showNavigation: false, activeNav: 'profile', requiresAuth: true }
     },
     {
+      path: '/manage-members',
+      name: 'manage-members',
+      component: () => import('../views/ManageMembersView.vue'),
+      meta: { showNavigation: false, activeNav: 'profile', requiresAuth: true, requiresManageMembers: true }
+    },
+    {
       path: '/signin',
       name: 'signin',
       component: () => import('../views/SignInView.vue'),
@@ -121,6 +127,12 @@ router.beforeEach((to) => {
       return { path: '/account-setup' }
     }
     return
+  }
+
+  // Member-management routes are gated on the permission. Backend-enforced too; this just
+  // keeps someone without it from landing on a screen they can't use.
+  if (to.meta.requiresManageMembers && !auth.canManageMembers) {
+    return { path: '/events' }
   }
 
   // Logged in, approved, complete profile — redirect away from the auth-only pages.

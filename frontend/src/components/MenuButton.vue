@@ -1,32 +1,51 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import IconMore from '@/components/icons/IconMore.vue'
+import Divider from '@/components/Divider.vue'
 
 export interface MenuItem {
   label: string
   danger?: boolean
+  // Shows a small red dot next to the item, e.g. to flag a section that needs attention.
+  badge?: boolean
+  // Renders the item small, gray and centered — for a low-emphasis link-style entry.
+  subtle?: boolean
+  // Draws a separator line above the item, to group it apart from the ones before it.
+  divider?: boolean
   onClick: () => void
 }
 
-defineProps<{
+const props = withDefaults(defineProps<{
   items: MenuItem[]
   ariaLabel?: string
-}>()
+  // 'floating' (default) is the circular button meant to sit over content; 'bare' is a plain
+  // icon button for use inside a header or toolbar.
+  variant?: 'floating' | 'bare'
+  // Shows a red dot on the trigger, e.g. when the menu contains something needing attention.
+  badge?: boolean
+  // Where the menu sits: 'below' (default) drops it just under the trigger; 'top-aligned' lines
+  // the menu's top edge up with the trigger's top edge, so it grows downward from there.
+  placement?: 'below' | 'top-aligned'
+}>(), {
+  variant: 'floating',
+  badge: false,
+  placement: 'below',
+})
 
 const open = ref(false)
 const trigger = ref<HTMLButtonElement | null>(null)
-const menuPosition = ref({ top: 0, right: 0 })
+const menuStyle = ref<Record<string, string>>({})
 
-// The menu is teleported to <body>, so we position it from the trigger's
-// on-screen rectangle: dropping below it and aligning their right edges.
+// The menu is teleported to <body>, so we position it from the trigger's on-screen
+// rectangle: aligning their right edges, and anchoring above or below per `placement`.
 function updatePosition() {
   const el = trigger.value
   if (!el) return
   const rect = el.getBoundingClientRect()
-  menuPosition.value = {
-    top: rect.bottom + 8,
-    right: window.innerWidth - rect.right,
-  }
+  const right = `${window.innerWidth - rect.right}px`
+  menuStyle.value = props.placement === 'top-aligned'
+    ? { top: `${rect.top}px`, right }
+    : { top: `${rect.bottom + 8}px`, right }
 }
 
 function openMenu() {
@@ -83,12 +102,14 @@ onBeforeUnmount(() => {
       ref="trigger"
       type="button"
       class="menuButtonTrigger"
+      :class="variant === 'bare' ? 'menuButtonTriggerBare' : 'menuButtonTriggerFloating'"
       :aria-label="ariaLabel"
       :aria-expanded="open"
       aria-haspopup="menu"
       @click="toggle"
     >
-      <IconMore class="menuButtonIcon" />
+      <slot name="icon"><IconMore class="menuButtonIcon" /></slot>
+      <span v-if="badge" class="menuButtonBadge" aria-hidden="true" />
     </button>
 
     <Teleport to="body">
@@ -96,20 +117,22 @@ onBeforeUnmount(() => {
         <div
           class="menuButtonMenu"
           role="menu"
-          :style="{ top: `${menuPosition.top}px`, right: `${menuPosition.right}px` }"
+          :style="menuStyle"
           @click.stop
         >
-          <button
-            v-for="(item, index) in items"
-            :key="index"
-            type="button"
-            role="menuitem"
-            class="menuButtonItem"
-            :class="{ menuButtonItemDanger: item.danger }"
-            @click="select(item)"
-          >
-            {{ item.label }}
-          </button>
+          <template v-for="(item, index) in items" :key="index">
+            <Divider v-if="item.divider" class="menuButtonDivider" />
+            <button
+              type="button"
+              role="menuitem"
+              class="menuButtonItem"
+              :class="{ menuButtonItemDanger: item.danger, menuButtonItemSubtle: item.subtle }"
+              @click="select(item)"
+            >
+              <span class="menuButtonItemLabel">{{ item.label }}</span>
+              <span v-if="item.badge" class="menuButtonItemBadge" aria-hidden="true" />
+            </button>
+          </template>
         </div>
       </div>
     </Teleport>
@@ -125,21 +148,47 @@ onBeforeUnmount(() => {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(4px);
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--box-shadow);
   padding: 0;
+  position: relative;
+}
+
+.menuButtonTriggerFloating {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(4px);
+  box-shadow: var(--box-shadow);
+}
+
+.menuButtonTriggerBare {
+  background: transparent;
+  color: var(--text-color);
+}
+
+.menuButtonTriggerBare:hover,
+.menuButtonTriggerBare:active {
+  background: var(--light-gray);
 }
 
 .menuButtonIcon {
   width: 22px;
   height: 22px;
   color: var(--text-color);
+}
+
+.menuButtonBadge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--blue);
+  border: 2px solid var(--background-color);
+  box-sizing: content-box;
 }
 
 .menuButtonScrim {
@@ -164,6 +213,10 @@ onBeforeUnmount(() => {
 
 .menuButtonItem {
   width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap);
   text-align: left;
   padding: var(--padding-input) var(--padding);
   background: transparent;
@@ -182,5 +235,23 @@ onBeforeUnmount(() => {
 
 .menuButtonItemDanger {
   color: var(--red);
+}
+
+.menuButtonItemSubtle {
+  justify-content: center;
+  font-size: var(--font-size-small);
+  color: var(--text-gray);
+}
+
+.menuButtonDivider {
+  margin: 4px 0;
+}
+
+.menuButtonItemBadge {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--blue);
+  flex-shrink: 0;
 }
 </style>

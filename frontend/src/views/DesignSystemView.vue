@@ -25,6 +25,13 @@ const menuItems: MenuItem[] = [
   { label: 'Delete', danger: true, onClick: () => {} },
 ]
 
+const menuItemsBadged: MenuItem[] = [
+  { label: 'Edit', onClick: () => {} },
+  { label: 'Manage Members', badge: true, onClick: () => {} },
+  { label: 'Logout', danger: true, onClick: () => {} },
+  { label: 'How it works', subtle: true, divider: true, onClick: () => {} },
+]
+
 const textInput = ref('')
 const errorInput = ref('')
 const dateInput = ref('')
@@ -61,6 +68,7 @@ const colors = [
   { name: '--blue', value: '#0E6EF0', label: 'Blue · Primary flat' },
   { name: '--light-blue', value: '#E1EDFD', label: 'Light Blue · Info bg' },
   { name: '--green', value: '#28E8A2', label: 'Green · Success / confirm' },
+  { name: '--light-green', value: '#D6F8EC', label: 'Light Green · Confirm bg' },
   { name: '--red', value: '#F3675E', label: 'Red · Error / decline' },
   { name: '--light-red', value: '#FCD7D4', label: 'Light Red · Error bg' },
   { name: '--orange', value: '#FF9F43', label: 'Orange · Warning' },
@@ -697,15 +705,37 @@ const spacingLayout = [
     <section class="dsSection">
       <h2 class="dsSectionTitle">Menu Button</h2>
       <p class="dsSectionDesc">
-        A round overflow button (kebab icon) that opens a small dropdown of actions. Use it to tuck away
-        secondary or rarely-needed actions (e.g. deleting an event) instead of showing a prominent button.
-        Pass <code>items</code> as <code>{ label, danger?, onClick }</code>; mark destructive actions with
-        <code>danger</code>. While open it dims the rest of the screen with a backdrop that blocks other
-        clicks; tapping the backdrop, pressing <code>Esc</code>, or choosing an item closes it.
+        A button that opens a small dropdown of actions. Use it to tuck away secondary or rarely-needed
+        actions (e.g. deleting an event) instead of showing a prominent button. Pass <code>items</code> as
+        <code>{ label, danger?, badge?, subtle?, divider?, onClick }</code>; mark destructive actions with
+        <code>danger</code>, set <code>badge</code> on an item to show a dot beside it, <code>subtle</code>
+        for a small, gray, centered link-style entry, and <code>divider</code> to draw a separator line above
+        it. While open it dims the rest of the
+        screen with a backdrop that blocks other clicks; tapping the backdrop, pressing <code>Esc</code>, or
+        choosing an item closes it.
+      </p>
+      <p class="dsSectionDesc">
+        <code>variant</code> is <code>floating</code> by default (the round translucent button meant to sit
+        over content); use <code>bare</code> for a plain icon button inside a header or toolbar. Override the
+        icon with the <code>#icon</code> slot, and set the <code>badge</code> prop to show a dot on the
+        trigger itself — e.g. when the menu holds something that needs attention. <code>placement</code>
+        (<code>below</code> by default, or <code>top-aligned</code>) controls whether the menu drops just under
+        the trigger or lines its top edge up with the trigger's top.
       </p>
       <div class="dsMenuButtonRow">
         <MenuButton :items="menuItems" aria-label="More options" />
-        <span class="dsNote">Click it — the menu opens below, aligned to the right.</span>
+        <span class="dsNote">Default: floating kebab button.</span>
+      </div>
+      <div class="dsMenuButtonRow">
+        <MenuButton
+          variant="bare"
+          :items="menuItemsBadged"
+          :badge="true"
+          aria-label="Settings"
+        >
+          <template #icon><IconPencil class="dsMenuButtonCog" /></template>
+        </MenuButton>
+        <span class="dsNote">Bare variant with a custom icon (#icon slot), a trigger badge, and a badged item.</span>
       </div>
     </section>
 
@@ -1565,6 +1595,11 @@ const spacingLayout = [
   display: flex;
   align-items: center;
   gap: var(--padding);
+}
+
+.dsMenuButtonCog {
+  width: 22px;
+  height: 22px;
 }
 
 /* ── Modal ── */

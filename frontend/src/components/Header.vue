@@ -21,6 +21,7 @@ const router = useRouter()
       </div>
       <h1 class="headerTitle">{{ title }}</h1>
       <div class="headerIcon">
+        <slot name="right" />
       </div>
     </div>
     <Divider v-if="showDivider" />

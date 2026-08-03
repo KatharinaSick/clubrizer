@@ -13,7 +13,6 @@ const router = useRouter()
         :title="$t('manageKids.header')"
         left-action="back"
         :back-fn="() => router.push('/profile')"
-        show-divider
       />
 
       <KidsManager />

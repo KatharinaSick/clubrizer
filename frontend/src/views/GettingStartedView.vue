@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import IconBack from '@/components/icons/IconBack.vue'
 import Button from '@/components/Button.vue'
 import Divider from '@/components/Divider.vue'
 import Alert from '@/components/Alert.vue'
@@ -63,6 +64,15 @@ const whySources: WhySource[] = [
 
 <template>
   <div class="gettingStartedPage">
+    <button
+      v-if="auth.isLoggedIn"
+      type="button"
+      class="gettingStartedBack"
+      :aria-label="$t('gettingStarted.back')"
+      @click="router.back()"
+    >
+      <IconBack class="gettingStartedBackIcon" />
+    </button>
 
     <!-- Hero -->
     <header class="gettingStartedHero">
@@ -169,6 +179,7 @@ const whySources: WhySource[] = [
 
 <style scoped>
 .gettingStartedPage {
+  position: relative;
   width: 100%;
   max-width: 640px;
   margin: 0 auto;
@@ -177,6 +188,24 @@ const whySources: WhySource[] = [
   display: flex;
   flex-direction: column;
   gap: 48px;
+}
+
+/* Floats in the top-left corner so it doesn't push the hero down. */
+.gettingStartedBack {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 4px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-color);
+}
+
+.gettingStartedBackIcon {
+  display: block;
+  width: 28px;
+  height: 28px;
 }
 
 /* Hero */

@@ -24,6 +24,7 @@ export default createI18n({
         howItWorks: 'New here? See how it works',
       },
       gettingStarted: {
+        back: 'Back',
         hero: {
           welcomeTo: 'Welcome to',
           intro: 'The app for your club. Stay connected, wherever you are.',
@@ -71,6 +72,8 @@ export default createI18n({
         logout: 'Logout',
         edit: 'Edit Profile',
         myKids: 'My Kids',
+        manageMembers: 'Manage Members',
+        menuLabel: 'Open menu',
         cancel: 'Cancel',
         howItWorks: 'How it works',
       },
@@ -205,6 +208,19 @@ export default createI18n({
       manageKids: {
         header: 'My Kids',
       },
+      manageMembers: {
+        header: 'Manage Members',
+        requests: {
+          title: 'Approval requests',
+          empty: 'No pending requests right now.',
+          newMember: 'New member',
+          guardian: 'Manages kids only',
+          newKids: 'New kids to review',
+          kids: 'Kids',
+          approve: 'Approve',
+          reject: 'Decline',
+        },
+      },
       pendingApproval: {
         pending: {
           title: 'Approval Pending',
@@ -249,6 +265,7 @@ export default createI18n({
         howItWorks: 'Neu hier? So geht\'s',
       },
       gettingStarted: {
+        back: 'Zurück',
         hero: {
           welcomeTo: 'Willkommen bei',
           intro: 'Die App für deinen Verein. Bleib in Verbindung, egal wo du bist.',
@@ -296,6 +313,8 @@ export default createI18n({
         logout: 'Abmelden',
         edit: 'Profil bearbeiten',
         myKids: 'Meine Kinder',
+        manageMembers: 'Mitglieder verwalten',
+        menuLabel: 'Menü öffnen',
         cancel: 'Abbrechen',
         howItWorks: 'So funktioniert die App',
       },
@@ -443,6 +462,19 @@ export default createI18n({
       },
       manageKids: {
         header: 'Meine Kinder',
+      },
+      manageMembers: {
+        header: 'Mitglieder verwalten',
+        requests: {
+          title: 'Freigabe-Anfragen',
+          empty: 'Aktuell keine offenen Anfragen.',
+          newMember: 'Neues Mitglied',
+          guardian: 'Verwaltet nur Kinder',
+          newKids: 'Neue Kinder zur Freigabe',
+          kids: 'Kinder',
+          approve: 'Freigeben',
+          reject: 'Ablehnen',
+        },
       },
       navigation: {
         events: 'Events',

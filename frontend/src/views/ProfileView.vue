@@ -1,17 +1,21 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useApprovalsStore } from '@/stores/approvals'
 import { useRequestStore } from '@/stores/request'
 import { useRouter } from 'vue-router'
 import ProfileInfo from '@/components/ProfileInfo.vue'
 import Header from '@/components/Header.vue'
 import Button from '@/components/Button.vue'
 import Input from '@/components/Input.vue'
+import MenuButton, { type MenuItem } from '@/components/MenuButton.vue'
+import IconMore from '@/components/icons/IconMore.vue'
 import RequestError from '@/components/RequestError.vue'
 import i18n from '@/plugins/i18n'
 import usersService, { type Role } from '@/service/users'
 
 const auth = useAuthStore()
+const approvals = useApprovalsStore()
 const requestStore = useRequestStore()
 const router = useRouter()
 
@@ -83,23 +87,51 @@ const logout = async () => {
   await auth.logout()
   router.push('/signin')
 }
+
+// Profile actions live in the gear menu. "Manage Members" and its red dot only appear for
+// accounts that can manage members; everyone else sees the personal actions only.
+const menuItems = computed<MenuItem[]>(() => {
+  const items: MenuItem[] = [
+    { label: i18n.global.t('profile.edit'), onClick: startEditing },
+    { label: i18n.global.t('profile.myKids'), onClick: () => router.push('/my-kids') },
+  ]
+  if (auth.canManageMembers) {
+    items.push({
+      label: i18n.global.t('profile.manageMembers'),
+      badge: approvals.hasPending,
+      onClick: () => router.push('/manage-members'),
+    })
+  }
+  items.push({ label: i18n.global.t('profile.logout'), danger: true, onClick: logout })
+  items.push({ label: i18n.global.t('profile.howItWorks'), subtle: true, divider: true, onClick: () => router.push('/getting-started') })
+  return items
+})
 </script>
 
 <template>
   <div class="profileView">
     <div class="profileCard">
-      <Header :title="i18n.global.t('profile.header')" />
+      <Header
+        :title="i18n.global.t('profile.header')"
+        :left-action="isEditing ? 'back' : undefined"
+        :back-fn="isEditing ? cancelEditing : undefined"
+      >
+        <template #right>
+          <MenuButton
+            v-if="!isEditing"
+            variant="bare"
+            placement="top-aligned"
+            :items="menuItems"
+            :badge="auth.canManageMembers && approvals.hasPending"
+            :aria-label="i18n.global.t('profile.menuLabel')"
+          >
+            <template #icon><IconMore class="profileMenuIcon" /></template>
+          </MenuButton>
+        </template>
+      </Header>
 
       <template v-if="!isEditing">
         <ProfileInfo :user="auth.user" :roles="roles" />
-        <div class="profileActions">
-          <Button :title="$t('profile.edit')" theme="secondary" @click="startEditing" />
-          <Button :title="$t('profile.myKids')" theme="secondary" @click="router.push('/my-kids')" />
-          <Button :title="$t('profile.logout')" theme="red" @click="logout" />
-        </div>
-        <div class="profileHowItWorks">
-          <RouterLink to="/getting-started" class="profileHowItWorksLink">{{ $t('profile.howItWorks') }}</RouterLink>
-        </div>
       </template>
 
       <template v-else>
@@ -140,7 +172,6 @@ const logout = async () => {
         <RequestError class="profileEditError" />
         <div class="profileActions">
           <Button :title="$t('profileSetup.save')" :loading="isLoading" @click="saveProfile" />
-          <Button :title="$t('profile.cancel')" theme="secondary" :disabled="isLoading" @click="cancelEditing" />
         </div>
       </template>
     </div>
@@ -160,19 +191,10 @@ const logout = async () => {
   margin-top: 24px;
 }
 
-.profileHowItWorks {
-  margin-top: var(--padding);
-  text-align: center;
-}
-
-.profileHowItWorksLink {
-  color: var(--text-gray);
-  font-size: var(--font-size-small);
-  text-decoration: underline;
-}
-
-.profileHowItWorksLink:active {
-  opacity: 0.6;
+.profileMenuIcon {
+  width: 22px;
+  height: 22px;
+  color: var(--text-color);
 }
 
 .profileEditFileWrapper {

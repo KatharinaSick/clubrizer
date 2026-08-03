@@ -1,11 +1,24 @@
 <script setup lang="ts">
+import { watch } from 'vue'
 import { RouterView, useRouter } from 'vue-router'
 import Navigation from '@/components/Navigation.vue'
 import TopProgressBar from '@/components/TopProgressBar.vue'
 import { useRequestStore } from '@/stores/request'
+import { useAuthStore } from '@/stores/auth'
+import { useApprovalsStore } from '@/stores/approvals'
 
 const requestStore = useRequestStore()
 useRouter().afterEach(() => requestStore.clearError())
+
+// Keep the pending-approvals badge in sync with who's logged in. refresh() clears the queue
+// for accounts that can't manage members, so the badges turn off on logout too.
+const auth = useAuthStore()
+const approvals = useApprovalsStore()
+watch(
+  () => auth.isLoggedIn && auth.canManageMembers,
+  () => approvals.refresh().catch(() => {}),
+  { immediate: true },
+)
 </script>
 
 <template>
