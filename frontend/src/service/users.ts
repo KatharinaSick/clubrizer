@@ -34,6 +34,24 @@ const usersService = {
     const { accessToken } = response.data
     return { user: jwtDecode<User>(accessToken), accessToken }
   },
+
+  async setAccountType(selfParticipates: boolean): Promise<{ user: User; accessToken: string }> {
+    const response = await axios.post(
+      '/users/me/account-type',
+      { selfParticipates },
+      { withCredentials: true },
+    )
+    const { accessToken } = response.data
+    return { user: jwtDecode<User>(accessToken), accessToken }
+  },
+
+  async finishOnboarding(): Promise<{ user: User; accessToken: string }> {
+    const response = await axios.post('/users/me/finish-onboarding', undefined, {
+      withCredentials: true,
+    })
+    const { accessToken } = response.data
+    return { user: jwtDecode<User>(accessToken), accessToken }
+  },
 }
 
 export default usersService

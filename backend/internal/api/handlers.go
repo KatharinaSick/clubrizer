@@ -18,15 +18,20 @@ import (
 	"github.com/katharinasick/clubrizer/internal/users"
 )
 
+// Handler function signatures the wrappers below adapt into http.Handler — all grouped
+// here so every shape lives in one place.
 type handler[Out any] func(context.Context) (*Out, error)
 type handlerWithInput[In any] func(context.Context, In) error
 type handlerWithInputAndReturnValue[In any, Out any] func(context.Context, In) (*Out, error)
 type handlerWithIdAndReturnValue[Out any] func(context.Context, string) (*Out, error)
 type handlerWithId func(context.Context, string) error
-
 type handlerWithListReturn[Out any] func(context.Context) ([]*Out, error)
-
 type handlerWithIdAndBody[In any] func(context.Context, string, In) error
+type handlerWithInputAndListReturn[In any, Out any] func(context.Context, In) ([]*Out, error)
+type handlerWithIdAndBodyAndReturnValue[In any, Out any] func(context.Context, string, In) (*Out, error)
+type handlerWithInputAndRefreshTokenReturn[In any, Out any] func(context.Context, In) (*Out, *users.RefreshTokenInfo, error)
+type handlerWithRefreshToken[Out any] func(context.Context, users.RefreshTokenInfo) (*Out, *users.RefreshTokenInfo, error)
+type handlerReturnValueAndRefreshToken[Out any] func(context.Context) (*Out, *users.RefreshTokenInfo, error)
 
 var validate = validator.New()
 
@@ -37,9 +42,6 @@ func init() {
 		panic(err)
 	}
 }
-
-type handlerWithInputAndRefreshTokenReturn[In any, Out any] func(context.Context, In) (*Out, *users.RefreshTokenInfo, error)
-type handlerWithRefreshToken[Out any] func(context.Context, users.RefreshTokenInfo) (*Out, *users.RefreshTokenInfo, error)
 
 func handle[Out any](f handler[Out]) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -80,6 +82,24 @@ func handleWithBody[In any](f handlerWithInput[In]) http.Handler {
 		}
 
 		ok(w)
+	})
+}
+
+func handleWithBodyAndReturnList[In any, Out any](f handlerWithInputAndListReturn[In, Out]) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		in, err := getAndValidatePayload[In](r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		out, err := f(r.Context(), *in)
+		if err != nil {
+			http.Error(w, err.Error(), apperrors.HttpStatusCode(err))
+			return
+		}
+
+		writeResponse(w, out)
 	})
 }
 
@@ -157,6 +177,84 @@ func handleWithIdAndBody[In any](f handlerWithIdAndBody[In]) http.Handler {
 		}
 
 		ok(w)
+	})
+}
+
+func handleWithIdAndBodyAndReturnValue[In any, Out any](f handlerWithIdAndBodyAndReturnValue[In, Out]) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		if id == "" {
+			http.Error(w, "missing id", http.StatusBadRequest)
+			return
+		}
+
+		in, err := getAndValidatePayload[In](r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		out, err := f(r.Context(), id, *in)
+		if err != nil {
+			http.Error(w, err.Error(), apperrors.HttpStatusCode(err))
+			return
+		}
+
+		writeResponse(w, out)
+	})
+}
+
+// handleKidPicture parses a multipart image upload for the kid identified by the
+// path id and returns the updated resource. Unlike handleProfilePicture it does not
+// touch the refresh token — a kid's picture is not part of the account's JWT.
+func handleKidPicture[Out any](f func(context.Context, string, string, io.Reader) (*Out, error)) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		if id == "" {
+			http.Error(w, "missing id", http.StatusBadRequest)
+			return
+		}
+
+		if err := r.ParseMultipartForm(5 << 20); err != nil { // 5 MB max
+			http.Error(w, "file too large or invalid form", http.StatusBadRequest)
+			return
+		}
+
+		file, header, err := r.FormFile("picture")
+		if err != nil {
+			http.Error(w, "missing picture field", http.StatusBadRequest)
+			return
+		}
+		defer file.Close()
+
+		contentType := header.Header.Get("Content-Type")
+		if !strings.HasPrefix(contentType, "image/") {
+			http.Error(w, "only image files are accepted", http.StatusBadRequest)
+			return
+		}
+
+		out, err := f(r.Context(), id, contentType, file)
+		if err != nil {
+			http.Error(w, err.Error(), apperrors.HttpStatusCode(err))
+			return
+		}
+
+		writeResponse(w, out)
+	})
+}
+
+// handleAndReturnRefreshToken is like handleWithBodyAndReturnRefreshToken but takes no
+// request body — for actions triggered by a bare POST that still reissue tokens.
+func handleAndReturnRefreshToken[Out any](cfg app.Config, f handlerReturnValueAndRefreshToken[Out]) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		out, rt, err := f(r.Context())
+		if err != nil {
+			http.Error(w, err.Error(), apperrors.HttpStatusCode(err))
+			return
+		}
+
+		setRefreshTokenCookie(w, cfg, rt)
+		writeResponse(w, out)
 	})
 }
 

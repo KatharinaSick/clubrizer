@@ -14,8 +14,11 @@ import type { EventProps } from '@/components/EventTitle.vue'
 import Header from '@/components/Header.vue'
 import MenuButton from '@/components/MenuButton.vue'
 import type { MenuItem } from '@/components/MenuButton.vue'
+import IconPencil from '@/components/icons/IconPencil.vue'
+import IconTrash from '@/components/icons/IconTrash.vue'
 
 const showProfileModal = ref(false)
+const showKidProfileModal = ref(false)
 
 const menuItems: MenuItem[] = [
   { label: 'Edit', onClick: () => {} },
@@ -320,6 +323,50 @@ const spacingLayout = [
           <p class="dsColorLabel">18×18px slot, left of label</p>
         </div>
       </div>
+
+      <h3 class="dsSubsectionTitle">Modifiers</h3>
+      <p class="dsSectionDesc">
+        Boolean props that combine with any <code>theme</code>. <code>inline</code> and
+        <code>icon-only</code> control sizing; <code>danger</code> and <code>accent</code> tint the
+        text of the borderless themes (<code>tertiary</code> / <code>ghost</code>) so they still
+        read as actionable rather than muted.
+      </p>
+      <div class="dsButtonGrid">
+        <div class="dsComponentItem">
+          <Button title="Inline" inline theme="secondary" />
+          <code class="dsToken">inline</code>
+          <p class="dsColorLabel">Sizes to its content instead of full width — for buttons that sit in a row</p>
+        </div>
+        <div class="dsComponentItem">
+          <Button title="Edit" icon-only inline theme="tertiary">
+            <template #icon><IconPencil /></template>
+          </Button>
+          <code class="dsToken">icon-only</code>
+          <p class="dsColorLabel">Shows only the icon; <code>title</code> becomes the <code>aria-label</code>. Always pair with an <code>#icon</code>.</p>
+        </div>
+        <div class="dsComponentItem">
+          <Button title="Edit" accent inline theme="tertiary" />
+          <code class="dsToken">accent + tertiary</code>
+          <p class="dsColorLabel">Blue link-coloured text — a borderless action that should read as clickable</p>
+        </div>
+        <div class="dsComponentItem">
+          <Button title="Remove" danger inline theme="tertiary" />
+          <code class="dsToken">danger + tertiary</code>
+          <p class="dsColorLabel">Red text — destructive borderless actions (remove, delete)</p>
+        </div>
+      </div>
+      <p class="dsSectionDesc" style="margin-top: 12px">
+        Real-world pairing — the per-kid actions in <code>KidsManager</code> combine
+        <code>icon-only</code> + <code>inline</code> with <code>accent</code> / <code>danger</code>:
+      </p>
+      <div class="dsKidActionsPreview">
+        <Button title="Edit" icon-only inline accent theme="tertiary">
+          <template #icon><IconPencil /></template>
+        </Button>
+        <Button title="Remove" icon-only inline danger theme="tertiary">
+          <template #icon><IconTrash /></template>
+        </Button>
+      </div>
     </section>
 
     <!-- ─── FORM INPUTS ─── -->
@@ -454,11 +501,17 @@ const spacingLayout = [
         Use <code>&lt;UserProfileModal&gt;</code> whenever the user taps a profile picture.
         Pass the user's name and optional picture; listen for <code>@close</code> to hide it.
         Clicking outside the card (on the backdrop) emits <code>close</code> automatically.
+        For a kid's profile, pass the optional <code>parent</code> prop (the parent's display
+        name) to show a "kid of {parent}" line.
       </p>
       <div class="dsModalPreview">
         <button class="dsProfileModalTrigger" @click="showProfileModal = true">
           <Avatar given-name="Kate" family-name="Poshuk" picture="https://i.pravatar.cc/150?img=47" size="md" />
           <span class="dsColorLabel">Click avatar to preview</span>
+        </button>
+        <button class="dsProfileModalTrigger" @click="showKidProfileModal = true">
+          <Avatar given-name="Max" family-name="Poshuk" size="md" />
+          <span class="dsColorLabel">Kid variant (with parent)</span>
         </button>
       </div>
       <UserProfileModal
@@ -468,6 +521,13 @@ const spacingLayout = [
         nick-name="Katze"
         picture="https://i.pravatar.cc/150?img=47"
         @close="showProfileModal = false"
+      />
+      <UserProfileModal
+        v-if="showKidProfileModal"
+        given-name="Max"
+        family-name="Poshuk"
+        parent="Katze"
+        @close="showKidProfileModal = false"
       />
       <div class="dsNote">
         Always set <code>selectedUser = null</code> (or equivalent) in the <code>@close</code> handler to dismiss the modal.
@@ -791,6 +851,61 @@ const spacingLayout = [
         <code>&lt;ProfileInfo :user="user" /&gt;</code> — avatar (xl, gradient ring) + nickname, full name, and email.
         Used at the top of the profile screen and profile menu.
       </p>
+
+      <h3 class="dsSubsectionTitle">Icons</h3>
+      <p class="dsSectionDesc">
+        SVG icon components live in <code>components/icons</code>. They fill with <code>currentColor</code>,
+        so they take the colour of their context — drop one into a <code>&lt;Button&gt;</code>'s
+        <code>#icon</code> slot and it inherits the button's text colour.
+      </p>
+      <div class="dsIconRow">
+        <div class="dsComponentItem dsComponentItemCenter">
+          <IconPencil />
+          <code class="dsToken">IconPencil</code>
+          <p class="dsColorLabel">Edit</p>
+        </div>
+        <div class="dsComponentItem dsComponentItemCenter">
+          <IconTrash />
+          <code class="dsToken">IconTrash</code>
+          <p class="dsColorLabel">Remove / delete</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── KIDS MANAGEMENT ─── -->
+    <section class="dsSection">
+      <h2 class="dsSectionTitle">Kids Management</h2>
+      <p class="dsSectionDesc">
+        Two components handle a member's children. Both fetch from the API on mount, so they're
+        documented here by reference rather than rendered live.
+      </p>
+
+      <h3 class="dsSubsectionTitle">KidsManager</h3>
+      <p class="dsSectionDesc">
+        <code>&lt;KidsManager /&gt;</code> — the post-approval management list on the profile
+        (<code>ManageKidsView</code>). One read-only row per kid (avatar, name, pending badge) with
+        icon-only <strong>edit</strong> (blue pencil) and <strong>remove</strong> (red trash)
+        actions. Add and edit share a single <code>&lt;Modal&gt;</code> that collects photo, first
+        name, and last name — both names required. Removing asks for confirmation in a second modal;
+        removed kids are soft-deleted, so they disappear from this list and the RSVP controls but keep
+        their past attendance on events they already responded to. Rejected kids are never shown (the
+        backend omits them).
+      </p>
+
+      <h3 class="dsSubsectionTitle">OnboardingKids</h3>
+      <p class="dsSectionDesc">
+        <code>&lt;OnboardingKids :initial-names="[]" @change="fn" /&gt;</code> — the lightweight
+        first-names-only entry used during onboarding. An auto-growing column of
+        <code>&lt;Input&gt;</code> fields: a trailing empty field spawns the next as you type, and
+        each filled row gets an icon-only remove button. Exposes <code>names()</code> via
+        <code>defineExpose</code> for the parent screen to collect on submit — nothing is persisted
+        until then.
+      </p>
+      <div class="dsNote">
+        Two entry points by design: onboarding collects <em>first names only</em> (fast, low
+        friction), while the post-approval manager and account setup collect the full details.
+        Keep them distinct — don't merge into one form.
+      </div>
     </section>
 
     <!-- ─── LAYOUT PATTERNS ─── -->
@@ -860,7 +975,7 @@ const spacingLayout = [
         </div>
       </div>
       <div class="dsNote">
-        Views currently using this pattern: EventDetailView, NewEventView, ProfileView, ProfileSetupView, PendingApprovalView.
+        Views currently using this pattern: EventDetailView, NewEventView, ProfileView, AccountSetupView, PendingApprovalView.
         Apply the same pattern to any new detail or form screen.
       </div>
     </section>
@@ -1215,6 +1330,25 @@ const spacingLayout = [
 
 .dsComponentItemCenter {
   align-items: center;
+}
+
+.dsKidActionsPreview {
+  display: flex;
+  gap: var(--gap);
+  align-items: center;
+  padding: var(--padding);
+  background: var(--light-gray);
+  border-radius: var(--border-radius);
+  width: fit-content;
+}
+
+.dsIconRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-start;
+  margin-top: var(--gap);
+  color: var(--text-light);
 }
 
 /* ── Forms ── */

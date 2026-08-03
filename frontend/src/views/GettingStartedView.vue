@@ -21,6 +21,7 @@ const joinSteps: JoinStep[] = [
   { title: 'gettingStarted.join.step2Title', text: 'gettingStarted.join.step2', note: 'gettingStarted.join.step2Note' },
   { title: 'gettingStarted.join.step3Title', text: 'gettingStarted.join.step3' },
   { title: 'gettingStarted.join.step4Title', text: 'gettingStarted.join.step4' },
+  { title: 'gettingStarted.join.step5Title', text: 'gettingStarted.join.step5' },
 ]
 
 interface InstallPlatform {

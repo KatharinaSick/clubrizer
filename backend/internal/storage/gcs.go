@@ -25,10 +25,11 @@ func NewClient(ctx context.Context, bucketName string) (*Client, error) {
 	return &Client{bucketName: bucketName, gcs: gcsClient}, nil
 }
 
-// UploadProfilePicture uploads an image to GCS with a UUID-based object name and
-// sets a public read ACL on the object. Returns the public URL.
+// UploadPicture uploads an image to GCS with a UUID-based object name and sets a
+// public read ACL on the object. Returns the public URL. Used for both user and kid
+// profile pictures (the object is not tied to any particular owner).
 // Note: per-object ACLs require uniform bucket-level access to be disabled on the bucket.
-func (c *Client) UploadProfilePicture(ctx context.Context, contentType string, data io.Reader) (string, error) {
+func (c *Client) UploadPicture(ctx context.Context, contentType string, data io.Reader) (string, error) {
 	objectName := uuid.New().String()
 
 	obj := c.gcs.Bucket(c.bucketName).Object(objectName)

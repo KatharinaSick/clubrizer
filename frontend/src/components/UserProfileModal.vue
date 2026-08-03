@@ -6,6 +6,8 @@ defineProps<{
   familyName: string
   nickName?: string | null
   picture?: string | null
+  // When set, this profile belongs to a kid managed by the named parent.
+  parent?: string | null
 }>()
 
 const emit = defineEmits<{ close: [] }>()
@@ -26,6 +28,7 @@ const emit = defineEmits<{ close: [] }>()
         <div class="userProfileModalText">
           <strong v-if="nickName" class="userProfileModalNickname">{{ nickName }}</strong>
           <span class="userProfileModalFullName">{{ givenName }} {{ familyName }}</span>
+          <span v-if="parent" class="userProfileModalParent">{{ $t('userProfileModal.kidOf', { parent }) }}</span>
         </div>
       </div>
     </div>
@@ -102,6 +105,11 @@ const emit = defineEmits<{ close: [] }>()
 .userProfileModalFullName {
   color: var(--text-color);
   font-size: var(--font-size-medium);
+}
+
+.userProfileModalParent {
+  color: var(--text-gray);
+  font-size: var(--font-size-small);
 }
 
 @keyframes userProfileModalOverlayIn {

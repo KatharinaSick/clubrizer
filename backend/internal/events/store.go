@@ -113,40 +113,97 @@ func (s *store) getEventById(ctx context.Context, id uuid.UUID) (*Event, error) 
 	return &e, nil
 }
 
-func (s *store) getEventResponses(ctx context.Context, eventId uuid.UUID, userId uuid.UUID) (*EventResponses, error) {
+func (s *store) getEventResponses(ctx context.Context, eventId uuid.UUID, r responder) (*EventResponses, error) {
+	// Attendee grid: every response for the event, whether it belongs to an account
+	// holder (user_id) or a kid (kid_id). COALESCE folds kid fields over user fields
+	// so both render the same way; for a kid, the parent's nick name is joined in.
 	rows, err := s.conn.Query(ctx, `
-		SELECT u.id, u.given_name, u.family_name, COALESCE(u.nick_name, u.given_name), u.picture, r.response
-		FROM event_responses r
-		JOIN users u ON r.user_id = u.id
-		WHERE r.event_id = $1
-		ORDER BY r.created_at
+		SELECT
+			COALESCE(u.id, k.id),
+			COALESCE(u.given_name, k.given_name, ''),
+			COALESCE(u.family_name, k.family_name, ''),
+			COALESCE(u.nick_name, u.given_name, k.given_name, ''),
+			COALESCE(u.picture, k.picture),
+			resp.response,
+			(resp.kid_id IS NOT NULL),
+			pu.nick_name
+		FROM event_responses resp
+		LEFT JOIN users u ON resp.user_id = u.id
+		LEFT JOIN kids k ON resp.kid_id = k.id
+		LEFT JOIN users pu ON k.user_id = pu.id
+		WHERE resp.event_id = $1
+		  -- Own responses always show; a kid response only if the kid isn't rejected.
+		  -- Removed (soft-deleted) kids keep status 'approved', so their past responses
+		  -- stay visible here even though they're gone from the parent's controls.
+		  AND (resp.kid_id IS NULL OR k.status <> 'rejected')
+		ORDER BY resp.created_at
 	`, eventId)
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("failed to query event responses: %s", err.Error()))
 	}
 	defer rows.Close()
 
-	responses := &EventResponses{Attendees: []*EventAttendee{}}
+	responses := &EventResponses{Attendees: []*EventAttendee{}, MyResponses: []*MyResponse{}}
+	var ownResponse *bool
 	for rows.Next() {
 		var a EventAttendee
-		err := rows.Scan(&a.ID, &a.GivenName, &a.FamilyName, &a.NickName, &a.Picture, &a.Response)
+		var parent *string
+		err := rows.Scan(&a.ID, &a.GivenName, &a.FamilyName, &a.NickName, &a.Picture, &a.Response, &a.IsKid, &parent)
 		if err != nil {
 			return nil, errors.New(fmt.Sprintf("failed to scan event response: %s", err.Error()))
+		}
+		if a.IsKid {
+			a.Parent = parent
 		}
 		if a.Response {
 			responses.Going++
 		} else {
 			responses.NotGoing++
 		}
-		if a.ID == userId {
-			r := a.Response
-			responses.CurrentUserResponse = &r
+		if !a.IsKid && a.ID == r.UserID {
+			resp := a.Response
+			ownResponse = &resp
 		}
 		responses.Attendees = append(responses.Attendees, &a)
 	}
-
 	if rows.Err() != nil {
 		return nil, errors.New(fmt.Sprintf("rows error: %s", rows.Err().Error()))
+	}
+
+	// The account holder participates only if self_participates; their own response
+	// was captured above (nil if they haven't responded yet).
+	if r.SelfParticipates {
+		responses.MyResponses = append(responses.MyResponses, &MyResponse{
+			ID:       r.UserID,
+			IsSelf:   true,
+			Name:     r.Name,
+			Picture:  r.Picture,
+			Response: ownResponse,
+		})
+	}
+
+	// Approved kids the account manages, each with their response for this event.
+	kidRows, err := s.conn.Query(ctx, `
+		SELECT k.id, COALESCE(k.given_name, ''), k.picture, resp.response
+		FROM kids k
+		LEFT JOIN event_responses resp ON resp.kid_id = k.id AND resp.event_id = $2
+		WHERE k.user_id = $1 AND k.status = 'approved' AND k.deleted_at IS NULL
+		ORDER BY k.created_at
+	`, r.UserID, eventId)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to query kid responses: %s", err.Error()))
+	}
+	defer kidRows.Close()
+
+	for kidRows.Next() {
+		var m MyResponse
+		if err := kidRows.Scan(&m.ID, &m.Name, &m.Picture, &m.Response); err != nil {
+			return nil, errors.New(fmt.Sprintf("failed to scan kid response: %s", err.Error()))
+		}
+		responses.MyResponses = append(responses.MyResponses, &m)
+	}
+	if kidRows.Err() != nil {
+		return nil, errors.New(fmt.Sprintf("rows error: %s", kidRows.Err().Error()))
 	}
 
 	return responses, nil
@@ -162,6 +219,37 @@ func (s *store) upsertEventResponse(ctx context.Context, eventId uuid.UUID, user
 		return errors.New(fmt.Sprintf("failed to upsert event response: %s", err.Error()))
 	}
 	return nil
+}
+
+func (s *store) upsertKidEventResponse(ctx context.Context, eventId uuid.UUID, kidId uuid.UUID, response bool) error {
+	_, err := s.conn.Exec(ctx, `
+		INSERT INTO event_responses (event_id, kid_id, response)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (event_id, kid_id) WHERE kid_id IS NOT NULL DO UPDATE SET response = EXCLUDED.response
+	`, eventId, kidId, response)
+	if err != nil {
+		return errors.New(fmt.Sprintf("failed to upsert kid event response: %s", err.Error()))
+	}
+	return nil
+}
+
+// getOwnedKidStatus returns the kid's approval status only if it belongs to userId and
+// hasn't been removed. A kid owned by someone else — or one that was soft-deleted — is
+// reported as not found, so a guessed id reveals nothing and a removed kid can't receive
+// new responses.
+func (s *store) getOwnedKidStatus(ctx context.Context, kidId uuid.UUID, userId uuid.UUID) (string, error) {
+	var status string
+	err := s.conn.QueryRow(ctx,
+		"SELECT status FROM kids WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL",
+		kidId, userId,
+	).Scan(&status)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", apperrors.NewNotFound(fmt.Sprintf("kid with id %s not found", kidId))
+		}
+		return "", errors.New(fmt.Sprintf("failed to query kid status: %s", err.Error()))
+	}
+	return status, nil
 }
 
 func (s *store) deleteEvent(ctx context.Context, id uuid.UUID) error {
@@ -203,7 +291,7 @@ func (s *store) uncancelEvent(ctx context.Context, id uuid.UUID) error {
 func (s *store) createEvent(ctx context.Context, e *Event) (uuid.UUID, error) {
 	var id uuid.UUID
 	err := s.conn.QueryRow(
-		context.Background(),
+		ctx,
 		"INSERT INTO events(title, category, description, location, start_time, created_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
 		e.Title, e.CategoryID, e.Description, e.Location, e.StartTime, ctx.Value(s.cfg.JWT.User.Key).(*users.Claims).ID,
 	).Scan(&id)

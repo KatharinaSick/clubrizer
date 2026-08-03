@@ -5,6 +5,15 @@ withDefaults(
     loading?: boolean
     disabled?: boolean
     theme?: 'primary' | 'secondary' | 'green' | 'red' | 'ghost' | 'tertiary'
+    // iconOnly shows just the icon slot; the title is kept as the accessible label.
+    iconOnly?: boolean
+    // inline sizes the button to its content instead of full width.
+    inline?: boolean
+    // danger tints the text of the borderless themes (tertiary/ghost) red.
+    danger?: boolean
+    // accent tints the text of the borderless themes (tertiary/ghost) with the accent
+    // colour, so a borderless button still reads as an actionable link rather than muted.
+    accent?: boolean
   }>(),
   {
     theme: 'primary'
@@ -15,15 +24,16 @@ withDefaults(
 <template>
   <button
     class="button"
-    :class="theme"
+    :class="[theme, { iconOnly, inline, danger, accent }]"
     :disabled="disabled || loading"
+    :aria-label="iconOnly ? title : undefined"
   >
     <span v-if="loading" class="buttonSpinner" />
     <span v-else class="buttonContent">
       <span v-if="$slots.icon" class="buttonIconWrapper">
         <slot name="icon"></slot>
       </span>
-      <span>{{ title }}</span>
+      <span v-if="!iconOnly">{{ title }}</span>
     </span>
   </button>
 </template>
@@ -45,6 +55,10 @@ withDefaults(
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.button.inline {
+  width: auto;
 }
 
 .buttonIconWrapper {
@@ -154,6 +168,16 @@ withDefaults(
 
 .button.tertiary:disabled {
   opacity: 0.4;
+}
+
+.button.tertiary.danger,
+.button.ghost.danger {
+  color: var(--red);
+}
+
+.button.tertiary.accent,
+.button.ghost.accent {
+  color: var(--blue);
 }
 
 .buttonSpinner {

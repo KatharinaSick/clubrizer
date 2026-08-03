@@ -91,6 +91,7 @@ func (s *Service) generateAccessToken(u *User, registeredClaims jwt.RegisteredCl
 		NickName:         u.NickName,
 		Picture:          u.Picture,
 		Status:           u.Status,
+		SelfParticipates: u.SelfParticipates,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)

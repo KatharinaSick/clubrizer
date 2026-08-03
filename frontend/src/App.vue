@@ -14,7 +14,11 @@ useRouter().afterEach(() => requestStore.clearError())
     <div class="content" :class="{ contentFullBleed: $route.meta.fullBleed }">
       <RouterView />
     </div>
-    <Navigation class="navigation" :class="{ navigationMobileHidden: !$route.meta.showNavigation }" />
+    <Navigation
+      v-if="!$route.meta.hideNavigation"
+      class="navigation"
+      :class="{ navigationMobileHidden: !$route.meta.showNavigation }"
+    />
   </div>
 </template>
 

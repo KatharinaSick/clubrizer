@@ -57,7 +57,7 @@ type UpdateProfilePictureResponse struct {
 func (s *Service) UpdateProfilePicture(ctx context.Context, contentType string, data io.Reader) (*UpdateProfilePictureResponse, *RefreshTokenInfo, error) {
 	claims := ctx.Value(s.cfg.JWT.User.Key).(*Claims)
 
-	url, err := s.storageClient.UploadProfilePicture(ctx, contentType, data)
+	url, err := s.storageClient.UploadPicture(ctx, contentType, data)
 	if err != nil {
 		return nil, nil, err
 	}

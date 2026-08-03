@@ -29,8 +29,14 @@ func (s *Service) GetEvent(ctx context.Context, id string) (*Event, error) {
 		return nil, err
 	}
 
-	userId := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims).ID
-	responses, err := s.store.getEventResponses(ctx, uuidId, userId)
+	claims := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims)
+	userId := claims.ID
+	responses, err := s.store.getEventResponses(ctx, uuidId, responder{
+		UserID:           claims.ID,
+		Name:             displayName(claims),
+		Picture:          claims.Picture,
+		SelfParticipates: claims.SelfParticipates,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -166,8 +172,28 @@ func (s *Service) UpsertEventResponse(ctx context.Context, eventId string, req U
 		return apperrors.NewBadRequest("this event has already taken place", nil)
 	}
 
-	userId := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims).ID
-	return s.store.upsertEventResponse(ctx, uuidId, userId, *req.Response)
+	claims := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims)
+
+	// RSVP for a kid: it must be the caller's own kid and approved. Ownership is
+	// enforced in the query (a kid belonging to someone else is reported as not
+	// found), and approval is gated here — never trust the client.
+	if req.KidID != nil {
+		status, err := s.store.getOwnedKidStatus(ctx, *req.KidID, claims.ID)
+		if err != nil {
+			return err
+		}
+		if status != "approved" {
+			return apperrors.NewForbidden("this kid is not approved yet")
+		}
+		return s.store.upsertKidEventResponse(ctx, uuidId, *req.KidID, *req.Response)
+	}
+
+	// Own response: only participating accounts may RSVP for themselves. A guardian
+	// ("only my kids") account has no own participation.
+	if !claims.SelfParticipates {
+		return apperrors.NewForbidden("this account does not participate in events itself")
+	}
+	return s.store.upsertEventResponse(ctx, uuidId, claims.ID, *req.Response)
 }
 
 func (s *Service) CreateEvent(ctx context.Context, e Event) (*Event, error) {
@@ -175,7 +201,8 @@ func (s *Service) CreateEvent(ctx context.Context, e Event) (*Event, error) {
 		return nil, apperrors.NewBadRequest("start time must be in the future", nil)
 	}
 
-	userId := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims).ID
+	claims := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims)
+	userId := claims.ID
 
 	authorized, err := s.rbac.IsAuthorizedToCreateEvent(ctx, userId, e.CategoryID)
 	if err != nil {
@@ -191,9 +218,25 @@ func (s *Service) CreateEvent(ctx context.Context, e Event) (*Event, error) {
 	}
 	e.ID = id
 
-	if err := s.store.upsertEventResponse(ctx, id, userId, true); err != nil {
-		return nil, err
+	// Auto-RSVP the creator as going — but only if the account participates itself.
+	// (A guardian account can't create events anyway, since it holds no member role.)
+	if claims.SelfParticipates {
+		if err := s.store.upsertEventResponse(ctx, id, userId, true); err != nil {
+			return nil, err
+		}
 	}
 
 	return &e, nil
+}
+
+// displayName returns the best available display name for the account holder,
+// preferring the nick name and falling back to the given name.
+func displayName(c *users.Claims) string {
+	if c.NickName != nil && *c.NickName != "" {
+		return *c.NickName
+	}
+	if c.GivenName != nil {
+		return *c.GivenName
+	}
+	return ""
 }

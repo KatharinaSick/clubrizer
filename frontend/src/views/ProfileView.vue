@@ -94,6 +94,7 @@ const logout = async () => {
         <ProfileInfo :user="auth.user" :roles="roles" />
         <div class="profileActions">
           <Button :title="$t('profile.edit')" theme="secondary" @click="startEditing" />
+          <Button :title="$t('profile.myKids')" theme="secondary" @click="router.push('/my-kids')" />
           <Button :title="$t('profile.logout')" theme="red" @click="logout" />
         </div>
         <div class="profileHowItWorks">

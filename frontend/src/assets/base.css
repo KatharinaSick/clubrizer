@@ -38,6 +38,11 @@
     margin: 0;
     padding: 0;
 
+    /* The app is light-only for now (dark theming is a TODO below). Declaring this stops
+       dark-mode browsers from applying their own dark treatment on top of the hardcoded
+       light colors, which otherwise dims the page and native controls to a grey cast. */
+    color-scheme: light;
+
     --background-color: var(--white);
     --text-color: var(--text-light);
     --modal-background-color: var(--modal-background-light);

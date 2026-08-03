@@ -99,6 +99,28 @@ func addRoutes(
 	mux.Handle("PATCH /users/me/profile", authenticated(cfg, handleWithBodyAndReturnRefreshToken(cfg, userService.UpdateProfile)))
 	mux.Handle("POST /users/me/picture", authenticated(cfg, handleProfilePicture(cfg, userService.UpdateProfilePicture)))
 
+	// Onboarding mutations — gated onboarding-only. Choosing the account type and finishing
+	// onboarding must never be reachable once approved: post-approval they could silently flip
+	// self_participates (revoking the member role and the account's own RSVP ability, and
+	// orphaning existing own responses) with no UI or cleanup behind them. Reading kids stays
+	// reachable while approved too, since the post-approval account-setup and kid-management
+	// screens list them, and while pending, so the waiting screen can show the submitted kids.
+	mux.Handle("POST /users/me/account-type", onboardingOnly(cfg, handleWithBodyAndReturnRefreshToken(cfg, userService.SetAccountType)))
+	mux.Handle("POST /users/me/finish-onboarding", onboardingOnly(cfg, handleAndReturnRefreshToken(cfg, userService.FinishOnboarding)))
+	mux.Handle("GET /users/me/kids", notRejected(cfg, handleAndReturnList(userService.ListKids)))
+	// Onboarding's "add your kids" step: the wizard sends its whole list and this replaces
+	// the account's kids with it. Named as an onboarding action (like account-type /
+	// finish-onboarding) and gated onboarding-only, so the general /users/me/kids resource
+	// below stays uniform approved-only CRUD — a wholesale replace must never be able to
+	// wipe an approved account's kids (and their event responses).
+	mux.Handle("POST /users/me/onboarding/kids", onboardingOnly(cfg, handleWithBodyAndReturnList(userService.ReplaceKids)))
+
+	// Approved-only kid management — adding, editing, removing and photos happen after approval.
+	mux.Handle("POST /users/me/kids", authenticated(cfg, handleWithBodyAndReturnValue(userService.AddKid)))
+	mux.Handle("PATCH /users/me/kids/{id}", authenticated(cfg, handleWithIdAndBodyAndReturnValue(userService.UpdateKid)))
+	mux.Handle("DELETE /users/me/kids/{id}", authenticated(cfg, handleWithId(userService.RemoveKid)))
+	mux.Handle("POST /users/me/kids/{id}/picture", authenticated(cfg, handleKidPicture(userService.UpdateKidPicture)))
+
 	// Events
 	mux.Handle("GET /events/categories", authenticated(cfg, handleAndReturnList(eventsService.ListCategories)))
 
@@ -118,6 +140,15 @@ type userService interface {
 	UpdateProfile(ctx context.Context, req users.UpdateProfileRequest) (*users.UpdateProfileResponse, *users.RefreshTokenInfo, error)
 	UpdateProfilePicture(ctx context.Context, contentType string, data io.Reader) (*users.UpdateProfilePictureResponse, *users.RefreshTokenInfo, error)
 	RefreshTokens(ctx context.Context, t users.RefreshTokenInfo) (*users.RefreshTokensResponse, *users.RefreshTokenInfo, error)
+
+	SetAccountType(ctx context.Context, req users.SetAccountTypeRequest) (*users.SetAccountTypeResponse, *users.RefreshTokenInfo, error)
+	FinishOnboarding(ctx context.Context) (*users.FinishOnboardingResponse, *users.RefreshTokenInfo, error)
+	ListKids(ctx context.Context) ([]*users.Kid, error)
+	ReplaceKids(ctx context.Context, req users.ReplaceKidsRequest) ([]*users.Kid, error)
+	AddKid(ctx context.Context, req users.KidRequest) (*users.Kid, error)
+	UpdateKid(ctx context.Context, id string, req users.KidRequest) (*users.Kid, error)
+	RemoveKid(ctx context.Context, id string) error
+	UpdateKidPicture(ctx context.Context, id string, contentType string, data io.Reader) (*users.Kid, error)
 }
 
 type eventsService interface {

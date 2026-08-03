@@ -35,13 +35,26 @@ export interface EventAttendee {
   nickName: string
   picture?: string
   response: boolean
+  isKid: boolean
+  // parent is the owning parent's display name, present only for kid attendees.
+  parent?: string
+}
+
+// MyResponse is one person the current account can RSVP for (the account holder, if
+// they participate, plus each approved kid) with that person's current response.
+export interface MyResponse {
+  id: string
+  isSelf: boolean
+  name: string
+  picture?: string | null
+  response: boolean | null
 }
 
 export interface EventResponses {
   going: number
   notGoing: number
-  currentUserResponse: boolean | null
   attendees: EventAttendee[]
+  myResponses: MyResponse[]
 }
 
 export interface EventDetail extends Event {
@@ -64,8 +77,14 @@ export const createEvent = async (event: CreateEventRequest): Promise<Event> => 
   return response.data
 }
 
-export const upsertEventResponse = async (eventId: string, response: boolean): Promise<void> => {
-  await axios.put(`/events/${eventId}/response`, { response })
+// upsertEventResponse sets a response for one person. Omit kidId for the account
+// holder's own response, or pass a kid's id to respond for that kid.
+export const upsertEventResponse = async (
+  eventId: string,
+  response: boolean,
+  kidId?: string,
+): Promise<void> => {
+  await axios.put(`/events/${eventId}/response`, { response, kidId: kidId ?? null })
 }
 
 export const deleteEvent = async (eventId: string): Promise<void> => {

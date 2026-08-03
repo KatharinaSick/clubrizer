@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
 import { computed, onMounted, ref } from 'vue'
+import { useMediaQuery } from '@vueuse/core'
 import axios from '@/plugins/axios'
 import Alert from '@/components/Alert.vue'
 import Avatar from '@/components/Avatar.vue'
 import Button from '@/components/Button.vue'
 import EventTitle from '@/components/EventTitle.vue'
-import type { EventDetail } from '@/service/events'
+import type { EventDetail, MyResponse } from '@/service/events'
 import { upsertEventResponse, deleteEvent, cancelEvent, uncancelEvent } from '@/service/events'
 import i18n from '@/plugins/i18n'
 import IconBack from '@/components/icons/IconBack.vue'
@@ -25,6 +26,8 @@ type UserForModal = {
   familyName: string
   nickName: string | null
   picture?: string | null
+  isKid?: boolean
+  parent?: string
 }
 
 const route = useRoute()
@@ -33,6 +36,7 @@ const eventId = route.params.id as string
 
 const event = ref<EventDetail | null>(null)
 const pendingResponse = ref<boolean | null>(null)
+const submittingIds = ref<Set<string>>(new Set())
 const showDeleteConfirm = ref(false)
 const isDeleting = ref(false)
 const showCancelConfirm = ref(false)
@@ -42,6 +46,10 @@ const isRestoring = ref(false)
 const selectedUser = ref<UserForModal | null>(null)
 
 const isCancelled = computed(() => !!event.value?.cancelledAt)
+
+// Below the layout breakpoint the per-person RSVP toggles show icon-only to stay compact;
+// above it they spell out the action.
+const isCompact = useMediaQuery('(max-width: 767px)')
 
 const menuItems = computed<MenuItem[]>(() => {
   const items: MenuItem[] = []
@@ -123,14 +131,41 @@ const isPastEvent = computed(() => {
   return new Date(event.value.startTime) <= new Date()
 })
 
-const submitResponse = async (response: boolean) => {
-  if (!event.value || isPastEvent.value || event.value.responses?.currentUserResponse === response || pendingResponse.value !== null) return
+// The people the current account can RSVP for on this event: the account holder (if
+// they participate) plus each approved kid, each with their current response.
+const myPeople = computed(() => event.value?.responses?.myResponses ?? [])
+const isSinglePerson = computed(() => myPeople.value.length === 1)
+const soloPerson = computed(() => myPeople.value[0] ?? null)
+
+// What a Going/Not-going button should reflect: for a single person it mirrors their
+// current response; for multiple people the buttons just open the picker.
+const soloGoing = computed(() => isSinglePerson.value && soloPerson.value?.response === true)
+const soloNotGoing = computed(() => isSinglePerson.value && soloPerson.value?.response === false)
+
+const submitSolo = async (response: boolean) => {
+  const person = soloPerson.value
+  if (!person || person.response === response || pendingResponse.value !== null) return
   pendingResponse.value = response
   try {
-    await upsertEventResponse(eventId, response)
+    await upsertEventResponse(eventId, response, person.isSelf ? undefined : person.id)
     await loadEvent()
   } finally {
     pendingResponse.value = null
+  }
+}
+
+// Multi-person accounts: set one person's response directly from their inline row. Each
+// row tracks its own in-flight state so several can be tapped without blocking each other.
+const setPersonResponse = async (person: MyResponse, response: boolean) => {
+  if (isPastEvent.value || person.response === response || submittingIds.value.has(person.id)) return
+  submittingIds.value = new Set(submittingIds.value).add(person.id)
+  try {
+    await upsertEventResponse(eventId, response, person.isSelf ? undefined : person.id)
+    await loadEvent()
+  } finally {
+    const next = new Set(submittingIds.value)
+    next.delete(person.id)
+    submittingIds.value = next
   }
 }
 
@@ -189,31 +224,68 @@ const formattedStartTime = computed(() => {
           />
 
           <div :class="{ eventDetailInfoBodyCancelled: isCancelled }">
-          <!-- Attendance Buttons -->
-          <div v-if="!isCancelled" class="eventDetailAttendanceButtons">
-            <Button
-              :title="i18n.global.t('events.detail.wontGo')"
-              :theme="event.responses?.currentUserResponse === false ? 'red' : 'secondary'"
-              :loading="pendingResponse === false"
-              :disabled="isPastEvent || pendingResponse !== null"
-              @click="submitResponse(false)"
-            >
-              <template #icon>
-                <IconError :class="{ 'eventDetailIconNotGoing': event.responses?.currentUserResponse !== false }" />
-              </template>
-            </Button>
-            <Button
-              :title="i18n.global.t('events.detail.going')"
-              :theme="event.responses?.currentUserResponse === true ? 'green' : 'secondary'"
-              :loading="pendingResponse === true"
-              :disabled="isPastEvent || pendingResponse !== null"
-              @click="submitResponse(true)"
-            >
-              <template #icon>
-                <IconCheckmark :class="{ 'eventDetailIconGoing': event.responses?.currentUserResponse !== true }" />
-              </template>
-            </Button>
-          </div>
+          <!-- RSVP controls (hidden when the account has no one to RSVP, e.g. a guardian
+               with no approved kids yet). Single person → prominent buttons; multiple
+               people → a compact row per person so the whole family is visible and settable
+               at a glance, each with its own going/not-going toggle. -->
+          <template v-if="!isCancelled && myPeople.length > 0">
+            <div v-if="isSinglePerson" class="eventDetailAttendanceButtons">
+              <Button
+                :title="i18n.global.t('events.detail.wontGo')"
+                :theme="soloNotGoing ? 'red' : 'secondary'"
+                :loading="pendingResponse === false"
+                :disabled="isPastEvent || pendingResponse !== null"
+                @click="submitSolo(false)"
+              >
+                <template #icon>
+                  <IconError :class="{ 'eventDetailIconNotGoing': !soloNotGoing }" />
+                </template>
+              </Button>
+              <Button
+                :title="i18n.global.t('events.detail.going')"
+                :theme="soloGoing ? 'green' : 'secondary'"
+                :loading="pendingResponse === true"
+                :disabled="isPastEvent || pendingResponse !== null"
+                @click="submitSolo(true)"
+              >
+                <template #icon>
+                  <IconCheckmark :class="{ 'eventDetailIconGoing': !soloGoing }" />
+                </template>
+              </Button>
+            </div>
+            <div v-else class="eventDetailPeople">
+              <div v-for="person in myPeople" :key="person.id" class="eventDetailPerson">
+                <Avatar :picture="person.picture" :given-name="person.name" :family-name="null" size="sm" />
+                <span class="eventDetailPersonName">{{ person.name }}</span>
+                <div class="eventDetailPersonChoices">
+                  <Button
+                    inline
+                    :icon-only="isCompact"
+                    :theme="person.response === false ? 'red' : 'secondary'"
+                    :title="i18n.global.t('events.detail.wontGo')"
+                    :disabled="isPastEvent || submittingIds.has(person.id)"
+                    @click="setPersonResponse(person, false)"
+                  >
+                    <template #icon>
+                      <IconError :class="{ eventDetailIconNotGoing: person.response !== false }" />
+                    </template>
+                  </Button>
+                  <Button
+                    inline
+                    :icon-only="isCompact"
+                    :theme="person.response === true ? 'green' : 'secondary'"
+                    :title="i18n.global.t('events.detail.going')"
+                    :disabled="isPastEvent || submittingIds.has(person.id)"
+                    @click="setPersonResponse(person, true)"
+                  >
+                    <template #icon>
+                      <IconCheckmark :class="{ eventDetailIconGoing: person.response !== true }" />
+                    </template>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </template>
 
           <!-- Date & Location -->
           <p class="eventDetailDate">{{ formattedStartTime }}</p>
@@ -282,6 +354,7 @@ const formattedStartTime = computed(() => {
       :family-name="selectedUser.familyName"
       :nick-name="selectedUser.nickName"
       :picture="selectedUser.picture"
+      :parent="selectedUser.isKid ? selectedUser.parent : undefined"
       @close="selectedUser = null"
     />
 
@@ -429,6 +502,34 @@ const formattedStartTime = computed(() => {
   display: flex;
   flex-direction: column;
   gap: var(--gap);
+}
+
+.eventDetailPeople {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  margin: var(--padding) 0;
+}
+
+.eventDetailPerson {
+  display: flex;
+  align-items: center;
+  gap: var(--gap);
+}
+
+.eventDetailPersonName {
+  flex: 1;
+  min-width: 0;
+  font-weight: var(--font-weight-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eventDetailPersonChoices {
+  display: flex;
+  gap: var(--gap);
+  flex-shrink: 0;
 }
 
 .eventDetailRequestError {

@@ -3,7 +3,7 @@ import authService from '@/service/auth'
 import usersService from '@/service/users'
 import { useStorage } from '@vueuse/core'
 
-export type UserStatus = 'pending' | 'approved' | 'rejected'
+export type UserStatus = 'onboarding' | 'pending' | 'approved' | 'rejected'
 
 export interface User {
   email: string
@@ -12,6 +12,9 @@ export interface User {
   nickName: string | null
   picture?: string | null
   status: UserStatus
+  // Whether the account holder participates in events themselves. false = a guardian
+  // account ("only my kids") that only manages kids and never RSVPs for itself.
+  selfParticipates: boolean
 }
 
 export const useAuthStore = defineStore('auth', {
@@ -41,6 +44,16 @@ export const useAuthStore = defineStore('auth', {
     },
     async updateProfilePicture(file: File) {
       const { user, accessToken } = await usersService.updateProfilePicture(file)
+      this.user = user
+      this.accessToken = accessToken
+    },
+    async setAccountType(selfParticipates: boolean) {
+      const { user, accessToken } = await usersService.setAccountType(selfParticipates)
+      this.user = user
+      this.accessToken = accessToken
+    },
+    async finishOnboarding() {
+      const { user, accessToken } = await usersService.finishOnboarding()
       this.user = user
       this.accessToken = accessToken
     },
@@ -81,4 +94,5 @@ const emptyUser: User = {
   nickName: null,
   picture: undefined,
   status: 'pending',
+  selfParticipates: true,
 }

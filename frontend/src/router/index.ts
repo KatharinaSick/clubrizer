@@ -33,19 +33,34 @@ const router = createRouter({
       meta: { showNavigation: true, activeNav: 'profile', requiresAuth: true }
     },
     {
+      path: '/my-kids',
+      name: 'my-kids',
+      component: () => import('../views/ManageKidsView.vue'),
+      meta: { showNavigation: false, activeNav: 'profile', requiresAuth: true }
+    },
+    {
       path: '/signin',
       name: 'signin',
-      component: () => import('../views/SignInView.vue')
+      component: () => import('../views/SignInView.vue'),
+      meta: { hideNavigation: true }
+    },
+    {
+      path: '/onboarding',
+      name: 'onboarding',
+      component: () => import('../views/OnboardingView.vue'),
+      meta: { hideNavigation: true }
     },
     {
       path: '/pending-approval',
       name: 'pending-approval',
-      component: () => import('../views/PendingApprovalView.vue')
+      component: () => import('../views/PendingApprovalView.vue'),
+      meta: { hideNavigation: true }
     },
     {
-      path: '/profile-setup',
-      name: 'profile-setup',
-      component: () => import('../views/ProfileSetupView.vue')
+      path: '/account-setup',
+      name: 'account-setup',
+      component: () => import('../views/AccountSetupView.vue'),
+      meta: { hideNavigation: true }
     },
     {
       path: '/getting-started',
@@ -64,32 +79,52 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const auth = useAuthStore()
-  const isApproved = auth.user.status === 'approved'
-  const needsProfileSetup = isApproved && auth.user.givenName === null
+  const status = auth.user.status
+  const isApproved = status === 'approved'
+  // Every approved account — guardians included — must fill in at least a first and last
+  // name once, on the account-setup screen. There's no stored "done" flag: the presence of
+  // the own name is the signal, and account-setup saves it last, so setup can't be
+  // half-finished. (Kids' last names are enforced within that screen.)
+  const needsAccountSetup =
+    isApproved && (auth.user.givenName === null || auth.user.familyName === null)
+
+  // Paths that need a session; a logged-out visitor is bounced to /signin. Note this
+  // must NOT include /signin itself, or a logged-out visitor would redirect to
+  // /signin forever.
+  const sessionPaths = ['/onboarding', '/pending-approval', '/account-setup']
 
   if (!auth.isLoggedIn) {
-    if (to.meta.requiresAuth || to.path === '/pending-approval' || to.path === '/profile-setup') {
+    if (to.meta.requiresAuth || sessionPaths.includes(to.path)) {
       return { path: '/signin', query: { redirect: to.fullPath } }
     }
     return
   }
 
-  if (!isApproved) {
+  // Phase 1 of signup: choose account type + add kids (active). Distinct from waiting.
+  if (status === 'onboarding') {
+    if (to.path !== '/onboarding') {
+      return { path: '/onboarding' }
+    }
+    return
+  }
+
+  // Phase 2: submitted, waiting for an admin (or rejected) — passive.
+  if (status === 'pending' || status === 'rejected') {
     if (to.path !== '/pending-approval') {
       return { path: '/pending-approval' }
     }
     return
   }
 
-  if (needsProfileSetup) {
-    if (to.path !== '/profile-setup') {
-      return { path: '/profile-setup' }
+  if (needsAccountSetup) {
+    if (to.path !== '/account-setup') {
+      return { path: '/account-setup' }
     }
     return
   }
 
-  // User is logged in, approved, and has a complete profile — redirect away from auth-only pages
-  if (['/signin', '/pending-approval', '/profile-setup'].includes(to.path)) {
+  // Logged in, approved, complete profile — redirect away from the auth-only pages.
+  if (to.path === '/signin' || sessionPaths.includes(to.path)) {
     return { path: '/events' }
   }
 })

@@ -1,12 +1,29 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import Button from '@/components/Button.vue'
+import kidsService from '@/service/kids'
 import router from '@/router'
 
 const auth = useAuthStore()
 const isChecking = ref(false)
 const checked = ref(false)
+
+// While waiting for approval, show the kids that were submitted so the parent can see
+// their family is part of the request under review. Only fetched for pending accounts —
+// a rejected account has nothing to look at (and the backend wouldn't return it).
+const kidNames = ref<string[]>([])
+const kidNamesLine = computed(() => kidNames.value.join(', '))
+
+onMounted(async () => {
+  if (auth.user.status !== 'pending') return
+  try {
+    const kids = await kidsService.listKids()
+    kidNames.value = kids.map((k) => k.givenName ?? '').filter(Boolean)
+  } catch {
+    // A missing kids line is not worth surfacing an error over on the waiting screen.
+  }
+})
 
 async function checkStatus() {
   isChecking.value = true
@@ -29,11 +46,7 @@ async function cancel() {
 <template>
   <div class="pendingApprovalContainer">
     <div class="pendingApprovalCenter">
-      <img
-        :alt="$t('team')"
-        class="pendingApprovalLogo"
-        src="@/assets/logo.svg"
-      />
+      <img :alt="$t('team')" class="pendingApprovalLogo" src="@/assets/logo.svg" />
       <h1 class="pendingApprovalTitle">{{ $t('team') }}</h1>
     </div>
 
@@ -45,11 +58,19 @@ async function cancel() {
       <template v-else>
         <h1>{{ $t('pendingApproval.pending.title') }}</h1>
         <p>{{ $t('pendingApproval.pending.message') }}</p>
+        <p v-if="kidNames.length > 0" class="pendingApprovalKids">
+          {{ $t('pendingApproval.pending.yourKids', { names: kidNamesLine }) }}
+        </p>
       </template>
     </div>
 
     <div v-if="auth.user.status !== 'rejected'" class="pendingApprovalCenter">
-      <Button :title="$t('pendingApproval.pending.checkStatus')" :loading="isChecking" theme="secondary" @click="checkStatus" />
+      <Button
+        :title="$t('pendingApproval.pending.checkStatus')"
+        :loading="isChecking"
+        theme="secondary"
+        @click="checkStatus"
+      />
       <p v-if="checked" class="pendingApprovalStillPending">{{ $t('pendingApproval.pending.stillPending') }}</p>
     </div>
 
@@ -92,6 +113,12 @@ async function cancel() {
   color: transparent;
   background-clip: text;
   -webkit-background-clip: text;
+}
+
+.pendingApprovalKids {
+  margin: 4px 0 0 0;
+  font-size: var(--font-size-small);
+  color: var(--text-gray);
 }
 
 .pendingApprovalStillPending {
