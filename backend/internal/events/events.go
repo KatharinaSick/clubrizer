@@ -229,6 +229,38 @@ func (s *Service) CreateEvent(ctx context.Context, e Event) (*Event, error) {
 	return &e, nil
 }
 
+// ListComments returns the comments on an event, oldest first. Any authenticated
+// member may read them; the route middleware enforces authentication.
+func (s *Service) ListComments(ctx context.Context, eventId string) ([]*Comment, error) {
+	uuidId, err := uuid.Parse(eventId)
+	if err != nil {
+		return nil, apperrors.NewBadRequest("invalid event id", err)
+	}
+
+	if _, err := s.store.getEventById(ctx, uuidId); err != nil {
+		return nil, err
+	}
+
+	return s.store.getEventComments(ctx, uuidId)
+}
+
+// CreateComment adds a comment to an event on behalf of the current account holder.
+// Any authenticated member may comment; the body is validated (non-blank, max 500) at
+// the API boundary.
+func (s *Service) CreateComment(ctx context.Context, eventId string, req CreateCommentRequest) (*Comment, error) {
+	uuidId, err := uuid.Parse(eventId)
+	if err != nil {
+		return nil, apperrors.NewBadRequest("invalid event id", err)
+	}
+
+	if _, err := s.store.getEventById(ctx, uuidId); err != nil {
+		return nil, err
+	}
+
+	userId := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims).ID
+	return s.store.createComment(ctx, uuidId, userId, req.Body)
+}
+
 // displayName returns the best available display name for the account holder,
 // preferring the nick name and falling back to the given name.
 func displayName(c *users.Claims) string {

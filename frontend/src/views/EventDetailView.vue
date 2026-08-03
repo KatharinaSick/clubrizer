@@ -7,8 +7,10 @@ import Alert from '@/components/Alert.vue'
 import Avatar from '@/components/Avatar.vue'
 import Button from '@/components/Button.vue'
 import EventTitle from '@/components/EventTitle.vue'
-import type { EventDetail, MyResponse } from '@/service/events'
-import { upsertEventResponse, deleteEvent, cancelEvent, uncancelEvent } from '@/service/events'
+import Input from '@/components/Input.vue'
+import IconSend from '@/components/icons/IconSend.vue'
+import type { EventDetail, MyResponse, Comment } from '@/service/events'
+import { upsertEventResponse, deleteEvent, cancelEvent, uncancelEvent, listComments, createComment } from '@/service/events'
 import i18n from '@/plugins/i18n'
 import IconBack from '@/components/icons/IconBack.vue'
 import IconError from '@/components/icons/IconError.vue'
@@ -44,6 +46,11 @@ const isCancelling = ref(false)
 const showRestoreConfirm = ref(false)
 const isRestoring = ref(false)
 const selectedUser = ref<UserForModal | null>(null)
+
+const comments = ref<Comment[]>([])
+const newComment = ref('')
+const isPostingComment = ref(false)
+const COMMENT_MAX_LENGTH = 500
 
 const isCancelled = computed(() => !!event.value?.cancelledAt)
 
@@ -119,11 +126,44 @@ const confirmDelete = async () => {
 
 onMounted(() => {
   loadEvent()
+  loadComments()
 })
 
 const loadEvent = async () => {
   const response = await axios.get(`/events/${eventId}`)
   event.value = response.data
+}
+
+const loadComments = async () => {
+  comments.value = await listComments(eventId)
+}
+
+const postComment = async () => {
+  const body = newComment.value.trim()
+  if (!body || isPostingComment.value) return
+  isPostingComment.value = true
+  try {
+    const comment = await createComment(eventId, body)
+    comments.value = [...comments.value, comment]
+    newComment.value = ''
+  } finally {
+    isPostingComment.value = false
+  }
+}
+
+// A comment's timestamp shown as a short, friendly absolute date and time.
+const formatCommentTime = (isoTime: string) => {
+  const date = new Date(isoTime)
+  const datePart = date.toLocaleDateString(navigator.language, {
+    month: 'short',
+    day: 'numeric',
+  })
+  const timePart = date.toLocaleTimeString(navigator.language, {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+  return `${datePart}, ${timePart}`
 }
 
 const isPastEvent = computed(() => {
@@ -344,6 +384,63 @@ const formattedStartTime = computed(() => {
             {{ i18n.global.t('events.detail.attendees.noResponses') }}
           </p>
           </div>
+
+          <!-- Comments -->
+          <Divider class="eventDetailDivider" />
+          <div class="eventDetailComments">
+            <h2 class="eventDetailCommentsTitle">{{ i18n.global.t('events.detail.comments.title') }}</h2>
+
+            <p v-if="comments.length === 0" class="eventDetailNoComments">
+              {{ i18n.global.t('events.detail.comments.empty') }}
+            </p>
+            <div v-else class="eventDetailCommentList">
+              <div v-for="comment in comments" :key="comment.id" class="eventDetailComment">
+                <Avatar
+                  :picture="comment.author.picture"
+                  :given-name="comment.author.givenName"
+                  :family-name="comment.author.familyName"
+                  :nick-name="comment.author.nickName"
+                  size="sm"
+                />
+                <div class="eventDetailCommentBody">
+                  <div class="eventDetailCommentMeta">
+                    <span class="eventDetailCommentAuthor">{{ comment.author.nickName || comment.author.givenName }}</span>
+                    <span class="eventDetailCommentTime">{{ formatCommentTime(comment.createdAt) }}</span>
+                  </div>
+                  <p class="eventDetailCommentText">{{ comment.body }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comment composer: pinned to the bottom of the screen on phones (the content
+         above scrolls independently), a card below the event on wider screens. -->
+    <div v-if="event" class="eventDetailComposer">
+      <div class="eventDetailCommentForm">
+        <Input
+          id="eventDetailCommentInput"
+          type="text"
+          multi-line
+          auto-grow
+          :max-length="COMMENT_MAX_LENGTH"
+          :placeholder="i18n.global.t('events.detail.comments.placeholder')"
+          v-model="newComment"
+        />
+        <div class="eventDetailCommentSend">
+          <Button
+            icon-only
+            :title="i18n.global.t('events.detail.comments.post')"
+            :loading="isPostingComment"
+            :disabled="newComment.trim().length === 0"
+            @click="postComment"
+          >
+            <template #icon>
+              <IconSend />
+            </template>
+          </Button>
         </div>
       </div>
     </div>
@@ -427,12 +524,27 @@ const formattedStartTime = computed(() => {
 .eventDetailPage {
   position: relative;
   height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .eventDetailScroll {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+}
+
+/* The composer is a flex sibling below the scroll area, so it stays pinned to the
+   bottom of the screen while the event details and comments scroll above it — and it
+   stays put even with no comments (unlike a sticky element, which needs content to
+   push against). */
+.eventDetailComposer {
+  flex-shrink: 0;
+  padding: var(--padding);
+  background: var(--background-color);
+  border-top: 1px solid var(--gray);
+  box-sizing: border-box;
 }
 
 .eventDetailBackButton {
@@ -698,8 +810,103 @@ const formattedStartTime = computed(() => {
   background: var(--red);
 }
 
+.eventDetailComments {
+  display: flex;
+  flex-direction: column;
+  gap: var(--padding);
+}
+
+.eventDetailCommentsTitle {
+  margin: 0;
+  font-size: var(--font-size-large);
+  font-weight: var(--font-weight-bold);
+}
+
+.eventDetailNoComments {
+  color: var(--text-gray);
+}
+
+.eventDetailCommentList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--padding);
+}
+
+.eventDetailComment {
+  display: flex;
+  gap: var(--gap);
+  align-items: flex-start;
+}
+
+.eventDetailCommentBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.eventDetailCommentMeta {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap);
+}
+
+.eventDetailCommentAuthor {
+  font-weight: var(--font-weight-medium);
+}
+
+.eventDetailCommentTime {
+  color: var(--text-gray);
+  font-size: var(--font-size-small);
+}
+
+.eventDetailCommentText {
+  margin-top: 2px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.eventDetailCommentForm {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--gap);
+}
+
+/* Let the input take the remaining width next to the fixed send button, and strip the
+   floating-label's reserved top space so the bar sits low and compact. */
+.eventDetailCommentForm :deep(.inputWrapper) {
+  flex: 1;
+  min-width: 0;
+  padding-top: 0;
+}
+
+.eventDetailCommentForm :deep(.inputPlaceholder) {
+  top: 10px;
+}
+
+/* On focus/with content the label would slide up into the stripped-away space, so keep
+   it hidden and rely on the placeholder text alone — chat-bar style. */
+.eventDetailCommentForm :deep(.input:is(:focus, :valid) ~ .inputPlaceholder) {
+  display: none;
+}
+
+/* A round send button that stays a fixed size, so it never wobbles as you type. The
+   wrapper is a real parent element so the :deep override reaches the Button's root. */
+.eventDetailCommentSend {
+  flex-shrink: 0;
+}
+
+.eventDetailCommentSend :deep(.button) {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+}
+
 @media (min-width: 768px) {
+  /* Desktop is a centered card the page scrolls around, so drop the mobile full-height
+     flex layout and let the composer flow as its own card just below the event card. */
   .eventDetailPage {
+    display: block;
     height: auto;
     padding: var(--padding);
     box-sizing: border-box;
@@ -707,9 +914,19 @@ const formattedStartTime = computed(() => {
 
   .eventDetailScroll {
     position: relative;
+    flex: none;
+    min-height: 0;
     overflow-y: visible;
     max-width: var(--content-max-width);
     margin: 0 auto;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+  }
+
+  .eventDetailComposer {
+    max-width: var(--content-max-width);
+    margin: var(--padding) auto 0;
+    border: none;
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow);
   }

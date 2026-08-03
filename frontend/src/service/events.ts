@@ -87,6 +87,25 @@ export const upsertEventResponse = async (
   await axios.put(`/events/${eventId}/response`, { response, kidId: kidId ?? null })
 }
 
+// Comment is a message an account holder left on an event, with the author's display
+// details included so it can be rendered without a second lookup.
+export interface Comment {
+  id: string
+  body: string
+  createdAt: string
+  author: Creator
+}
+
+export const listComments = async (eventId: string): Promise<Comment[]> => {
+  const response = await axios.get(`/events/${eventId}/comments`)
+  return response.data
+}
+
+export const createComment = async (eventId: string, body: string): Promise<Comment> => {
+  const response = await axios.post(`/events/${eventId}/comments`, { body })
+  return response.data
+}
+
 export const deleteEvent = async (eventId: string): Promise<void> => {
   await axios.delete(`/events/${eventId}`)
 }

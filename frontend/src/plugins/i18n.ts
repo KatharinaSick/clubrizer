@@ -159,6 +159,12 @@ export default createI18n({
             going: '{count} going',
             notGoing: '{count} not going',
             noResponses: 'No responses yet',
+          },
+          comments: {
+            title: 'Comments',
+            placeholder: 'Write a comment…',
+            post: 'Post',
+            empty: 'No comments yet. Write the first one!',
           }
         }
       },
@@ -400,6 +406,12 @@ export default createI18n({
             going: '{count} Zusagen',
             notGoing: '{count} Absagen',
             noResponses: 'Noch keine Rückmeldungen',
+          },
+          comments: {
+            title: 'Kommentare',
+            placeholder: 'Schreib einen Kommentar…',
+            post: 'Senden',
+            empty: 'Noch keine Kommentare. Schreib den ersten!',
           }
         }
       },

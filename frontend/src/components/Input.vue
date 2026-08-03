@@ -1,10 +1,16 @@
 <script setup lang="ts">
-defineProps<{
+import { nextTick, onMounted, ref, watch } from 'vue'
+
+const props = defineProps<{
   id: string
   type: 'text' | 'email' | 'date' | 'time'
 
   placeholder?: string
   multiLine?: boolean
+  // autoGrow (multiLine only) starts the field at a single row and grows it with the
+  // content up to a max height, then scrolls — a compact chat-style composer instead of
+  // the fixed five-row box.
+  autoGrow?: boolean
   error?: string
   required?: boolean
   min?: string
@@ -14,6 +20,31 @@ defineProps<{
 }>()
 
 const value = defineModel<string | number | null>()
+
+// Largest height (px) an auto-growing field expands to before it starts scrolling.
+const AUTO_GROW_MAX_HEIGHT = 120
+
+const textarea = ref<HTMLTextAreaElement | null>(null)
+
+// Recompute the auto-grow height: shrink to nothing first so it can grow or shrink to
+// exactly fit the content, capped at the max. Runs after the DOM updates so the new
+// content is measured.
+function resize() {
+  const el = textarea.value
+  if (!el || !props.autoGrow) return
+  el.style.height = 'auto'
+  el.style.height = `${Math.min(el.scrollHeight, AUTO_GROW_MAX_HEIGHT)}px`
+}
+
+onMounted(() => {
+  if (props.autoGrow) nextTick(resize)
+})
+
+// Grow/shrink whenever the value changes — including when the parent clears it after a
+// submit, which snaps the field back to a single row.
+watch(value, () => {
+  if (props.autoGrow) nextTick(resize)
+})
 
 // Trim leading/trailing whitespace when the field loses focus. Done on blur (not
 // while typing) so spaces inside the text are kept; a value of only blanks becomes
@@ -30,11 +61,13 @@ function trimOnBlur() {
   <div class="inputWrapper" :class="{ inputWrapperGhost: theme === 'ghost' }">
     <textarea
       v-if="multiLine"
+      ref="textarea"
       class="input"
-      :class="{ 'inputError': error }"
+      :class="{ 'inputError': error, 'inputAutoGrow': autoGrow }"
       :id="id"
       placeholder=""
-      rows="5"
+      :rows="autoGrow ? 1 : 5"
+      :maxlength="maxLength"
       v-model="value"
       required
       @blur="trimOnBlur"
@@ -109,6 +142,19 @@ function trimOnBlur() {
 
 .inputError {
   border-color: var(--red);
+}
+
+.inputAutoGrow {
+  resize: none;
+  overflow-y: auto;
+  max-height: 120px;
+  /* Hide the scrollbar (Firefox) but keep the field scrollable once it hits max height. */
+  scrollbar-width: none;
+}
+
+/* Hide the scrollbar (WebKit/Chromium) too. */
+.inputAutoGrow::-webkit-scrollbar {
+  display: none;
 }
 
 .inputPlaceholder {

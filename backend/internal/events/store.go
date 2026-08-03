@@ -308,3 +308,59 @@ func (s *store) createEvent(ctx context.Context, e *Event) (uuid.UUID, error) {
 
 	return id, nil
 }
+
+func (s *store) getEventComments(ctx context.Context, eventId uuid.UUID) ([]*Comment, error) {
+	rows, err := s.conn.Query(ctx, `
+		SELECT
+			cm.id, cm.body, cm.created_at,
+			u.id, u.given_name, u.family_name, COALESCE(u.nick_name, u.given_name), u.picture
+		FROM event_comments cm
+		LEFT JOIN users u ON cm.user_id = u.id
+		WHERE cm.event_id = $1
+		ORDER BY cm.created_at ASC
+	`, eventId)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to query event comments: %s", err.Error()))
+	}
+	defer rows.Close()
+
+	comments := []*Comment{}
+	for rows.Next() {
+		var c Comment
+		var a Creator
+		if err := rows.Scan(&c.ID, &c.Body, &c.CreatedAt, &a.ID, &a.GivenName, &a.FamilyName, &a.NickName, &a.Picture); err != nil {
+			return nil, errors.New(fmt.Sprintf("failed to scan event comment: %s", err.Error()))
+		}
+		c.Author = a
+		comments = append(comments, &c)
+	}
+	if rows.Err() != nil {
+		return nil, errors.New(fmt.Sprintf("rows error: %s", rows.Err().Error()))
+	}
+
+	return comments, nil
+}
+
+func (s *store) createComment(ctx context.Context, eventId uuid.UUID, userId uuid.UUID, body string) (*Comment, error) {
+	row := s.conn.QueryRow(ctx, `
+		WITH inserted AS (
+			INSERT INTO event_comments (event_id, user_id, body)
+			VALUES ($1, $2, $3)
+			RETURNING id, body, created_at, user_id
+		)
+		SELECT
+			i.id, i.body, i.created_at,
+			u.id, u.given_name, u.family_name, COALESCE(u.nick_name, u.given_name), u.picture
+		FROM inserted i
+		LEFT JOIN users u ON i.user_id = u.id
+	`, eventId, userId, body)
+
+	var c Comment
+	var a Creator
+	if err := row.Scan(&c.ID, &c.Body, &c.CreatedAt, &a.ID, &a.GivenName, &a.FamilyName, &a.NickName, &a.Picture); err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to create comment: %s", err.Error()))
+	}
+	c.Author = a
+
+	return &c, nil
+}

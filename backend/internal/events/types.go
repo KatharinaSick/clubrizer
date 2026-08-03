@@ -87,3 +87,18 @@ type UpsertEventResponseRequest struct {
 	Response *bool      `json:"response" validate:"required"`
 	KidID    *uuid.UUID `json:"kidId"`
 }
+
+// Comment is a message an account holder left on an event, with the author's display
+// details joined in so the UI can render it without a second lookup.
+type Comment struct {
+	ID        uuid.UUID `json:"id"`
+	Body      string    `json:"body"`
+	CreatedAt time.Time `json:"createdAt"`
+	Author    Creator   `json:"author"`
+}
+
+// CreateCommentRequest is the body of a new comment. The 500-char cap mirrors the
+// event_comments.body column length; notblank rejects whitespace-only messages.
+type CreateCommentRequest struct {
+	Body string `json:"body" validate:"required,notblank,max=500"`
+}

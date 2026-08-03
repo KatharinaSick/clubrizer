@@ -37,6 +37,7 @@ const errorInput = ref('')
 const dateInput = ref('')
 const timeInput = ref('')
 const textareaInput = ref('')
+const autoGrowInput = ref('')
 const selectValue = ref<Option | null>(null)
 const selectLoadingValue = ref<Option | null>(null)
 
@@ -405,6 +406,11 @@ const spacingLayout = [
           <Input id="ds-multiline" type="text" placeholder="Description" :multiLine="true" v-model="textareaInput" />
           <code class="dsToken">:multiLine="true"</code>
           <p class="dsColorLabel">5-row textarea</p>
+        </div>
+        <div class="dsComponentItem">
+          <Input id="ds-autogrow" type="text" placeholder="Write a comment…" :multiLine="true" :autoGrow="true" :maxLength="500" v-model="autoGrowInput" />
+          <code class="dsToken">:autoGrow="true"</code>
+          <p class="dsColorLabel">Chat-style: starts at one row, grows with content up to a max height, then scrolls</p>
         </div>
       </div>
 

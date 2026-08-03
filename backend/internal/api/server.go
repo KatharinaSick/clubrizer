@@ -143,6 +143,9 @@ func addRoutes(
 	mux.Handle("DELETE /events/{id}", authenticated(cfg, handleWithId(eventsService.DeleteEvent)))
 	mux.Handle("POST /events/{id}/cancel", authenticated(cfg, handleWithId(eventsService.CancelEvent)))
 	mux.Handle("POST /events/{id}/uncancel", authenticated(cfg, handleWithId(eventsService.UncancelEvent)))
+
+	mux.Handle("GET /events/{id}/comments", authenticated(cfg, handleWithIdAndReturnList(eventsService.ListComments)))
+	mux.Handle("POST /events/{id}/comments", authenticated(cfg, handleWithIdAndBodyAndReturnValue(eventsService.CreateComment)))
 }
 
 type userService interface {
@@ -182,4 +185,6 @@ type eventsService interface {
 	DeleteEvent(ctx context.Context, id string) error
 	CancelEvent(ctx context.Context, id string) error
 	UncancelEvent(ctx context.Context, id string) error
+	ListComments(ctx context.Context, eventId string) ([]*events.Comment, error)
+	CreateComment(ctx context.Context, eventId string, req events.CreateCommentRequest) (*events.Comment, error)
 }
