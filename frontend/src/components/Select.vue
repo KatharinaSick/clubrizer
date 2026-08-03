@@ -24,7 +24,7 @@ const value = defineModel()
   >
     <option :value="null" disabled selected>{{ placeholder }}</option>
     <option v-if="loading" disabled>{{ i18n.global.t('select.loading') }}</option>
-    <option v-else v-for="option in options" :key="option.id" :value="option">{{ option.name }}
+    <option v-else v-for="option in options" :key="option.id" :value="option">{{ option.name }}</option>
   </select>
 </template>
 
