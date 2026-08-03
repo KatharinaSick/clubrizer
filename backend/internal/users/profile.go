@@ -40,7 +40,7 @@ func (s *Service) UpdateProfile(ctx context.Context, req UpdateProfileRequest) (
 		return nil, nil, err
 	}
 
-	accessToken, refreshToken, refreshTokenExpiresAt, err := s.generateTokens(u)
+	accessToken, refreshToken, refreshTokenExpiresAt, err := s.generateTokens(ctx, u)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -67,7 +67,7 @@ func (s *Service) UpdateProfilePicture(ctx context.Context, contentType string, 
 		return nil, nil, err
 	}
 
-	accessToken, refreshToken, refreshTokenExpiresAt, err := s.generateTokens(u)
+	accessToken, refreshToken, refreshTokenExpiresAt, err := s.generateTokens(ctx, u)
 	if err != nil {
 		return nil, nil, err
 	}

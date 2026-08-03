@@ -27,6 +27,32 @@ func (s *Service) IsAuthorized(ctx context.Context, userID uuid.UUID, permission
 	return s.store.hasPermission(ctx, userID, permissionKey)
 }
 
+// GetEffectivePermissions returns the permission keys the user effectively holds. Admins
+// bypass individual permission checks, so they expand to the full catalog (AllPermissions);
+// everyone else gets exactly the keys assigned to their roles. Intended for surfacing
+// permissions to the frontend (e.g. in JWT claims) so it can show or hide UI. Backend
+// authorization must still go through IsAuthorized, which reads the DB as the source of
+// truth — a stale token must never grant access.
+func (s *Service) GetEffectivePermissions(ctx context.Context, userID uuid.UUID) ([]string, error) {
+	isAdmin, err := s.store.hasAdminRole(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if isAdmin {
+		// Return a copy so callers can't mutate the shared catalog slice.
+		return append([]string(nil), AllPermissions...), nil
+	}
+
+	keys, err := s.store.getPermissionKeys(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if keys == nil {
+		keys = []string{}
+	}
+	return keys, nil
+}
+
 // IsAuthorizedToCreateEvent returns true if the user holds a role that is allowed to create events
 // in the given category, or is an admin.
 func (s *Service) IsAuthorizedToCreateEvent(ctx context.Context, userID uuid.UUID, categoryID uuid.UUID) (bool, error) {

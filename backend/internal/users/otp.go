@@ -100,7 +100,7 @@ func (s *Service) VerifyOTP(ctx context.Context, req VerifyOTPRequest) (*VerifyO
 		}
 	}
 
-	accessToken, refreshToken, refreshTokenExpiresAt, err := s.generateTokens(u)
+	accessToken, refreshToken, refreshTokenExpiresAt, err := s.generateTokens(ctx, u)
 	if err != nil {
 		return nil, nil, err
 	}

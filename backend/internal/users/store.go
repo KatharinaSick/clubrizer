@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/katharinasick/clubrizer/internal/app"
 	"github.com/katharinasick/clubrizer/internal/apperrors"
@@ -441,52 +442,302 @@ func (s *store) countKidsByUserID(ctx context.Context, userID uuid.UUID) (int, e
 // passed in from the caller's claims), so a stale or forged token can't hand a guardian
 // the member role. Both statements always run; the WHERE clauses make exactly one take
 // effect for the account's current type.
-func (s *store) submitForApproval(ctx context.Context, userID uuid.UUID) (*User, error) {
+//
+// The transition is guarded on the account still being in 'onboarding', making the whole
+// operation idempotent: a double-submit or a replay with a still-valid onboarding token
+// flips no row the second time. It returns transitioned=false in that case so the caller
+// skips re-notifying admins (and no role work is redone).
+func (s *store) submitForApproval(ctx context.Context, userID uuid.UUID) (*User, bool, error) {
 	tx, err := s.conn.Begin(ctx)
 	if err != nil {
-		return nil, errors.New("failed to begin transaction: " + err.Error())
+		return nil, false, errors.New("failed to begin transaction: " + err.Error())
 	}
 	defer tx.Rollback(ctx)
 
-	if _, err := tx.Exec(ctx, "UPDATE users SET status = 'pending' WHERE id = $1", userID); err != nil {
-		return nil, errors.New(fmt.Sprintf("failed to update user status: %s", err.Error()))
+	tag, err := tx.Exec(ctx, "UPDATE users SET status = 'pending' WHERE id = $1 AND status = 'onboarding'", userID)
+	if err != nil {
+		return nil, false, errors.New(fmt.Sprintf("failed to update user status: %s", err.Error()))
 	}
+	transitioned := tag.RowsAffected() > 0
 
-	// Grant member iff the account participates itself.
-	if _, err := tx.Exec(ctx,
-		`INSERT INTO user_roles (user_id, role_id)
-		 SELECT u.id, r.id FROM users u JOIN roles r ON r.name = 'member'
-		 WHERE u.id = $1 AND u.self_participates
-		 ON CONFLICT (user_id, role_id) DO NOTHING`,
-		userID,
-	); err != nil {
-		return nil, errors.New(fmt.Sprintf("failed to grant member role: %s", err.Error()))
-	}
-	// Revoke member iff the account is a guardian (belt-and-braces: guardians never
-	// held it, but this keeps the invariant true regardless of prior state).
-	if _, err := tx.Exec(ctx,
-		`DELETE FROM user_roles
-		 WHERE user_id = $1
-		   AND role_id = (SELECT id FROM roles WHERE name = 'member')
-		   AND NOT (SELECT self_participates FROM users WHERE id = $1)`,
-		userID,
-	); err != nil {
-		return nil, errors.New(fmt.Sprintf("failed to revoke member role: %s", err.Error()))
+	if transitioned {
+		// Grant member iff the account participates itself.
+		if _, err := tx.Exec(ctx,
+			`INSERT INTO user_roles (user_id, role_id)
+			 SELECT u.id, r.id FROM users u JOIN roles r ON r.name = 'member'
+			 WHERE u.id = $1 AND u.self_participates
+			 ON CONFLICT (user_id, role_id) DO NOTHING`,
+			userID,
+		); err != nil {
+			return nil, false, errors.New(fmt.Sprintf("failed to grant member role: %s", err.Error()))
+		}
+		// Revoke member iff the account is a guardian (belt-and-braces: guardians never
+		// held it, but this keeps the invariant true regardless of prior state).
+		if _, err := tx.Exec(ctx,
+			`DELETE FROM user_roles
+			 WHERE user_id = $1
+			   AND role_id = (SELECT id FROM roles WHERE name = 'member')
+			   AND NOT (SELECT self_participates FROM users WHERE id = $1)`,
+			userID,
+		); err != nil {
+			return nil, false, errors.New(fmt.Sprintf("failed to revoke member role: %s", err.Error()))
+		}
 	}
 
 	rows, err := tx.Query(ctx, "SELECT * FROM users WHERE id = $1", userID)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("failed to query user: %s", err.Error()))
+		return nil, false, errors.New(fmt.Sprintf("failed to query user: %s", err.Error()))
 	}
 	u, err := pgx.CollectOneRow(rows, pgx.RowToAddrOfStructByName[User])
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("failed to scan user: %s", err.Error()))
+		return nil, false, errors.New(fmt.Sprintf("failed to scan user: %s", err.Error()))
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return nil, errors.New(fmt.Sprintf("failed to commit transaction: %s", err.Error()))
+		return nil, false, errors.New(fmt.Sprintf("failed to commit transaction: %s", err.Error()))
 	}
-	return u, nil
+	return u, transitioned, nil
+}
+
+// listApprovals returns the approval queue as one row per account: every account still
+// awaiting approval ('pending'), plus every approved account that has newly-added kids
+// awaiting approval. Onboarding accounts are excluded — they haven't submitted yet, even
+// though their kids are already 'pending' — as are rejected accounts. Each account's
+// pending kids are attached in a second query.
+func (s *store) listApprovals(ctx context.Context) ([]*ApprovalRequest, error) {
+	rows, err := s.conn.Query(ctx, `
+		SELECT id, email, given_name, family_name, nick_name, picture, status, self_participates
+		FROM users u
+		WHERE u.status = 'pending'
+		   OR (u.status = 'approved' AND EXISTS (
+		        SELECT 1 FROM kids k
+		        WHERE k.user_id = u.id AND k.status = 'pending' AND k.deleted_at IS NULL))
+		ORDER BY email
+	`)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to query approvals: %s", err.Error()))
+	}
+	defer rows.Close()
+
+	var requests []*ApprovalRequest
+	byID := make(map[uuid.UUID]*ApprovalRequest)
+	for rows.Next() {
+		f := &ApprovalRequest{PendingKids: []*ApprovalKid{}}
+		if err := rows.Scan(&f.UserID, &f.Email, &f.GivenName, &f.FamilyName, &f.NickName, &f.Picture, &f.Status, &f.SelfParticipates); err != nil {
+			return nil, errors.New(fmt.Sprintf("failed to scan approval: %s", err.Error()))
+		}
+		requests = append(requests, f)
+		byID[f.UserID] = f
+	}
+	if rows.Err() != nil {
+		return nil, errors.New(fmt.Sprintf("rows error: %s", rows.Err().Error()))
+	}
+
+	if len(requests) == 0 {
+		return requests, nil
+	}
+
+	ids := make([]uuid.UUID, 0, len(byID))
+	for id := range byID {
+		ids = append(ids, id)
+	}
+
+	kidRows, err := s.conn.Query(ctx, `
+		SELECT id, user_id, given_name, family_name, picture
+		FROM kids
+		WHERE user_id = ANY($1) AND status = 'pending' AND deleted_at IS NULL
+		ORDER BY created_at
+	`, ids)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to query pending kids: %s", err.Error()))
+	}
+	defer kidRows.Close()
+
+	for kidRows.Next() {
+		var userID uuid.UUID
+		k := &ApprovalKid{}
+		if err := kidRows.Scan(&k.ID, &userID, &k.GivenName, &k.FamilyName, &k.Picture); err != nil {
+			return nil, errors.New(fmt.Sprintf("failed to scan pending kid: %s", err.Error()))
+		}
+		if f, ok := byID[userID]; ok {
+			f.PendingKids = append(f.PendingKids, k)
+		}
+	}
+	if kidRows.Err() != nil {
+		return nil, errors.New(fmt.Sprintf("rows error: %s", kidRows.Err().Error()))
+	}
+
+	return requests, nil
+}
+
+// decideApprovals sets the given accounts and kids to decision (StatusApproved or
+// StatusRejected) in one all-or-nothing transaction, returning who to notify (see
+// decisionRecipients). Only rows currently 'pending' are eligible;
+// if any requested id is not pending (stale, already decided, bogus, or — for kids —
+// belonging to an account that isn't approved) the affected-row count won't match and the
+// whole batch is rolled back. When approving, a kid is only eligible if its parent is
+// already approved or is being approved in this same batch — the users UPDATE runs first, so
+// batched parents already read as 'approved' within the transaction. This guarantees an
+// approved kid never hangs under a non-approved parent. Rejecting a kid carries no such
+// parent guard, and rejecting an account additionally cascades to its still-pending kids so
+// none are stranded (see below).
+func (s *store) decideApprovals(ctx context.Context, userIDs, kidIDs []uuid.UUID, decision Status) (decisionRecipients, error) {
+	// De-duplicate first: a repeated id would otherwise undercount against len() below and
+	// trip the all-or-nothing check on input that is actually valid.
+	userIDs = dedupeUUIDs(userIDs)
+	kidIDs = dedupeUUIDs(kidIDs)
+
+	tx, err := s.conn.Begin(ctx)
+	if err != nil {
+		return decisionRecipients{}, errors.New("failed to begin transaction: " + err.Error())
+	}
+	defer tx.Rollback(ctx)
+
+	var accountEmails []string
+	if len(userIDs) > 0 {
+		rows, err := tx.Query(ctx,
+			"UPDATE users SET status = $1 WHERE id = ANY($2) AND status = 'pending' RETURNING email",
+			string(decision), userIDs,
+		)
+		if err != nil {
+			return decisionRecipients{}, errors.New(fmt.Sprintf("failed to update users: %s", err.Error()))
+		}
+		accountEmails, err = pgx.CollectRows(rows, pgx.RowTo[string])
+		if err != nil {
+			return decisionRecipients{}, errors.New(fmt.Sprintf("failed to collect updated emails: %s", err.Error()))
+		}
+		if len(accountEmails) != len(userIDs) {
+			return decisionRecipients{}, apperrors.NewBadRequest("one or more accounts are not awaiting approval", nil)
+		}
+	}
+
+	if len(kidIDs) > 0 {
+		var tag pgconn.CommandTag
+		if decision == StatusApproved {
+			tag, err = tx.Exec(ctx, `
+				UPDATE kids SET status = 'approved'
+				WHERE id = ANY($1) AND status = 'pending' AND deleted_at IS NULL
+				  AND user_id IN (SELECT id FROM users WHERE status = 'approved')
+			`, kidIDs)
+		} else {
+			tag, err = tx.Exec(ctx, `
+				UPDATE kids SET status = 'rejected'
+				WHERE id = ANY($1) AND status = 'pending' AND deleted_at IS NULL
+			`, kidIDs)
+		}
+		if err != nil {
+			return decisionRecipients{}, errors.New(fmt.Sprintf("failed to update kids: %s", err.Error()))
+		}
+		if int(tag.RowsAffected()) != len(kidIDs) {
+			return decisionRecipients{}, apperrors.NewBadRequest("one or more kids cannot be decided (not awaiting approval, or their account is not approved)", nil)
+		}
+	}
+
+	// Rejecting an account cascades to its still-pending kids. Otherwise a kid left pending
+	// under a rejected parent is stranded: listApprovals surfaces neither rejected accounts
+	// nor their kids, and the approve path requires an approved parent — so the kid would be
+	// invisible in the queue and impossible to ever decide. Runs after the explicit kid
+	// updates above and is deliberately not counted against kidIDs; it only mops up pending
+	// kids not already handled in this batch.
+	if decision == StatusRejected && len(userIDs) > 0 {
+		if _, err := tx.Exec(ctx, `
+			UPDATE kids SET status = 'rejected'
+			WHERE user_id = ANY($1) AND status = 'pending' AND deleted_at IS NULL
+		`, userIDs); err != nil {
+			return decisionRecipients{}, errors.New(fmt.Sprintf("failed to reject kids of rejected accounts: %s", err.Error()))
+		}
+	}
+
+	// Parents to notify about an individual kid decision: the decided kids whose account is
+	// NOT in this batch (a later-added kid on an already-approved account). Kids decided
+	// alongside their own account — a whole-family batch — are excluded here, because the
+	// single account-level email already covers the family.
+	kidParents, err := collectKidParentNotifications(ctx, tx, kidIDs, userIDs)
+	if err != nil {
+		return decisionRecipients{}, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return decisionRecipients{}, errors.New(fmt.Sprintf("failed to commit transaction: %s", err.Error()))
+	}
+	return decisionRecipients{accountEmails: accountEmails, kidParents: kidParents}, nil
+}
+
+// collectKidParentNotifications returns the parent email + kid name for each decided kid
+// (in kidIDs) whose account is not in userIDs. Runs inside the decision transaction so it
+// closes its rows before the caller commits.
+func collectKidParentNotifications(ctx context.Context, tx pgx.Tx, kidIDs, userIDs []uuid.UUID) ([]kidParentNotification, error) {
+	if len(kidIDs) == 0 {
+		return nil, nil
+	}
+
+	// A nil userIDs encodes such that `k.user_id <> ALL($2)` evaluates to NULL, excluding
+	// every row — which would silently skip all parent emails. Normalize to an empty array
+	// so a kid-only batch (parent already approved, not in the batch) still notifies parents.
+	if userIDs == nil {
+		userIDs = []uuid.UUID{}
+	}
+
+	rows, err := tx.Query(ctx, `
+		SELECT u.email, COALESCE(k.given_name, '')
+		FROM kids k
+		JOIN users u ON u.id = k.user_id
+		WHERE k.id = ANY($1) AND k.user_id <> ALL($2)
+	`, kidIDs, userIDs)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to query kid parents: %s", err.Error()))
+	}
+	defer rows.Close()
+
+	var out []kidParentNotification
+	for rows.Next() {
+		var n kidParentNotification
+		if err := rows.Scan(&n.parentEmail, &n.kidName); err != nil {
+			return nil, errors.New(fmt.Sprintf("failed to scan kid parent: %s", err.Error()))
+		}
+		out = append(out, n)
+	}
+	if rows.Err() != nil {
+		return nil, errors.New(fmt.Sprintf("rows error: %s", rows.Err().Error()))
+	}
+	return out, nil
+}
+
+// dedupeUUIDs returns ids with duplicates removed, preserving first-seen order.
+func dedupeUUIDs(ids []uuid.UUID) []uuid.UUID {
+	if len(ids) < 2 {
+		return ids
+	}
+	seen := make(map[uuid.UUID]struct{}, len(ids))
+	out := make([]uuid.UUID, 0, len(ids))
+	for _, id := range ids {
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		out = append(out, id)
+	}
+	return out
+}
+
+// getAdminEmails returns the emails of all approved admins, used to notify them of new
+// approval requests.
+func (s *store) getAdminEmails(ctx context.Context) ([]string, error) {
+	rows, err := s.conn.Query(ctx, `
+		SELECT u.email
+		FROM users u
+		JOIN user_roles ur ON ur.user_id = u.id
+		JOIN roles r ON r.id = ur.role_id
+		WHERE r.name = 'admin' AND u.status = 'approved'
+	`)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to query admin emails: %s", err.Error()))
+	}
+	emails, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to collect admin emails: %s", err.Error()))
+	}
+	return emails, nil
 }
 
 // getOwnedKid returns the kid only if it belongs to userID and hasn't been removed (any

@@ -29,7 +29,7 @@ func (s *Service) SetAccountType(ctx context.Context, req SetAccountTypeRequest)
 		return nil, nil, err
 	}
 
-	accessToken, refreshToken, refreshTokenExpiresAt, err := s.generateTokens(u)
+	accessToken, refreshToken, refreshTokenExpiresAt, err := s.generateTokens(ctx, u)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -65,12 +65,18 @@ func (s *Service) FinishOnboarding(ctx context.Context) (*FinishOnboardingRespon
 		}
 	}
 
-	u, err := s.store.submitForApproval(ctx, claims.ID)
+	u, transitioned, err := s.store.submitForApproval(ctx, claims.ID)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	accessToken, refreshToken, refreshTokenExpiresAt, err := s.generateTokens(u)
+	// Only notify admins on a real onboarding→pending transition, so a double-submit or a
+	// token replay doesn't re-notify. Fire-and-forget — see notifyAdminsOfNewApprovalRequest.
+	if transitioned {
+		s.notifyAdminsOfNewApprovalRequest(u)
+	}
+
+	accessToken, refreshToken, refreshTokenExpiresAt, err := s.generateTokens(ctx, u)
 	if err != nil {
 		return nil, nil, err
 	}

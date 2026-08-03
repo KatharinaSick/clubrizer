@@ -7,8 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/katharinasick/clubrizer/internal/app"
 	"github.com/katharinasick/clubrizer/internal/events"
+	"github.com/katharinasick/clubrizer/internal/rbac"
 	"github.com/katharinasick/clubrizer/internal/users"
 	"github.com/rs/cors"
 )
@@ -18,9 +20,10 @@ func NewHandler(
 	cfg app.Config,
 	userService userService,
 	eventsService eventsService,
+	auth authorizer,
 ) http.Handler {
 	mux := http.NewServeMux()
-	addRoutes(mux, cfg, userService, eventsService)
+	addRoutes(mux, cfg, userService, eventsService, auth)
 
 	handler := cors.New(cors.Options{
 		AllowedOrigins: cfg.Cors.AllowedOrigins,
@@ -87,6 +90,7 @@ func addRoutes(
 	cfg app.Config,
 	userService userService,
 	eventsService eventsService,
+	auth authorizer,
 ) {
 	// Authentication & Users
 	mux.Handle("POST /auth/otp", handleWithBody(userService.RequestOTP))
@@ -121,6 +125,14 @@ func addRoutes(
 	mux.Handle("DELETE /users/me/kids/{id}", authenticated(cfg, handleWithId(userService.RemoveKid)))
 	mux.Handle("POST /users/me/kids/{id}/picture", authenticated(cfg, handleKidPicture(userService.UpdateKidPicture)))
 
+	// Admin — account & kid approvals. requirePermission gates these to approved accounts
+	// that hold the users.approve permission (admins bypass), so the service methods can
+	// trust the caller. Approve and reject each take a batch of user and/or kid ids so a
+	// whole family is decided in one all-or-nothing request.
+	mux.Handle("GET /admin/approvals", requirePermission(cfg, auth, rbac.PermissionUsersApprove, handleAndReturnList(userService.ListApprovals)))
+	mux.Handle("POST /admin/approvals/approve", requirePermission(cfg, auth, rbac.PermissionUsersApprove, handleWithBody(userService.ApproveApprovals)))
+	mux.Handle("POST /admin/approvals/reject", requirePermission(cfg, auth, rbac.PermissionUsersApprove, handleWithBody(userService.RejectApprovals)))
+
 	// Events
 	mux.Handle("GET /events/categories", authenticated(cfg, handleAndReturnList(eventsService.ListCategories)))
 
@@ -149,6 +161,16 @@ type userService interface {
 	UpdateKid(ctx context.Context, id string, req users.KidRequest) (*users.Kid, error)
 	RemoveKid(ctx context.Context, id string) error
 	UpdateKidPicture(ctx context.Context, id string, contentType string, data io.Reader) (*users.Kid, error)
+
+	ListApprovals(ctx context.Context) ([]*users.ApprovalRequest, error)
+	ApproveApprovals(ctx context.Context, req users.ApprovalDecisionRequest) error
+	RejectApprovals(ctx context.Context, req users.ApprovalDecisionRequest) error
+}
+
+// authorizer is the permission check the route middleware needs. rbac.Service satisfies it;
+// admins are authorized for everything inside the implementation.
+type authorizer interface {
+	IsAuthorized(ctx context.Context, userID uuid.UUID, permissionKey string) (bool, error)
 }
 
 type eventsService interface {

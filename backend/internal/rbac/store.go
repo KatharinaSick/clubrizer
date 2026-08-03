@@ -41,6 +41,31 @@ func (s *store) hasPermission(ctx context.Context, userID uuid.UUID, permissionK
 	return exists, err
 }
 
+// getPermissionKeys returns the distinct permission keys assigned to the user's roles (an
+// admin's implicit bypass is applied by the caller, not here).
+func (s *store) getPermissionKeys(ctx context.Context, userID uuid.UUID) ([]string, error) {
+	rows, err := s.conn.Query(ctx, `
+		SELECT DISTINCT rp.permission_key
+		FROM user_roles ur
+		JOIN role_permissions rp ON rp.role_id = ur.role_id
+		WHERE ur.user_id = $1
+	`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var keys []string
+	for rows.Next() {
+		var key string
+		if err := rows.Scan(&key); err != nil {
+			return nil, err
+		}
+		keys = append(keys, key)
+	}
+	return keys, rows.Err()
+}
+
 func (s *store) canCreateInCategory(ctx context.Context, userID uuid.UUID, categoryID uuid.UUID) (bool, error) {
 	var exists bool
 	err := s.conn.QueryRow(ctx, `

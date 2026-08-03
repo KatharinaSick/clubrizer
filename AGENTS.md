@@ -58,6 +58,7 @@ GitHub: `KatharinaSick/clubrizer`
   - `cmd/`: Application entry points.
   - `internal/`: Private application and library code.
 - **Error Handling**: Use custom error types where appropriate.
+- **Authorization**: Enforce access control in the backend, and handle it in the API middleware wherever possible — a route-level permission gate (e.g. `requirePermission`) keeps authorization in one predictable place instead of scattering `IsAuthorized` calls across services. Only put an authorization check inside a service when it genuinely cannot be expressed at the route level — e.g. it depends on the specific resource being loaded (an owner-or-permission check) or on the request body. Permissions may be surfaced to the frontend (e.g. in JWT claims) as a hint for showing/hiding UI, but that is never a substitute for the backend check.
 
 ### Database Migrations
 Migrations run in CI **before** the new backend version is deployed. This means the old backend is still live and serving traffic while the migration executes. Every migration must therefore be backwards-compatible with the previous backend version.

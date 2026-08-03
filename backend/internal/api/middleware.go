@@ -16,6 +16,30 @@ func authenticated(cfg app.Config, next http.Handler) http.Handler {
 	return withClaims(cfg, func(status string) bool { return status == "approved" }, next)
 }
 
+// requirePermission gates a route to approved accounts that additionally hold the given
+// permission (admins bypass the permission check inside the authorizer). It layers on top
+// of authenticated, so the status gate and claims injection are shared and only the
+// permission varies per route. Use it for pure permission gates; checks that depend on a
+// specific resource (e.g. an event's owner) or on the request body still belong in the
+// service, which cannot be expressed at route level.
+func requirePermission(cfg app.Config, auth authorizer, permission string, next http.Handler) http.Handler {
+	return authenticated(cfg, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		claims := r.Context().Value(cfg.JWT.User.Key).(*users.Claims)
+
+		authorized, err := auth.IsAuthorized(r.Context(), claims.ID, permission)
+		if err != nil {
+			http.Error(w, "failed to check permission", http.StatusInternalServerError)
+			return
+		}
+		if !authorized {
+			http.Error(w, "insufficient permissions", http.StatusForbidden)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	}))
+}
+
 // notRejected gates reading the account's own kids to any non-rejected account:
 // 'onboarding' (adding kids during setup), 'pending' (the waiting screen lists the
 // submitted kids for reassurance), and 'approved' (managing an established account).
