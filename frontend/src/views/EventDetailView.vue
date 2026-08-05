@@ -219,6 +219,7 @@ const formattedStartTime = computed(() => {
   const date = new Date(event.value.startTime)
   const datePart = date.toLocaleDateString(navigator.language, {
     weekday: 'long',
+    year: 'numeric',
     month: 'long',
     day: 'numeric',
   })
