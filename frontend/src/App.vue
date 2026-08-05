@@ -37,7 +37,7 @@ watch(
 
 <style scoped>
 .app {
-  height: 100dvh;
+  height: 100%;
   width: 100%;
 
   box-sizing: border-box;
