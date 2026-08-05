@@ -155,6 +155,7 @@ onBeforeUnmount(() => {
   justify-content: center;
   padding: 0;
   position: relative;
+  touch-action: manipulation;
 }
 
 .menuButtonTriggerFloating {
