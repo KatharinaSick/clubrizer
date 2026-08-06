@@ -48,7 +48,9 @@ func (s *store) getFutureEvents(ctx context.Context) ([]*Event, error) {
 		FROM events e
 		LEFT JOIN event_categories c ON e.category = c.id
 		LEFT JOIN users u ON e.created_by = u.id
-		WHERE e.start_time >= NOW()
+		-- Keep an event on the list until 4 hours after it starts, so an event in progress or
+		-- just finished stays visible. A plain interval avoids any timezone/day-boundary logic.
+		WHERE e.start_time >= NOW() - INTERVAL '4 hours'
 		ORDER BY e.start_time
 	`)
 	if err != nil {
