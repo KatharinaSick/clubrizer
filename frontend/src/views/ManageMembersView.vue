@@ -2,12 +2,14 @@
 import { onMounted, ref } from 'vue'
 import { useApprovalsStore } from '@/stores/approvals'
 import { useRequestStore } from '@/stores/request'
+import Avatar from '@/components/Avatar.vue'
 import Header from '@/components/Header.vue'
 import IconCheck from '@/components/icons/IconCheck.vue'
 import IconClose from '@/components/icons/IconClose.vue'
 import RequestError from '@/components/RequestError.vue'
 import i18n from '@/plugins/i18n'
 import type { ApprovalRequest, ApprovalKid } from '@/service/approvals'
+import membersService, { type Member, type MemberKid } from '@/service/members'
 
 const approvals = useApprovalsStore()
 const requestStore = useRequestStore()
@@ -16,11 +18,30 @@ const requestStore = useRequestStore()
 // the card against a double-submit.
 const busy = ref<{ id: string; action: 'approve' | 'reject' } | null>(null)
 
+const members = ref<Member[]>([])
+const membersLoaded = ref(false)
+
 onMounted(() => {
   approvals.refresh().catch(() => {
     // error shown globally via RequestError
   })
+  membersService
+    .listMembers()
+    .then((m) => { members.value = m })
+    .catch(() => {
+      // error shown globally via RequestError
+    })
+    .finally(() => { membersLoaded.value = true })
 })
+
+function memberName(member: Member): string {
+  const full = [member.givenName, member.familyName].filter(Boolean).join(' ')
+  return full || member.nickName || member.email
+}
+
+function memberKidName(kid: MemberKid): string {
+  return [kid.givenName, kid.familyName].filter(Boolean).join(' ')
+}
 
 function accountName(req: ApprovalRequest): string {
   const full = [req.givenName, req.familyName].filter(Boolean).join(' ')
@@ -125,6 +146,54 @@ function isCardBusy(req: ApprovalRequest): boolean {
           </div>
         </div>
       </section>
+
+      <section class="manageMembersSection">
+        <h2 class="manageMembersSectionTitle">
+          {{ $t('manageMembers.members.title') }}
+          <span v-if="members.length" class="manageMembersCount">{{ members.length }}</span>
+        </h2>
+
+        <p v-if="membersLoaded && members.length === 0" class="manageMembersEmpty">
+          {{ $t('manageMembers.members.empty') }}
+        </p>
+
+        <div v-else class="manageMembersList">
+          <div
+            v-for="(member, index) in members"
+            :key="index"
+            class="manageMembersMember"
+          >
+            <Avatar
+              interactive
+              :picture="member.picture"
+              :given-name="member.givenName"
+              :family-name="member.familyName"
+              :nick-name="member.nickName"
+              size="md"
+            />
+            <div class="manageMembersMemberInfo">
+              <span class="manageMembersMemberName">{{ memberName(member) }}</span>
+              <span class="manageMembersMemberEmail">{{ member.email }}</span>
+              <div v-if="!member.selfParticipates || member.roles.length" class="manageMembersBadges">
+                <span v-if="!member.selfParticipates" class="manageMembersBadge">
+                  {{ $t('manageMembers.members.guardian') }}
+                </span>
+                <span
+                  v-for="role in member.roles"
+                  :key="role.id"
+                  class="manageMembersBadge manageMembersBadgeRole"
+                >{{ role.name }}</span>
+              </div>
+              <template v-if="member.kids.length">
+                <span class="manageMembersKidsLabel">{{ $t('manageMembers.members.kids') }}</span>
+                <ul class="manageMembersKids">
+                  <li v-for="(kid, kidIndex) in member.kids" :key="kidIndex" class="manageMembersKid">{{ memberKidName(kid) }}</li>
+                </ul>
+              </template>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   </div>
 </template>
@@ -223,6 +292,62 @@ function isCardBusy(req: ApprovalRequest): boolean {
 .manageMembersKid {
   font-size: var(--font-size-small);
   color: var(--text-light);
+}
+
+.manageMembersSection + .manageMembersSection {
+  margin-top: calc(var(--padding) * 2);
+}
+
+.manageMembersMember {
+  padding: var(--padding);
+  border: 1px solid var(--gray);
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  gap: var(--padding);
+}
+
+.manageMembersMemberInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.manageMembersMemberName {
+  font-weight: var(--font-weight-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.manageMembersMemberEmail {
+  font-size: var(--font-size-small);
+  color: var(--text-gray);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.manageMembersBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.manageMembersBadge {
+  font-size: var(--font-size-small);
+  color: var(--text-gray);
+  background: var(--light-gray);
+  padding: 2px var(--gap);
+  border-radius: var(--border-radius);
+}
+
+.manageMembersBadgeRole {
+  color: var(--blue);
+  background: var(--light-blue);
+  text-transform: capitalize;
 }
 
 .manageMembersActions {

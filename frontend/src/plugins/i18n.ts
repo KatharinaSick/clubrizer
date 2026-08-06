@@ -158,7 +158,12 @@ export default createI18n({
           attendees: {
             going: '{count} going',
             notGoing: '{count} not going',
+            goingLabel: 'Going',
+            notGoingLabel: 'Not going',
             noResponses: 'No responses yet',
+            kid: 'Kid',
+            showAll: 'Show all',
+            less: 'Show less',
           },
           comments: {
             title: 'Comments',
@@ -225,6 +230,12 @@ export default createI18n({
           kids: 'Kids',
           approve: 'Approve',
           reject: 'Decline',
+        },
+        members: {
+          title: 'Members',
+          empty: 'No members yet.',
+          guardian: 'Guardian',
+          kids: 'Kids',
         },
       },
       pendingApproval: {
@@ -405,7 +416,12 @@ export default createI18n({
           attendees: {
             going: '{count} Zusagen',
             notGoing: '{count} Absagen',
+            goingLabel: 'Zusagen',
+            notGoingLabel: 'Absagen',
             noResponses: 'Noch keine Rückmeldungen',
+            kid: 'Kind',
+            showAll: 'Alle anzeigen',
+            less: 'Weniger',
           },
           comments: {
             title: 'Kommentare',
@@ -478,7 +494,7 @@ export default createI18n({
       manageMembers: {
         header: 'Mitglieder verwalten',
         requests: {
-          title: 'Freigabe-Anfragen',
+          title: 'Anfragen',
           empty: 'Aktuell keine offenen Anfragen.',
           newMember: 'Neues Mitglied',
           guardian: 'Verwaltet nur Kinder',
@@ -486,6 +502,12 @@ export default createI18n({
           kids: 'Kinder',
           approve: 'Freigeben',
           reject: 'Ablehnen',
+        },
+        members: {
+          title: 'Mitglieder',
+          empty: 'Noch keine Mitglieder.',
+          guardian: 'Betreuer:in',
+          kids: 'Kinder',
         },
       },
       navigation: {

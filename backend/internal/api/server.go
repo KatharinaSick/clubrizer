@@ -133,6 +133,9 @@ func addRoutes(
 	mux.Handle("POST /admin/approvals/approve", requirePermission(cfg, auth, rbac.PermissionUsersApprove, handleWithBody(userService.ApproveApprovals)))
 	mux.Handle("POST /admin/approvals/reject", requirePermission(cfg, auth, rbac.PermissionUsersApprove, handleWithBody(userService.RejectApprovals)))
 
+	// Admin — read-only roster of approved members, gated on the same users.approve permission.
+	mux.Handle("GET /admin/members", requirePermission(cfg, auth, rbac.PermissionUsersApprove, handleAndReturnList(userService.ListMembers)))
+
 	// Events
 	mux.Handle("GET /events/categories", authenticated(cfg, handleAndReturnList(eventsService.ListCategories)))
 
@@ -168,6 +171,8 @@ type userService interface {
 	ListApprovals(ctx context.Context) ([]*users.ApprovalRequest, error)
 	ApproveApprovals(ctx context.Context, req users.ApprovalDecisionRequest) error
 	RejectApprovals(ctx context.Context, req users.ApprovalDecisionRequest) error
+
+	ListMembers(ctx context.Context) ([]*users.Member, error)
 }
 
 // authorizer is the permission check the route middleware needs. rbac.Service satisfies it;

@@ -570,6 +570,99 @@ func (s *store) listApprovals(ctx context.Context) ([]*ApprovalRequest, error) {
 	return requests, nil
 }
 
+// listMembers returns the full roster of approved accounts, each with its roles (the
+// implicit 'member' role excluded, matching getRolesByUserID) and its approved kids,
+// attached in two follow-up queries keyed by user id.
+func (s *store) listMembers(ctx context.Context) ([]*Member, error) {
+	rows, err := s.conn.Query(ctx, `
+		SELECT id, email, given_name, family_name, nick_name, picture, self_participates
+		FROM users
+		WHERE status = 'approved'
+		ORDER BY LOWER(COALESCE(given_name, '')), LOWER(COALESCE(family_name, '')), email
+	`)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to query members: %s", err.Error()))
+	}
+	defer rows.Close()
+
+	var members []*Member
+	byID := make(map[uuid.UUID]*Member)
+	for rows.Next() {
+		var id uuid.UUID
+		m := &Member{Roles: []*Role{}, Kids: []*MemberKid{}}
+		if err := rows.Scan(&id, &m.Email, &m.GivenName, &m.FamilyName, &m.NickName, &m.Picture, &m.SelfParticipates); err != nil {
+			return nil, errors.New(fmt.Sprintf("failed to scan member: %s", err.Error()))
+		}
+		members = append(members, m)
+		byID[id] = m
+	}
+	if rows.Err() != nil {
+		return nil, errors.New(fmt.Sprintf("rows error: %s", rows.Err().Error()))
+	}
+
+	if len(members) == 0 {
+		return members, nil
+	}
+
+	ids := make([]uuid.UUID, 0, len(byID))
+	for id := range byID {
+		ids = append(ids, id)
+	}
+
+	roleRows, err := s.conn.Query(ctx, `
+		SELECT ur.user_id, r.id, r.name
+		FROM user_roles ur
+		JOIN roles r ON r.id = ur.role_id
+		WHERE ur.user_id = ANY($1) AND r.name != 'member'
+		ORDER BY r.name
+	`, ids)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to query member roles: %s", err.Error()))
+	}
+	defer roleRows.Close()
+
+	for roleRows.Next() {
+		var userID uuid.UUID
+		r := &Role{}
+		if err := roleRows.Scan(&userID, &r.ID, &r.Name); err != nil {
+			return nil, errors.New(fmt.Sprintf("failed to scan member role: %s", err.Error()))
+		}
+		if m, ok := byID[userID]; ok {
+			m.Roles = append(m.Roles, r)
+		}
+	}
+	if roleRows.Err() != nil {
+		return nil, errors.New(fmt.Sprintf("rows error: %s", roleRows.Err().Error()))
+	}
+
+	kidRows, err := s.conn.Query(ctx, `
+		SELECT user_id, given_name, family_name, picture
+		FROM kids
+		WHERE user_id = ANY($1) AND status = 'approved' AND deleted_at IS NULL
+		ORDER BY created_at
+	`, ids)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to query member kids: %s", err.Error()))
+	}
+	defer kidRows.Close()
+
+	for kidRows.Next() {
+		var userID uuid.UUID
+		k := &MemberKid{}
+		if err := kidRows.Scan(&userID, &k.GivenName, &k.FamilyName, &k.Picture); err != nil {
+			return nil, errors.New(fmt.Sprintf("failed to scan member kid: %s", err.Error()))
+		}
+		if m, ok := byID[userID]; ok {
+			m.Kids = append(m.Kids, k)
+		}
+	}
+	if kidRows.Err() != nil {
+		return nil, errors.New(fmt.Sprintf("rows error: %s", kidRows.Err().Error()))
+	}
+
+	return members, nil
+}
+
 // decideApprovals sets the given accounts and kids to decision (StatusApproved or
 // StatusRejected) in one all-or-nothing transaction, returning who to notify (see
 // decisionRecipients). Only rows currently 'pending' are eligible;
