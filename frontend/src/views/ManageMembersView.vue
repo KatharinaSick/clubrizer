@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useApprovalsStore } from '@/stores/approvals'
 import { useRequestStore } from '@/stores/request'
 import Avatar from '@/components/Avatar.vue'
@@ -20,6 +20,13 @@ const busy = ref<{ id: string; action: 'approve' | 'reject' } | null>(null)
 
 const members = ref<Member[]>([])
 const membersLoaded = ref(false)
+
+// Active members = participating adults plus every kid. Guardians (who only manage kids and
+// don't take part themselves) are not counted, but their kids are.
+const memberCount = computed(() =>
+  members.value.filter((m) => m.selfParticipates).length +
+  members.value.reduce((sum, m) => sum + m.kids.length, 0),
+)
 
 onMounted(() => {
   approvals.refresh().catch(() => {
@@ -150,7 +157,7 @@ function isCardBusy(req: ApprovalRequest): boolean {
       <section class="manageMembersSection">
         <h2 class="manageMembersSectionTitle">
           {{ $t('manageMembers.members.title') }}
-          <span v-if="members.length" class="manageMembersCount">{{ members.length }}</span>
+          <span v-if="memberCount" class="manageMembersCount">{{ memberCount }}</span>
         </h2>
 
         <p v-if="membersLoaded && members.length === 0" class="manageMembersEmpty">
