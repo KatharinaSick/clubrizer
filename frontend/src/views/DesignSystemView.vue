@@ -506,6 +506,38 @@ const spacingLayout = [
           <p class="dsColorLabel">Gradient ring — used on the profile screen</p>
         </div>
       </div>
+
+      <h3 class="dsSubsectionTitle">Interactive</h3>
+      <p class="dsSectionDesc">
+        With <code>interactive</code>, the avatar becomes a button that opens the person's
+        profile card (<code>UserProfileModal</code>) on click — no extra wiring at the call
+        site. Pass <code>parent</code> for a kid to show who manages them. Try clicking it:
+      </p>
+      <div class="dsAvatarRow">
+        <div class="dsComponentItem dsComponentItemCenter">
+          <Avatar
+            interactive
+            given-name="Kate"
+            family-name="Poshuk"
+            nick-name="Kat"
+            picture="https://i.pravatar.cc/150?img=47"
+            size="lg"
+          />
+          <code class="dsToken">interactive</code>
+          <p class="dsColorLabel">Opens the profile card on click</p>
+        </div>
+        <div class="dsComponentItem dsComponentItemCenter">
+          <Avatar
+            interactive
+            given-name="Max"
+            family-name="Poshuk"
+            parent="Kate Poshuk"
+            size="lg"
+          />
+          <code class="dsToken">interactive :parent="…"</code>
+          <p class="dsColorLabel">Kid — card shows the managing parent</p>
+        </div>
+      </div>
     </section>
 
     <!-- ─── USER PROFILE MODAL ─── -->

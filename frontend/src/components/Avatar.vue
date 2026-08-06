@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, defineAsyncComponent, ref } from 'vue'
+
+// Loaded lazily to break the circular import: UserProfileModal renders an Avatar itself.
+const UserProfileModal = defineAsyncComponent(() => import('@/components/UserProfileModal.vue'))
 
 const SIZES = { sm: 32, md: 48, lg: 64, xl: 80 }
 
@@ -10,9 +13,14 @@ const props = withDefaults(defineProps<{
   picture?: string | null
   size?: keyof typeof SIZES
   gradient?: boolean
+  // When true, the avatar becomes a button that opens the person's profile card on click.
+  interactive?: boolean
+  // For a kid's profile card: the display name of the managing parent.
+  parent?: string | null
 }>(), {
   size: 'md',
-  gradient: false
+  gradient: false,
+  interactive: false,
 })
 
 const initials = computed(() => {
@@ -20,17 +28,38 @@ const initials = computed(() => {
 })
 
 const sizeInPx = computed(() => `${SIZES[props.size]}px`)
+
+const showProfile = ref(false)
+
+function onClick() {
+  if (props.interactive) showProfile.value = true
+}
 </script>
 
 <template>
-  <div
+  <component
+    :is="interactive ? 'button' : 'div'"
+    :type="interactive ? 'button' : undefined"
     class="avatar"
-    :class="{ avatarGradient: gradient }"
+    :class="{ avatarGradient: gradient, avatarInteractive: interactive }"
     :style="{ '--avatarSize': sizeInPx }"
+    @click="onClick"
   >
     <img v-if="picture" :src="picture" :alt="givenName ?? ''" class="avatarImage" />
     <div v-else class="avatarFallback">{{ initials }}</div>
-  </div>
+
+    <Teleport v-if="interactive" to="body">
+      <UserProfileModal
+        v-if="showProfile"
+        :given-name="givenName ?? ''"
+        :family-name="familyName ?? ''"
+        :nick-name="nickName"
+        :picture="picture"
+        :parent="parent"
+        @close="showProfile = false"
+      />
+    </Teleport>
+  </component>
 </template>
 
 <style scoped>
@@ -45,6 +74,28 @@ const sizeInPx = computed(() => `${SIZES[props.size]}px`)
 .avatarGradient {
   background: var(--gradient);
   padding: 1px;
+}
+
+.avatarInteractive {
+  display: block;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  appearance: none;
+  font: inherit;
+  color: inherit;
+}
+
+/* Keep the gradient ring even when the avatar is a clickable button. Higher specificity so
+   it wins over the button reset above. */
+.avatarGradient.avatarInteractive {
+  padding: 1px;
+  background: var(--gradient);
+}
+
+.avatarInteractive:hover {
+  opacity: 0.85;
 }
 
 .avatarImage {
