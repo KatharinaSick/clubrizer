@@ -9,28 +9,19 @@ import Button from '@/components/Button.vue'
 import EventTitle from '@/components/EventTitle.vue'
 import Input from '@/components/Input.vue'
 import IconSend from '@/components/icons/IconSend.vue'
-import type { EventDetail, MyResponse, Comment } from '@/service/events'
+import type { EventDetail, MyResponse, Comment, EventAttendee } from '@/service/events'
 import { upsertEventResponse, deleteEvent, cancelEvent, uncancelEvent, listComments, createComment } from '@/service/events'
 import i18n from '@/plugins/i18n'
 import IconBack from '@/components/icons/IconBack.vue'
 import IconError from '@/components/icons/IconError.vue'
 import IconCheckmark from '@/components/icons/IconCheckMark.vue'
 import IconMapMarker from '@/components/icons/IconMapMarker.vue'
+import IconArrowDown from '@/components/icons/IconArrowDown.vue'
 import Divider from '@/components/Divider.vue'
 import RequestError from '@/components/RequestError.vue'
 import MenuButton from '@/components/MenuButton.vue'
 import type { MenuItem } from '@/components/MenuButton.vue'
 import Modal from '@/components/Modal.vue'
-import UserProfileModal from '@/components/UserProfileModal.vue'
-
-type UserForModal = {
-  givenName: string
-  familyName: string
-  nickName: string | null
-  picture?: string | null
-  isKid?: boolean
-  parent?: string
-}
 
 const route = useRoute()
 const router = useRouter()
@@ -45,7 +36,6 @@ const showCancelConfirm = ref(false)
 const isCancelling = ref(false)
 const showRestoreConfirm = ref(false)
 const isRestoring = ref(false)
-const selectedUser = ref<UserForModal | null>(null)
 
 const comments = ref<Comment[]>([])
 const newComment = ref('')
@@ -214,6 +204,22 @@ const sortedAttendees = computed(() => {
   return [...attendees].sort((a, b) => (b.response ? 1 : 0) - (a.response ? 1 : 0))
 })
 
+// The attendees section stays a single compact line — the counts plus an overlapping stack
+// of "going" avatars — so comments stay within easy reach. Expanding reveals the full named
+// list of everyone (going and not going).
+const attendeesExpanded = ref(false)
+
+// How many avatars the collapsed stack shows before collapsing the rest into a "+N" chip.
+const STACK_LIMIT = 8
+
+const attendeeName = (a: EventAttendee) =>
+  a.nickName || [a.givenName, a.familyName].filter(Boolean).join(' ')
+
+const goingAttendees = computed(() => sortedAttendees.value.filter((a) => a.response))
+const notGoingAttendees = computed(() => sortedAttendees.value.filter((a) => !a.response))
+const stackAttendees = computed(() => goingAttendees.value.slice(0, STACK_LIMIT))
+const stackOverflow = computed(() => Math.max(0, goingAttendees.value.length - STACK_LIMIT))
+
 const formattedStartTime = computed(() => {
   if (!event.value?.startTime) return ''
   const date = new Date(event.value.startTime)
@@ -336,15 +342,14 @@ const formattedStartTime = computed(() => {
           </div>
           <Divider class="eventDetailDivider" />
           <div class="eventDetailCreator">
-            <button class="eventDetailAvatarButton" @click="selectedUser = event.creator">
-              <Avatar
-                :picture="event.creator.picture"
-                :given-name="event.creator.givenName"
-                :family-name="event.creator.familyName"
-                :nick-name="event.creator.nickName"
-                size="sm"
-              />
-            </button>
+            <Avatar
+              interactive
+              :picture="event.creator.picture"
+              :given-name="event.creator.givenName"
+              :family-name="event.creator.familyName"
+              :nick-name="event.creator.nickName"
+              size="sm"
+            />
             <span>{{ i18n.global.t('events.createdBy') }} {{ event.creator.nickName || event.creator.givenName }}</span>
           </div>
 
@@ -354,31 +359,89 @@ const formattedStartTime = computed(() => {
           <!-- Attendees -->
           <Divider class="eventDetailDivider" />
           <template v-if="event.responses && (event.responses.going + event.responses.notGoing) > 0">
-            <p class="eventDetailAttendeeCounts">
-              {{ i18n.global.t('events.detail.attendees.going', { count: event.responses.going }) }}
-              &middot;
-              {{ i18n.global.t('events.detail.attendees.notGoing', { count: event.responses.notGoing }) }}
-            </p>
-            <div class="eventDetailAvatarGrid">
-              <button
-                v-for="attendee in sortedAttendees"
-                :key="attendee.id"
-                class="eventDetailAvatarWrapper"
-                @click="selectedUser = attendee"
-              >
-                <Avatar
-                  :picture="attendee.picture"
-                  :given-name="attendee.givenName"
-                  :family-name="attendee.familyName"
-                  :nick-name="attendee.nickName"
-                  size="md"
-                  :class="{ 'eventDetailAvatarGoing': attendee.response, 'eventDetailAvatarNotGoing': !attendee.response }"
-                />
+            <button
+              type="button"
+              class="eventDetailAttendeesToggle"
+              :aria-expanded="attendeesExpanded"
+              @click="attendeesExpanded = !attendeesExpanded"
+            >
+              <span class="eventDetailAttendeesCounts">
+                <span class="eventDetailAttendeesGoing">{{ i18n.global.t('events.detail.attendees.going', { count: event.responses.going }) }}</span>
+                <span class="eventDetailAttendeesNotGoing">&middot; {{ i18n.global.t('events.detail.attendees.notGoing', { count: event.responses.notGoing }) }}</span>
+              </span>
+              <span v-if="!attendeesExpanded && stackAttendees.length" class="eventDetailAvatarStack">
                 <span
-                  class="eventDetailAvatarBadge"
-                  :class="attendee.response ? 'eventDetailAvatarBadgeGoing' : 'eventDetailAvatarBadgeNotGoing'"
+                  v-for="attendee in stackAttendees"
+                  :key="attendee.id"
+                  class="eventDetailStackItem"
+                >
+                  <Avatar
+                    :picture="attendee.picture"
+                    :given-name="attendee.givenName"
+                    :family-name="attendee.familyName"
+                    size="md"
+                  />
+                </span>
+                <span v-if="stackOverflow > 0" class="eventDetailStackMore">+{{ stackOverflow }}</span>
+              </span>
+              <span class="eventDetailAttendeesToggleLabel">
+                {{ attendeesExpanded ? i18n.global.t('events.detail.attendees.less') : i18n.global.t('events.detail.attendees.showAll') }}
+                <IconArrowDown
+                  class="eventDetailAttendeesChevron"
+                  :class="{ eventDetailAttendeesChevronOpen: attendeesExpanded }"
                 />
-              </button>
+              </span>
+            </button>
+
+            <div v-if="attendeesExpanded" class="eventDetailAttendeeList">
+              <template v-if="goingAttendees.length">
+                <div class="eventDetailAttendeeGroupLabel">
+                  <span class="eventDetailAttendeeGroupDot eventDetailAttendeeGroupDotGoing" />
+                  {{ i18n.global.t('events.detail.attendees.goingLabel') }}
+                  <span class="eventDetailAttendeeGroupCount">{{ goingAttendees.length }}</span>
+                </div>
+                <div v-for="attendee in goingAttendees" :key="attendee.id" class="eventDetailAttendeeRow">
+                  <Avatar
+                    interactive
+                    :picture="attendee.picture"
+                    :given-name="attendee.givenName"
+                    :family-name="attendee.familyName"
+                    :nick-name="attendee.nickName"
+                    :parent="attendee.isKid ? attendee.parent : undefined"
+                    size="sm"
+                  />
+                  <span class="eventDetailAttendeeName">
+                    {{ attendeeName(attendee) }}
+                    <span v-if="attendee.isKid" class="eventDetailAttendeeKid">({{ i18n.global.t('events.detail.attendees.kid') }})</span>
+                  </span>
+                </div>
+              </template>
+
+              <div v-if="goingAttendees.length && notGoingAttendees.length" class="eventDetailAttendeeGroupSep" />
+
+              <template v-if="notGoingAttendees.length">
+                <div class="eventDetailAttendeeGroupLabel">
+                  <span class="eventDetailAttendeeGroupDot eventDetailAttendeeGroupDotNotGoing" />
+                  {{ i18n.global.t('events.detail.attendees.notGoingLabel') }}
+                  <span class="eventDetailAttendeeGroupCount">{{ notGoingAttendees.length }}</span>
+                </div>
+                <div v-for="attendee in notGoingAttendees" :key="attendee.id" class="eventDetailAttendeeRow eventDetailAttendeeRowDim">
+                  <Avatar
+                    interactive
+                    class="eventDetailAttendeeAvatarDim"
+                    :picture="attendee.picture"
+                    :given-name="attendee.givenName"
+                    :family-name="attendee.familyName"
+                    :nick-name="attendee.nickName"
+                    :parent="attendee.isKid ? attendee.parent : undefined"
+                    size="sm"
+                  />
+                  <span class="eventDetailAttendeeName">
+                    {{ attendeeName(attendee) }}
+                    <span v-if="attendee.isKid" class="eventDetailAttendeeKid">({{ i18n.global.t('events.detail.attendees.kid') }})</span>
+                  </span>
+                </div>
+              </template>
             </div>
           </template>
           <p v-else class="eventDetailNoResponses">
@@ -445,16 +508,6 @@ const formattedStartTime = computed(() => {
         </div>
       </div>
     </div>
-
-    <UserProfileModal
-      v-if="selectedUser"
-      :given-name="selectedUser.givenName"
-      :family-name="selectedUser.familyName"
-      :nick-name="selectedUser.nickName"
-      :picture="selectedUser.picture"
-      :parent="selectedUser.isKid ? selectedUser.parent : undefined"
-      @close="selectedUser = null"
-    />
 
     <Modal v-if="showCancelConfirm">
       <div class="eventDetailCancelConfirm">
@@ -652,7 +705,7 @@ const formattedStartTime = computed(() => {
 .eventDetailHero {
   position: relative;
   width: 100%;
-  height: 180px;
+  height: 144px;
 }
 
 .eventDetailImage {
@@ -746,9 +799,161 @@ const formattedStartTime = computed(() => {
   margin: var(--padding) 0;
 }
 
-.eventDetailAttendeeCounts {
+.eventDetailAttendeesToggle {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--gap);
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.eventDetailAttendeesCounts {
   font-weight: var(--font-weight-medium);
-  padding-bottom: var(--gap);
+}
+
+.eventDetailAttendeesToggleLabel {
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--blue);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-medium);
+}
+
+.eventDetailAttendeesNotGoing {
+  margin-left: 4px;
+  color: var(--text-gray);
+}
+
+.eventDetailAvatarStack {
+  display: flex;
+  align-items: center;
+}
+
+.eventDetailStackItem {
+  display: flex;
+  border-radius: 50%;
+  /* A background-coloured ring that reads as a thin separator only where avatars overlap;
+     on the free outer edge it blends into the page. position:relative is required so each
+     wrapper composites together with its ring above the previous avatar — the Avatar's own
+     position:relative would otherwise paint each image over the neighbour's ring. */
+  position: relative;
+  box-shadow: 0 0 0 2px var(--background-color);
+}
+
+.eventDetailStackItem:not(:first-child) {
+  margin-left: -14px;
+}
+
+.eventDetailStackMore {
+  margin-left: -14px;
+  width: 48px;
+  height: 48px;
+  position: relative;
+  border-radius: 50%;
+  background: var(--light-gray);
+  color: var(--text-gray);
+  font-size: var(--font-size-small);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px var(--background-color);
+}
+
+.eventDetailAttendeesChevron {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  color: currentColor;
+  transition: transform 0.15s ease;
+}
+
+.eventDetailAttendeesChevronOpen {
+  transform: rotate(180deg);
+}
+
+.eventDetailAttendeeList {
+  display: flex;
+  flex-direction: column;
+}
+
+.eventDetailAttendeeGroupLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--gap);
+}
+
+.eventDetailAttendeeGroupCount {
+  color: var(--text-gray);
+  font-weight: var(--font-weight-regular);
+}
+
+.eventDetailAttendeeGroupDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.eventDetailAttendeeGroupDotGoing {
+  background: var(--green);
+}
+
+.eventDetailAttendeeGroupDotNotGoing {
+  background: var(--red);
+}
+
+.eventDetailAttendeeGroupSep {
+  height: 1px;
+  background: var(--gray);
+  margin: var(--padding) 0;
+}
+
+.eventDetailAttendeeRow {
+  display: flex;
+  align-items: center;
+  gap: var(--gap);
+  padding: 5px 0;
+}
+
+.eventDetailAttendeeName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eventDetailAttendeeKid {
+  color: var(--text-gray);
+  font-size: var(--font-size-small);
+}
+
+.eventDetailAttendeeRowDim .eventDetailAttendeeName {
+  color: var(--text-gray);
+}
+
+.eventDetailAttendeeAvatarDim :deep(.avatarImage),
+.eventDetailAttendeeAvatarDim :deep(.avatarFallback) {
+  filter: grayscale(1) opacity(0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eventDetailAttendeesChevron {
+    transition: none;
+  }
 }
 
 .eventDetailDescription {
@@ -759,58 +964,6 @@ const formattedStartTime = computed(() => {
   color: var(--text-gray);
 }
 
-.eventDetailAvatarGrid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--padding);
-}
-
-.eventDetailAvatarButton {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  border-radius: 50%;
-  display: flex;
-}
-
-.eventDetailAvatarWrapper {
-  position: relative;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  border-radius: 50%;
-}
-
-.eventDetailAvatarGoing :deep(.avatarImage),
-.eventDetailAvatarGoing :deep(.avatarFallback) {
-  box-shadow: 0 0 0 2px var(--gray);
-}
-
-.eventDetailAvatarNotGoing :deep(.avatarImage),
-.eventDetailAvatarNotGoing :deep(.avatarFallback) {
-  filter: grayscale(1) opacity(0.5);
-}
-
-.eventDetailAvatarBadge {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border: 2px solid var(--background-color);
-}
-
-.eventDetailAvatarBadgeGoing {
-  background: var(--green);
-}
-
-.eventDetailAvatarBadgeNotGoing {
-  background: var(--red);
-}
-
 .eventDetailComments {
   display: flex;
   flex-direction: column;
@@ -819,8 +972,8 @@ const formattedStartTime = computed(() => {
 
 .eventDetailCommentsTitle {
   margin: 0;
-  font-size: var(--font-size-large);
-  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-medium);
+  font-weight: var(--font-weight-medium);
 }
 
 .eventDetailNoComments {
@@ -933,7 +1086,7 @@ const formattedStartTime = computed(() => {
   }
 
   .eventDetailHero {
-    height: 320px;
+    height: 256px;
   }
 
   .eventDetailImage {
