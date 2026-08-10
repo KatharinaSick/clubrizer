@@ -8,16 +8,25 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
+	"strings"
 	"time"
 
 	"github.com/katharinasick/clubrizer/internal/apperrors"
 )
+
+// normalizeEmail canonicalizes an email so that addresses differing only by
+// surrounding whitespace or letter case resolve to the same account.
+func normalizeEmail(email string) string {
+	return strings.ToLower(strings.TrimSpace(email))
+}
 
 type RequestOTPRequest struct {
 	Email string `json:"email" validate:"required,email"`
 }
 
 func (s *Service) RequestOTP(ctx context.Context, req RequestOTPRequest) error {
+	req.Email = normalizeEmail(req.Email)
+
 	count, err := s.store.countRecentOTPRequests(ctx, req.Email)
 	if err != nil {
 		return err
@@ -56,6 +65,8 @@ type VerifyOTPResponse struct {
 }
 
 func (s *Service) VerifyOTP(ctx context.Context, req VerifyOTPRequest) (*VerifyOTPResponse, *RefreshTokenInfo, error) {
+	req.Email = normalizeEmail(req.Email)
+
 	otp, err := s.store.getActiveOTPByEmail(ctx, req.Email)
 	if err != nil {
 		if apperrors.Is(err, apperrors.NotFound) {
