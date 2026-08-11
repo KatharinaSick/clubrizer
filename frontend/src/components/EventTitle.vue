@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 interface Category {
+  id: string
   name: string
   color: string
   picture?: string

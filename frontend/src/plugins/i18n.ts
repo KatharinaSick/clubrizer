@@ -107,6 +107,9 @@ export default createI18n({
         back: 'Back',
         noEvents: 'No events yet.',
         fab: 'New Event',
+        filter: {
+          allEvents: 'All events',
+        },
         cancelled: 'Cancelled',
         development: {
           title: 'Development Preview',
@@ -365,6 +368,9 @@ export default createI18n({
         back: 'Zurück',
         noEvents: 'Noch keine Events.',
         fab: 'Neues Event',
+        filter: {
+          allEvents: 'Alle Events',
+        },
         cancelled: 'Abgesagt',
         development: {
           title: 'Entwicklungs-Vorschau',

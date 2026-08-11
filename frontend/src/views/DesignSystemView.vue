@@ -46,6 +46,7 @@ const sampleEvent: EventProps = {
   title: 'Skate Training',
   description: 'Weekly skate training session at the park',
   category: {
+    id: 'ds-cat-1',
     name: 'Skatetraining',
     color: '#0762EF',
     picture: 'https://storage.googleapis.com/clubrizer-static-images/event-categories/skatetraining.png'

@@ -2,6 +2,7 @@
 import EventTitle from '@/components/EventTitle.vue'
 
 interface Category {
+  id: string
   name: string
   color: string
   picture?: string
