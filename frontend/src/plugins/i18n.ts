@@ -76,6 +76,7 @@ export default createI18n({
         menuLabel: 'Open menu',
         cancel: 'Cancel',
         howItWorks: 'How it works',
+        changelog: "What's New",
       },
       profileSetup: {
         header: 'Set Up Your Profile',
@@ -260,10 +261,135 @@ export default createI18n({
         },
         cancel: 'Cancel'
       },
+      changelog: {
+        header: "What's New",
+        entries: [
+          {
+            date: 'August 11, 2026',
+            items: [
+              'You can now filter events by category.',
+              'Past events are shown separately at the bottom of the list.',
+              'There is now a "What\'s New" page. You\'re looking at it.',
+            ],
+          },
+          {
+            date: 'August 6, 2026',
+            items: [
+              'Tap on any profile photo to see who it is.',
+              'The attendee list on event details now takes up less space.',
+              'Events stay visible until 4 hours after they start.',
+              'The member count in the admin view now correctly counts kids and excludes guardians.',
+            ],
+          },
+          {
+            date: 'August 5, 2026',
+            items: [
+              'The year is now shown as a divider in the event list.',
+              'Menus now respond faster on mobile.',
+            ],
+          },
+          {
+            date: 'August 4, 2026',
+            items: [
+              'You can now leave comments on events.',
+            ],
+          },
+          {
+            date: 'August 3, 2026',
+            items: [
+              'You can now manage your kids and respond to events on their behalf.',
+              'Admins can approve or decline new members and kids directly in the app.',
+            ],
+          },
+          {
+            date: 'July 10, 2026',
+            items: [
+              'Admins can now cancel events and restore them later.',
+              'Tap on a profile photo to see that person\'s name.',
+              'People who are going are now shown first in the attendee list.',
+            ],
+          },
+          {
+            date: 'July 9, 2026',
+            items: [
+              'Admins can now delete events.',
+            ],
+          },
+          {
+            date: 'July 7, 2026',
+            items: [
+              'Fixed a bug where a valid sign-in code was sometimes shown as invalid.',
+            ],
+          },
+          {
+            date: 'June 21, 2026',
+            items: [
+              'The app now has a proper layout on larger screens.',
+            ],
+          },
+          {
+            date: 'June 15, 2026',
+            items: [
+              'You can now install the app on your phone\'s home screen.',
+            ],
+          },
+          {
+            date: 'June 6, 2026',
+            items: [
+              'Sign in now works with a 6-digit code sent to your email.',
+              'The event organizer is now shown on the event detail page.',
+            ],
+          },
+          {
+            date: 'March 31, 2026',
+            items: [
+              'New accounts now need to be approved by an admin before they can access the app.',
+            ],
+          },
+          {
+            date: 'March 28, 2026',
+            items: [
+              'You can now say whether you are going to an event.',
+            ],
+          },
+          {
+            date: 'March 26, 2026',
+            items: [
+              'Tap on an event to see its full details.',
+            ],
+          },
+          {
+            date: 'March 6, 2026',
+            items: [
+              'Only upcoming events are shown in the list.',
+              'Events in the past can no longer be created.',
+            ],
+          },
+          {
+            date: 'February 15, 2026',
+            items: [
+              'Events can now be created and browsed in a list.',
+            ],
+          },
+          {
+            date: 'February 26, 2025',
+            items: [
+              'The app is now available in German.',
+            ],
+          },
+          {
+            date: 'February 13, 2025',
+            items: [
+              'The app launched. Sign in with your Google account to get started.',
+            ],
+          },
+        ],
+      },
       navigation: {
         events: 'Events',
         profile: 'Profile',
         signIn: 'Sign in',
+        changelog: "What's New",
       },
       request: {
         errorTitle: 'Something went wrong',
@@ -342,6 +468,7 @@ export default createI18n({
         menuLabel: 'Menü öffnen',
         cancel: 'Abbrechen',
         howItWorks: 'So funktioniert die App',
+        changelog: 'Neu in der App',
       },
       profileSetup: {
         header: 'Profil einrichten',
@@ -526,10 +653,135 @@ export default createI18n({
           kids: 'Kinder',
         },
       },
+      changelog: {
+        header: 'Neu in der App',
+        entries: [
+          {
+            date: '11. August 2026',
+            items: [
+              'Du kannst Events jetzt nach Kategorie filtern.',
+              'Vergangene Events findest du jetzt am Ende der Liste.',
+              'Es gibt jetzt eine Seite „Neu in der App". Du schaust gerade drauf.',
+            ],
+          },
+          {
+            date: '6. August 2026',
+            items: [
+              'Tippe auf ein Profilbild, um zu sehen, wer dahinter steckt.',
+              'Die Teilnehmerliste bei einem Event nimmt jetzt weniger Platz ein.',
+              'Events bleiben noch 4 Stunden nach dem Start in der Liste sichtbar.',
+              'Die Mitgliederzahl in der Verwaltung zählt Kinder jetzt korrekt und schließt Betreuer aus.',
+            ],
+          },
+          {
+            date: '5. August 2026',
+            items: [
+              'Das Jahr wird jetzt als Trennlinie in der Eventliste angezeigt.',
+              'Menüs reagieren auf dem Handy jetzt schneller.',
+            ],
+          },
+          {
+            date: '4. August 2026',
+            items: [
+              'Du kannst jetzt Kommentare bei Events hinterlassen.',
+            ],
+          },
+          {
+            date: '3. August 2026',
+            items: [
+              'Du kannst deine Kinder jetzt verwalten und Events für sie beantworten.',
+              'Admins können neue Mitglieder und Kinder direkt in der App freigeben oder ablehnen.',
+            ],
+          },
+          {
+            date: '10. Juli 2026',
+            items: [
+              'Admins können Events jetzt absagen und später wiederherstellen.',
+              'Tippe auf ein Profilbild, um den Namen der Person zu sehen.',
+              'Zusagen werden in der Teilnehmerliste zuerst angezeigt.',
+            ],
+          },
+          {
+            date: '9. Juli 2026',
+            items: [
+              'Admins können Events jetzt löschen.',
+            ],
+          },
+          {
+            date: '7. Juli 2026',
+            items: [
+              'Fehler behoben, bei dem ein gültiger Anmeldecode manchmal als ungültig angezeigt wurde.',
+            ],
+          },
+          {
+            date: '21. Juni 2026',
+            items: [
+              'Die App hat jetzt ein optimiertes Layout auf größeren Bildschirmen.',
+            ],
+          },
+          {
+            date: '15. Juni 2026',
+            items: [
+              'Du kannst die App jetzt auf deinem Startbildschirm installieren.',
+            ],
+          },
+          {
+            date: '6. Juni 2026',
+            items: [
+              'Die Anmeldung funktioniert jetzt mit einem 6-stelligen Code per E-Mail.',
+              'Der Ersteller eines Events wird jetzt in den Event-Details angezeigt.',
+            ],
+          },
+          {
+            date: '31. März 2026',
+            items: [
+              'Neue Accounts müssen jetzt erst von einem Admin freigegeben werden, bevor sie die App nutzen können.',
+            ],
+          },
+          {
+            date: '28. März 2026',
+            items: [
+              'Du kannst jetzt angeben, ob du bei einem Event dabei bist.',
+            ],
+          },
+          {
+            date: '26. März 2026',
+            items: [
+              'Tippe auf ein Event, um alle Details zu sehen.',
+            ],
+          },
+          {
+            date: '6. März 2026',
+            items: [
+              'In der Eventliste werden jetzt nur bevorstehende Events angezeigt.',
+              'Events in der Vergangenheit können nicht mehr erstellt werden.',
+            ],
+          },
+          {
+            date: '15. Februar 2026',
+            items: [
+              'Events können jetzt erstellt und in einer Liste angesehen werden.',
+            ],
+          },
+          {
+            date: '26. Februar 2025',
+            items: [
+              'Die App ist jetzt auch auf Deutsch verfügbar.',
+            ],
+          },
+          {
+            date: '13. Februar 2025',
+            items: [
+              'Die App ist gestartet. Melde dich mit deinem Google-Konto an, um loszulegen.',
+            ],
+          },
+        ],
+      },
       navigation: {
         events: 'Events',
         profile: 'Profil',
         signIn: 'Anmelden',
+        changelog: 'Neu in der App',
       },
       request: {
         errorTitle: 'Etwas ist schiefgelaufen',

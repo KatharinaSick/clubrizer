@@ -104,6 +104,7 @@ const menuItems = computed<MenuItem[]>(() => {
   }
   items.push({ label: i18n.global.t('profile.logout'), danger: true, onClick: logout })
   items.push({ label: i18n.global.t('profile.howItWorks'), subtle: true, divider: true, onClick: () => router.push('/getting-started') })
+  items.push({ label: i18n.global.t('profile.changelog'), subtle: true, onClick: () => router.push('/changelog') })
   return items
 })
 </script>

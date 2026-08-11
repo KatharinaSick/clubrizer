@@ -12,6 +12,7 @@ GitHub: `KatharinaSick/clubrizer`
 - **Clarification**: Never guess. If anything is unclear, ask for clarification until the task is fully understood.
 - **Implementation**: Do not implement new features or significant changes without explicit approval. Planning should precede implementation.
 - **Users**: The end users of this app are not tech-savvy. Keep UX simple, friendly, and avoid technical language in any user-facing text.
+- **No dead ends**: Every screen must have a way back. Any view that is not a top-level navigation tab must include a back button (use the `Header` component's `left-action="back"` prop).
 - **Full-stack security**: Always think about the full picture — this app has both a frontend and a backend. Hiding or restricting something only on the frontend is not sufficient security. Any access control must be properly enforced in the backend as well.
 
 ## Git Commits
@@ -69,6 +70,16 @@ Follow the **expand/contract** pattern:
 3. **Contract**: remove the old column/table in a *later, separate* release once the old code is no longer running.
 
 Never drop, rename, or change the type of a column/table in the same release that introduces its replacement.
+
+## Changelog
+A "What's New" page lives at `/changelog` (`frontend/src/views/ChangelogView.vue`). It shows users what has changed in the app, written in plain, friendly language — no technical terms.
+
+**When to update it:**
+- Any change users would notice or benefit from knowing about: new features, improved behavior, fixed annoyances.
+- Add a new entry or bullet point in `frontend/src/plugins/i18n.ts` under `changelog.entries` (both `en` and `de`).
+- Write entries from the user's perspective. Describe *what changed for them*, not *how* it was built.
+- Examples to include: new screens, new filters, improved layouts, bug fixes users experienced.
+- Examples to skip: backend refactors, code cleanup, security fixes invisible to users.
 
 ## Design System
 A living design system reference page lives at `/design-system` (`frontend/src/views/DesignSystemView.vue`). It documents all design tokens (colors, typography, spacing, shadows, border radius) and showcases every reusable component with usage notes and code references.

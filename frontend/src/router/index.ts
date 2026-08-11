@@ -75,6 +75,12 @@ const router = createRouter({
       meta: { showNavigation: false }
     },
     {
+      path: '/changelog',
+      name: 'changelog',
+      component: () => import('../views/ChangelogView.vue'),
+      meta: { showNavigation: false, activeNav: 'profile', requiresAuth: true }
+    },
+    {
       path: '/design-system',
       name: 'design-system',
       component: () => import('../views/DesignSystemView.vue'),
