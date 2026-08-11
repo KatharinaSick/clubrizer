@@ -140,6 +140,7 @@ func addRoutes(
 	mux.Handle("GET /events/categories", authenticated(cfg, handleAndReturnList(eventsService.ListCategories)))
 
 	mux.Handle("GET /events", authenticated(cfg, handleAndReturnList(eventsService.ListEvents)))
+	mux.Handle("GET /events/past", authenticated(cfg, handleAndReturnList(eventsService.ListPastEvents)))
 	mux.Handle("GET /events/{id}", authenticated(cfg, handleWithIdAndReturnValue(eventsService.GetEvent)))
 	mux.Handle("POST /events", authenticated(cfg, handleWithBodyAndReturnValue(eventsService.CreateEvent)))
 	mux.Handle("PUT /events/{id}/response", authenticated(cfg, handleWithIdAndBody(eventsService.UpsertEventResponse)))
@@ -184,6 +185,7 @@ type authorizer interface {
 type eventsService interface {
 	ListCategories(ctx context.Context) ([]*events.Category, error)
 	ListEvents(ctx context.Context) ([]*events.Event, error)
+	ListPastEvents(ctx context.Context) ([]*events.Event, error)
 	GetEvent(ctx context.Context, id string) (*events.Event, error)
 	CreateEvent(ctx context.Context, e events.Event) (*events.Event, error)
 	UpsertEventResponse(ctx context.Context, eventId string, req events.UpsertEventResponseRequest) error

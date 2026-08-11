@@ -53,6 +53,31 @@ const filteredEvents = computed(() =>
     : events.value.filter(e => e.category.id === selectedCategoryId.value),
 )
 
+const pastEvents = ref<EventProps[]>([])
+const pastEventsLoaded = ref(false)
+const isLoadingPast = ref(false)
+
+const filteredPastEvents = computed(() =>
+  selectedCategoryId.value === null
+    ? pastEvents.value
+    : pastEvents.value.filter(e => e.category.id === selectedCategoryId.value),
+)
+
+const loadPastEvents = () => {
+  if (isLoadingPast.value || pastEventsLoaded.value) return
+  isLoadingPast.value = true
+  axios
+    .get('/events/past')
+    .then(response => {
+      pastEvents.value = response.data ?? []
+      pastEventsLoaded.value = true
+    })
+    .catch(() => {})
+    .finally(() => {
+      isLoadingPast.value = false
+    })
+}
+
 const selectCategory = (id: string | null) => {
   selectedCategoryId.value = id
   isFilterOpen.value = false
@@ -172,9 +197,36 @@ const showYearDivider = (index: number) => {
       </template>
     </div>
 
-    <p v-if="eventsLoaded && filteredEvents.length === 0" class="eventsEmpty">
+    <p v-if="eventsLoaded && filteredEvents.length === 0 && !pastEventsLoaded" class="eventsEmpty">
       {{ $t('events.noEvents') }}
     </p>
+
+    <!-- Past events -->
+    <div class="eventsPastSection">
+      <button
+        v-if="!pastEventsLoaded"
+        class="eventsPastToggle"
+        :disabled="isLoadingPast"
+        @click="loadPastEvents"
+      >
+        <span v-if="isLoadingPast" class="eventsPastSpinner" />
+        {{ $t('events.past.show') }}
+      </button>
+
+      <template v-if="pastEventsLoaded">
+        <div class="eventsPastDivider">
+          <span class="eventsPastDividerLabel">{{ $t('events.past.title') }}</span>
+        </div>
+        <div class="eventsGrid">
+          <template v-for="event in filteredPastEvents" :key="event.id">
+            <Event :event="event" @click="openEvent(event.id)" style="cursor: pointer;" />
+          </template>
+        </div>
+        <p v-if="filteredPastEvents.length === 0" class="eventsEmpty">
+          {{ $t('events.past.empty') }}
+        </p>
+      </template>
+    </div>
 
     <FloatingActionButton
       v-if="categoriesLoading || fabActions.length > 0"
@@ -268,6 +320,67 @@ const showYearDivider = (index: number) => {
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
+}
+
+.eventsPastSection {
+  margin-top: var(--padding);
+}
+
+.eventsPastToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap);
+  width: 100%;
+  padding: var(--padding);
+  background: none;
+  border: none;
+  color: var(--text-gray);
+  font-size: var(--font-size-small);
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.eventsPastToggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.eventsPastSpinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid transparent;
+  border-top-color: var(--text-gray);
+  border-right-color: var(--text-gray);
+  border-radius: 50%;
+  animation: pastSpin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pastSpin {
+  to { transform: rotate(360deg); }
+}
+
+.eventsPastDivider {
+  display: flex;
+  align-items: center;
+  gap: var(--gap);
+  margin: var(--gap) 0 var(--padding);
+}
+
+.eventsPastDivider::before,
+.eventsPastDivider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--gray);
+}
+
+.eventsPastDividerLabel {
+  color: var(--text-gray);
+  font-size: var(--font-size-small);
+  white-space: nowrap;
 }
 
 .eventsYearDivider {

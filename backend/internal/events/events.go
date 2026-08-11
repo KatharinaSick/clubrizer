@@ -18,6 +18,14 @@ func (s *Service) ListEvents(ctx context.Context) ([]*Event, error) {
 	return events, nil
 }
 
+func (s *Service) ListPastEvents(ctx context.Context) ([]*Event, error) {
+	events, err := s.store.getPastEvents(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return events, nil
+}
+
 func (s *Service) GetEvent(ctx context.Context, id string) (*Event, error) {
 	uuidId, err := uuid.Parse(id)
 	if err != nil {

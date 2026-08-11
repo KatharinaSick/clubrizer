@@ -110,6 +110,11 @@ export default createI18n({
         filter: {
           allEvents: 'All events',
         },
+        past: {
+          show: 'Show past events',
+          title: 'Past events',
+          empty: 'No past events.',
+        },
         cancelled: 'Cancelled',
         development: {
           title: 'Development Preview',
@@ -370,6 +375,11 @@ export default createI18n({
         fab: 'Neues Event',
         filter: {
           allEvents: 'Alle Events',
+        },
+        past: {
+          show: 'Vergangene Events anzeigen',
+          title: 'Vergangene Events',
+          empty: 'Keine vergangenen Events.',
         },
         cancelled: 'Abgesagt',
         development: {

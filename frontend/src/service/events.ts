@@ -72,6 +72,11 @@ export interface CreateEventRequest {
   categoryId: string
 }
 
+export const listPastEvents = async (): Promise<Event[]> => {
+  const response = await axios.get('/events/past')
+  return response.data ?? []
+}
+
 export const createEvent = async (event: CreateEventRequest): Promise<Event> => {
   const response = await axios.post('/events', event)
   return response.data

@@ -83,6 +83,49 @@ func (s *store) getFutureEvents(ctx context.Context) ([]*Event, error) {
 	return events, nil
 }
 
+func (s *store) getPastEvents(ctx context.Context) ([]*Event, error) {
+	rows, err := s.conn.Query(ctx, `
+		SELECT
+			e.id, e.title, e.description, e.location, e.start_time, e.created_by, e.created_at, e.category, e.cancelled_at,
+			c.id, c.name, c.color, c.picture, c.sort_order, c.custom_label,
+			u.id, u.given_name, u.family_name, COALESCE(u.nick_name, u.given_name), u.picture
+		FROM events e
+		LEFT JOIN event_categories c ON e.category = c.id
+		LEFT JOIN users u ON e.created_by = u.id
+		WHERE e.start_time < NOW() - INTERVAL '4 hours'
+		ORDER BY e.start_time DESC
+		LIMIT 50
+	`)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to query past events: %s", err.Error()))
+	}
+	defer rows.Close()
+
+	var events []*Event
+	for rows.Next() {
+		var e Event
+		var c Category
+		var cr Creator
+		err := rows.Scan(
+			&e.ID, &e.Title, &e.Description, &e.Location, &e.StartTime, &e.CreatedBy, &e.CreatedAt, &e.CategoryID, &e.CancelledAt,
+			&c.ID, &c.Name, &c.Color, &c.Picture, &c.SortOrder, &c.CustomLabel,
+			&cr.ID, &cr.GivenName, &cr.FamilyName, &cr.NickName, &cr.Picture,
+		)
+		if err != nil {
+			return nil, errors.New(fmt.Sprintf("failed to scan past event: %s", err.Error()))
+		}
+		e.Category = c
+		e.Creator = cr
+		events = append(events, &e)
+	}
+
+	if rows.Err() != nil {
+		return nil, errors.New(fmt.Sprintf("rows error: %s", rows.Err().Error()))
+	}
+
+	return events, nil
+}
+
 func (s *store) getEventById(ctx context.Context, id uuid.UUID) (*Event, error) {
 	row := s.conn.QueryRow(ctx, `
 		SELECT
