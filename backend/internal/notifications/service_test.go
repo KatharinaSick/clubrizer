@@ -1,6 +1,10 @@
 package notifications
 
-import "testing"
+import (
+	"encoding/json"
+	"strings"
+	"testing"
+)
 
 func TestIsAllowedEndpoint(t *testing.T) {
 	tests := []struct {
@@ -46,5 +50,28 @@ func TestTypeCategories(t *testing.T) {
 		if switchable == alwaysSent[typ] {
 			t.Errorf("type %q: switchable = %v, always sent = %v; want exactly one", typ, switchable, alwaysSent[typ])
 		}
+	}
+}
+
+func TestEncodeShortensParams(t *testing.T) {
+	long := strings.Repeat("&ä", 500)
+	payload, err := encode(message{Type: typeEventComment, Params: map[string]string{"comment": long, "name": "Anna"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var decoded message
+	if err := json.Unmarshal(payload, &decoded); err != nil {
+		t.Fatal(err)
+	}
+	comment := []rune(decoded.Params["comment"])
+	if len(comment) != maxParamLength || comment[len(comment)-1] != '…' {
+		t.Errorf("comment not shortened to %d characters: got %d", maxParamLength, len(comment))
+	}
+	if decoded.Params["name"] != "Anna" {
+		t.Errorf("short param changed: %q", decoded.Params["name"])
+	}
+	if !strings.Contains(string(payload), "&ä&ä") {
+		t.Error("& should be kept as is, not escaped")
 	}
 }

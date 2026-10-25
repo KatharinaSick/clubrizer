@@ -80,7 +80,9 @@ self.addEventListener('push', (event) => {
 
 async function show(message: PushMessage) {
   const { t, te } = i18n.global
-  const key = te(`pushNotifications.${message.type}.title`)
+  // te only looks at the given locale, so check English (the fallback language) too —
+  // otherwise devices in other languages would only ever get the generic text.
+  const key = te(`pushNotifications.${message.type}.title`) || te(`pushNotifications.${message.type}.title`, 'en')
     ? message.type
     : 'fallback'
   const options: NotificationOptions = { icon: '/pwa-192x192.png' }

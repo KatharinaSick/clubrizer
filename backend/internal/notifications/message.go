@@ -1,5 +1,10 @@
 package notifications
 
+import (
+	"bytes"
+	"encoding/json"
+)
+
 // message is the payload delivered to the service worker. It only describes what happened —
 // the service worker turns Type into a translated text (pushNotifications.<type> in the
 // frontend's i18n), filling in Params, so all user-facing wording stays in the frontend.
@@ -10,6 +15,37 @@ type message struct {
 	Params map[string]string `json:"params,omitempty"`
 	// URL is the in-app path opened when the notification is tapped.
 	URL string `json:"url,omitempty"`
+}
+
+// maxParamLength caps each param (in characters). A push payload may be at most ~4KB, and
+// a notification only shows a few lines anyway, so a long comment or event title is cut off
+// rather than making the push fail for everyone.
+const maxParamLength = 200
+
+// encode turns the message into the push payload, shortening long params.
+func encode(msg message) ([]byte, error) {
+	params := make(map[string]string, len(msg.Params))
+	for k, v := range msg.Params {
+		params[k] = shorten(v, maxParamLength)
+	}
+	msg.Params = params
+
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	// Keep <, > and & as they are instead of \u003c etc., which take six bytes each.
+	enc.SetEscapeHTML(false)
+	if err := enc.Encode(msg); err != nil {
+		return nil, err
+	}
+	return bytes.TrimSuffix(buf.Bytes(), []byte("\n")), nil
+}
+
+func shorten(s string, max int) string {
+	runes := []rune(s)
+	if len(runes) <= max {
+		return s
+	}
+	return string(runes[:max-1]) + "…"
 }
 
 const (

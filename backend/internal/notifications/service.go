@@ -3,7 +3,6 @@ package notifications
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -232,7 +231,7 @@ func (s *Service) notify(ctx context.Context, userIds []uuid.UUID, msg message) 
 // Devices the push service reports as gone are removed; other failures are logged and
 // skipped so one broken device doesn't block the others.
 func (s *Service) sendToDevices(ctx context.Context, subs []*Subscription, msg message) (int, error) {
-	payload, err := json.Marshal(msg)
+	payload, err := encode(msg)
 	if err != nil {
 		return 0, errors.New(fmt.Sprintf("failed to encode push message: %s", err.Error()))
 	}
