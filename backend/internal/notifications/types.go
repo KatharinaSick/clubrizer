@@ -42,6 +42,10 @@ type SubscriptionStatusResponse struct {
 	Subscribed bool `json:"subscribed"`
 }
 
+type SendTestResponse struct {
+	Delivered int `json:"delivered"`
+}
+
 type VapidPublicKeyResponse struct {
 	PublicKey string `json:"publicKey"`
 }

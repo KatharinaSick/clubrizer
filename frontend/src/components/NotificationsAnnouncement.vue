@@ -35,7 +35,7 @@ const homeScreenSteps = computed(() => [1, 2, 3, 4].map((n) => i18n.global.t(`no
 onMounted(async () => {
   if (!isDue()) return
   try {
-    const state = await getPushState()
+    const state = await getPushState(true)
     if (state === 'off') step.value = 'intro'
     if (state === 'needsHomeScreen') step.value = 'homeScreen'
   } catch {

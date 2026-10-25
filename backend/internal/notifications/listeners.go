@@ -3,6 +3,7 @@ package notifications
 import (
 	"context"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/google/uuid"
@@ -33,7 +34,7 @@ func (s *Service) EventDeleted(ctx context.Context, change events.EventChanged) 
 
 // CommentCreated tells the event's creator and everyone who said yes.
 func (s *Service) CommentCreated(ctx context.Context, created events.CommentCreated) {
-	recipients := append(created.Attendees, created.Event.CreatedBy)
+	recipients := slices.Concat(created.Attendees, []uuid.UUID{created.Event.CreatedBy})
 	s.notify(ctx, excluding(recipients, created.AuthorID), message{
 		Type: typeEventComment,
 		Params: map[string]string{

@@ -42,7 +42,9 @@ function readyRegistration(): Promise<ServiceWorkerRegistration> {
   ])
 }
 
-export async function getPushState(): Promise<PushState> {
+// Pass silent when checking in the background (not on the notifications screen), so a failed
+// check shows no error.
+export async function getPushState(silent = false): Promise<PushState> {
   if (isIOS() && !isStandalone()) {
     return 'needsHomeScreen'
   }
@@ -62,7 +64,7 @@ export async function getPushState(): Promise<PushState> {
   }
   // The browser alone doesn't know whether the backend still has this device for the current
   // user (e.g. someone else signed in here since).
-  return (await notificationsService.isSubscribed(subscription.endpoint)) ? 'on' : 'off'
+  return (await notificationsService.isSubscribed(subscription.endpoint, silent)) ? 'on' : 'off'
 }
 
 // turnOnPush asks for permission and registers this device. Must be called directly from a

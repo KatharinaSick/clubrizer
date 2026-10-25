@@ -26,8 +26,8 @@ const notificationsService = {
     await axios.post('/notifications/subscriptions', subscription, { silent })
   },
 
-  async isSubscribed(endpoint: string): Promise<boolean> {
-    const response = await axios.post('/notifications/subscriptions/status', { endpoint })
+  async isSubscribed(endpoint: string, silent = false): Promise<boolean> {
+    const response = await axios.post('/notifications/subscriptions/status', { endpoint }, { silent })
     return response.data.subscribed
   },
 
@@ -42,8 +42,10 @@ const notificationsService = {
     await axios.post('/notifications/subscriptions/release', { endpoint, auth }, { silent: true })
   },
 
-  async sendTest(): Promise<void> {
-    await axios.post('/notifications/test')
+  // sendTest returns how many of the user's devices accepted the test notification.
+  async sendTest(): Promise<number> {
+    const response = await axios.post('/notifications/test')
+    return response.data.delivered
   },
 
   async getSettings(): Promise<NotificationSetting[]> {

@@ -47,7 +47,7 @@ watch(visibility, (v) => {
 onMounted(async () => {
   if (auth.user.status !== 'pending') return
   refreshStatus()
-  getPushState().then(s => { pushState.value = s }).catch(() => {})
+  getPushState(true).then(s => { pushState.value = s }).catch(() => {})
   try {
     const kids = await kidsService.listKids()
     kidNames.value = kids.map((k) => k.givenName ?? '').filter(Boolean)

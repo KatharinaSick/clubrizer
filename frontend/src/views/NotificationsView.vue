@@ -28,6 +28,8 @@ const auth = useAuthStore()
 const state = ref<PushState | null>(null)
 const busyAction = ref<'turnOn' | 'test' | 'offThisDevice' | null>(null)
 const testSent = ref(false)
+// The test reached none of the user's devices (e.g. the registration expired).
+const testUnreachable = ref(false)
 // Browser-side failures (e.g. the push service refusing to subscribe). API errors are
 // shown globally through RequestError instead.
 const deviceError = ref(false)
@@ -41,6 +43,7 @@ onMounted(() => run(null, async () => {
 async function run(action: typeof busyAction.value, fn: () => Promise<void>) {
   busyAction.value = action
   testSent.value = false
+  testUnreachable.value = false
   deviceError.value = false
   try {
     await fn()
@@ -85,8 +88,9 @@ const turnOn = () => run('turnOn', async () => {
 })
 
 const sendTest = () => run('test', async () => {
-  await notificationsService.sendTest()
-  testSent.value = true
+  const delivered = await notificationsService.sendTest()
+  testSent.value = delivered > 0
+  testUnreachable.value = delivered === 0
 })
 
 const turnOffThisDevice = () => run('offThisDevice', async () => {
@@ -153,6 +157,7 @@ const turnOffThisDevice = () => run('offThisDevice', async () => {
             <p class="notificationsHint">{{ $t('notifications.on.testSent') }}</p>
             <p class="notificationsHint">{{ $t('notifications.on.testMissing') }}</p>
           </template>
+          <p v-if="testUnreachable" class="notificationsHint">{{ $t('notifications.on.testUnreachable') }}</p>
         </section>
 
         <section v-if="settings.length > 0" class="notificationsSection">

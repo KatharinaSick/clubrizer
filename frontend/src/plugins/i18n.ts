@@ -91,6 +91,7 @@ export default createI18n({
           sendTest: 'Send test',
           testSent: 'Sent! It should pop up in a few seconds.',
           testMissing: 'Nothing showing up? Check that notifications are allowed for your browser in your device settings and that "Do Not Disturb" is off.',
+          testUnreachable: 'We couldn\'t reach this device. Please turn notifications off and on again, then try once more.',
           turnOffThisDevice: 'Turn off on this device',
         },
         homeScreen: {
@@ -638,6 +639,7 @@ export default createI18n({
           sendTest: 'Testen',
           testSent: 'Gesendet! Sie sollte gleich auftauchen.',
           testMissing: 'Nichts angekommen? Schau, ob Benachrichtigungen für deinen Browser in den Einstellungen deines Geräts erlaubt sind und „Nicht stören“ aus ist.',
+          testUnreachable: 'Wir konnten dieses Gerät nicht erreichen. Schalte die Benachrichtigungen aus und wieder ein und versuch es dann nochmal.',
           turnOffThisDevice: 'Auf diesem Gerät ausschalten',
         },
         homeScreen: {

@@ -94,8 +94,7 @@ func (s *Service) Subscribe(ctx context.Context, req SubscribeRequest) error {
 }
 
 // GetSubscriptionStatus tells a browser whether its subscription is still registered for the
-// caller. The browser alone can't know: the device may have been turned off from another
-// device ("turn off on all devices"), or someone else may have signed in on it since.
+// caller. The browser alone can't know: someone else may have signed in on it since.
 func (s *Service) GetSubscriptionStatus(ctx context.Context, req SubscriptionStatusRequest) (*SubscriptionStatusResponse, error) {
 	userId := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims).ID
 	subscribed, err := s.store.hasSubscription(ctx, userId, req.Endpoint)
@@ -118,22 +117,20 @@ func (s *Service) ReleaseDevice(ctx context.Context, req ReleaseDeviceRequest) e
 	return s.store.deleteSubscriptionOfDevice(ctx, req.Endpoint, req.Auth)
 }
 
-// SendTest sends a test notification to all of the caller's devices.
-func (s *Service) SendTest(ctx context.Context) error {
+// SendTest sends a test notification to all of the caller's devices and reports how many
+// accepted it. None is not an error: the app tells the user in its own words.
+func (s *Service) SendTest(ctx context.Context) (*SendTestResponse, error) {
 	userId := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims).ID
 
 	subs, err := s.store.getSubscriptionsByUsers(ctx, []uuid.UUID{userId})
 	if err != nil {
-		return err
+		return nil, err
 	}
-	sent, err := s.sendToDevices(ctx, subs, message{Type: typeTest, URL: "/notifications"})
+	delivered, err := s.sendToDevices(ctx, subs, message{Type: typeTest, URL: "/notifications"})
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if sent == 0 {
-		return apperrors.NewNotFound("no device could be reached")
-	}
-	return nil
+	return &SendTestResponse{Delivered: delivered}, nil
 }
 
 // GetSettings lists the notification settings screen's switches for the caller. Member
