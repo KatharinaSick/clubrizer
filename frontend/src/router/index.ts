@@ -39,6 +39,12 @@ const router = createRouter({
       meta: { showNavigation: false, activeNav: 'profile', requiresAuth: true }
     },
     {
+      path: '/notifications',
+      name: 'notifications',
+      component: () => import('../views/NotificationsView.vue'),
+      meta: { showNavigation: false, activeNav: 'profile', requiresAuth: true }
+    },
+    {
       path: '/manage-members',
       name: 'manage-members',
       component: () => import('../views/ManageMembersView.vue'),

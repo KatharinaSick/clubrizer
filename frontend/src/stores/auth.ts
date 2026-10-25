@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import authService from '@/service/auth'
 import usersService from '@/service/users'
 import { useStorage } from '@vueuse/core'
+import { releasePushOnLogout, restorePushOnSignIn } from '@/utils/push'
 
 export type UserStatus = 'onboarding' | 'pending' | 'approved' | 'rejected'
 
@@ -46,6 +47,8 @@ export const useAuthStore = defineStore('auth', {
       this.user = user
       this.accessToken = accessToken
       this.isAuthenticated = true
+      // Not awaited: sign-in shouldn't wait for the push service.
+      void restorePushOnSignIn(user.email)
     },
     async updateProfile(firstName: string, lastName: string, nickName?: string) {
       const { user, accessToken } = await usersService.updateProfile(firstName, lastName, nickName)
@@ -67,6 +70,9 @@ export const useAuthStore = defineStore('auth', {
       this.user = user
       this.accessToken = accessToken
     },
+    // refreshTokens swaps the refresh cookie for a new access token. On failure the session
+    // stays cleared and the error is rethrown, so the 401 interceptor can log out and send the
+    // user to sign in.
     async refreshTokens() {
       this.isLoading = true
       this.isAuthenticated = false
@@ -76,13 +82,28 @@ export const useAuthStore = defineStore('auth', {
         this.user = user
         this.accessToken = accessToken
         this.isAuthenticated = true
-      } catch {
-        // error is handled globally by the axios interceptor
       } finally {
         this.isLoading = false
       }
     },
+    // checkStatus re-reads the account (e.g. whether it has been approved) through a token
+    // refresh. Unlike refreshTokens it keeps the current session when the refresh fails (e.g.
+    // offline), so a check in the background can never log anyone out. Automatic checks are
+    // silent; only a check the user asked for shows its error.
+    async checkStatus(silent = false) {
+      try {
+        const { user, accessToken } = await authService.refreshTokens(silent)
+        this.user = user
+        this.accessToken = accessToken
+        this.isAuthenticated = true
+      } catch {
+        // keep the current session — unless silent, the axios interceptor shows the error
+      }
+    },
     async logout() {
+      // Also when the session is already gone (e.g. a failed token refresh) — releasing the
+      // device needs no session.
+      await releasePushOnLogout()
       try {
         await authService.logout()
       } catch {

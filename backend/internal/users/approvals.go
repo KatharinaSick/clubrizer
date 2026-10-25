@@ -2,16 +2,10 @@ package users
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/katharinasick/clubrizer/internal/apperrors"
 )
-
-// notificationTimeout bounds the fire-and-forget email goroutines below, which run on a
-// fresh background context (not the request context, which is cancelled once the handler
-// returns).
-const notificationTimeout = 30 * time.Second
 
 // ApprovalKid is a pending kid awaiting an admin decision, shown under its parent account
 // in the approval queue.
@@ -64,30 +58,16 @@ func (s *Service) ListApprovals(ctx context.Context) ([]*ApprovalRequest, error)
 	return requests, nil
 }
 
-// decisionRecipients is who to notify after a batch decision. accountEmails are the account
-// holders whose own status changed — one email each. kidParents are the parents of decided
-// kids whose account was NOT part of the batch, i.e. a later-added kid on an already-approved
-// account: those get a kid-specific email. Kids decided alongside their own account (a
-// whole-family batch) are intentionally absent — the single account email covers the family,
-// so a family approval sends exactly one email.
-type decisionRecipients struct {
-	accountEmails []string
-	kidParents    []kidParentNotification
-}
-
-type kidParentNotification struct {
-	parentEmail string
-	kidName     string
-}
-
-// ApproveApprovals approves the given accounts and/or kids in one transaction, then emails
-// the affected account holders (and the parents of any individually-approved kids).
+// ApproveApprovals approves the given accounts and/or kids in one transaction, then tells
+// the listener (which notifies the account holders and the parents of individually-approved
+// kids).
 func (s *Service) ApproveApprovals(ctx context.Context, req ApprovalDecisionRequest) error {
 	return s.decide(ctx, req, StatusApproved)
 }
 
-// RejectApprovals rejects the given accounts and/or kids in one transaction, then emails
-// the affected account holders (and the parents of any individually-rejected kids).
+// RejectApprovals rejects the given accounts and/or kids in one transaction, then tells the
+// listener (which notifies the account holders and the parents of individually-rejected
+// kids).
 func (s *Service) RejectApprovals(ctx context.Context, req ApprovalDecisionRequest) error {
 	return s.decide(ctx, req, StatusRejected)
 }
@@ -99,86 +79,11 @@ func (s *Service) decide(ctx context.Context, req ApprovalDecisionRequest, decis
 		return apperrors.NewBadRequest("select at least one account or kid", nil)
 	}
 
-	recipients, err := s.store.decideApprovals(ctx, req.UserIDs, req.KidIDs, decision)
+	accounts, kids, err := s.store.decideApprovals(ctx, req.UserIDs, req.KidIDs, decision)
 	if err != nil {
 		return err
 	}
 
-	s.sendDecisionEmails(recipients, decision)
+	s.listener.ApprovalsDecided(ctx, ApprovalsDecided{Decision: decision, Accounts: accounts, Kids: kids})
 	return nil
-}
-
-// sendDecisionEmails notifies the affected account holders and kid parents off the request
-// path. The decision is already committed, so delivery is best-effort and fire-and-forget:
-// it must neither block nor fail the admin's response, and errors are only logged. Runs on a
-// fresh background context so it survives the handler returning.
-func (s *Service) sendDecisionEmails(recipients decisionRecipients, decision Status) {
-	if len(recipients.accountEmails) == 0 && len(recipients.kidParents) == 0 {
-		return
-	}
-	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), notificationTimeout)
-		defer cancel()
-
-		for _, e := range recipients.accountEmails {
-			var mailErr error
-			if decision == StatusApproved {
-				mailErr = s.email.SendAccountApproved(ctx, e)
-			} else {
-				mailErr = s.email.SendAccountRejected(ctx, e)
-			}
-			if mailErr != nil {
-				s.log.Error("failed to send account decision email", "decision", decision, "error", mailErr)
-			}
-		}
-
-		for _, k := range recipients.kidParents {
-			var mailErr error
-			if decision == StatusApproved {
-				mailErr = s.email.SendKidApproved(ctx, k.parentEmail, k.kidName)
-			} else {
-				mailErr = s.email.SendKidRejected(ctx, k.parentEmail, k.kidName)
-			}
-			if mailErr != nil {
-				s.log.Error("failed to send kid decision email", "decision", decision, "error", mailErr)
-			}
-		}
-	}()
-}
-
-// notifyAdminsOfNewApprovalRequest lets admins know a freshly-submitted account is waiting
-// in the queue. Fire-and-forget and best-effort: it runs off the request path on a fresh
-// background context so it never blocks or fails onboarding — the account is already pending
-// and will show up in the queue regardless.
-func (s *Service) notifyAdminsOfNewApprovalRequest(applicant *User) {
-	name := applicantDisplayName(applicant)
-	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), notificationTimeout)
-		defer cancel()
-
-		admins, err := s.store.getAdminEmails(ctx)
-		if err != nil {
-			s.log.Error("failed to load admin emails for approval notification", "error", err)
-			return
-		}
-		if len(admins) == 0 {
-			return
-		}
-		if err := s.email.SendNewApprovalRequest(ctx, admins, name); err != nil {
-			s.log.Error("failed to send new-approval-request email", "error", err)
-		}
-	}()
-}
-
-// applicantDisplayName picks the friendliest name available for an applicant, falling back
-// to the email when no name has been set yet.
-func applicantDisplayName(u *User) string {
-	switch {
-	case u.NickName != nil && *u.NickName != "":
-		return *u.NickName
-	case u.GivenName != nil && *u.GivenName != "":
-		return *u.GivenName
-	default:
-		return u.Email
-	}
 }

@@ -254,53 +254,57 @@ func (s *store) getEventResponses(ctx context.Context, eventId uuid.UUID, r resp
 	return responses, nil
 }
 
-func (s *store) upsertEventResponse(ctx context.Context, eventId uuid.UUID, userId uuid.UUID, response bool) error {
+// upsertEventResponse stores the user's answer and reports whether it changed — answering the
+// same again touches no row.
+func (s *store) upsertEventResponse(ctx context.Context, eventId uuid.UUID, userId uuid.UUID, response bool) (bool, error) {
 	// The WHERE predicate is required to match the unique index on (event_id, user_id):
 	// since user_id became nullable (migration 000010, for kid responses), that index is
 	// partial — WHERE user_id IS NOT NULL — on CockroachDB, which rewrites a unique index
 	// over a nullable column as partial. Without the predicate the arbiter doesn't match
 	// (SQLSTATE 42P10). Mirrors the kid upsert. Safe on Postgres too: a predicate may infer
 	// a non-partial index there.
-	_, err := s.conn.Exec(ctx, `
+	tag, err := s.conn.Exec(ctx, `
 		INSERT INTO event_responses (event_id, user_id, response)
 		VALUES ($1, $2, $3)
 		ON CONFLICT (event_id, user_id) WHERE user_id IS NOT NULL DO UPDATE SET response = EXCLUDED.response
+		WHERE event_responses.response <> EXCLUDED.response
 	`, eventId, userId, response)
 	if err != nil {
-		return errors.New(fmt.Sprintf("failed to upsert event response: %s", err.Error()))
+		return false, errors.New(fmt.Sprintf("failed to upsert event response: %s", err.Error()))
 	}
-	return nil
+	return tag.RowsAffected() > 0, nil
 }
 
-func (s *store) upsertKidEventResponse(ctx context.Context, eventId uuid.UUID, kidId uuid.UUID, response bool) error {
-	_, err := s.conn.Exec(ctx, `
+// upsertKidEventResponse stores the kid's answer and reports whether it changed.
+func (s *store) upsertKidEventResponse(ctx context.Context, eventId uuid.UUID, kidId uuid.UUID, response bool) (bool, error) {
+	tag, err := s.conn.Exec(ctx, `
 		INSERT INTO event_responses (event_id, kid_id, response)
 		VALUES ($1, $2, $3)
 		ON CONFLICT (event_id, kid_id) WHERE kid_id IS NOT NULL DO UPDATE SET response = EXCLUDED.response
+		WHERE event_responses.response <> EXCLUDED.response
 	`, eventId, kidId, response)
 	if err != nil {
-		return errors.New(fmt.Sprintf("failed to upsert kid event response: %s", err.Error()))
+		return false, errors.New(fmt.Sprintf("failed to upsert kid event response: %s", err.Error()))
 	}
-	return nil
+	return tag.RowsAffected() > 0, nil
 }
 
-// getOwnedKidStatus returns the kid's approval status only if it belongs to userId and
-// hasn't been removed. A kid owned by someone else — or one that was soft-deleted — is
+// getOwnedKid returns the kid's approval status and given name only if it belongs to userId
+// and hasn't been removed. A kid owned by someone else — or one that was soft-deleted — is
 // reported as not found, so a guessed id reveals nothing and a removed kid can't receive
 // new responses.
-func (s *store) getOwnedKidStatus(ctx context.Context, kidId uuid.UUID, userId uuid.UUID) (string, error) {
-	var status string
-	err := s.conn.QueryRow(ctx,
-		"SELECT status FROM kids WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL",
+func (s *store) getOwnedKid(ctx context.Context, kidId uuid.UUID, userId uuid.UUID) (status string, name string, err error) {
+	err = s.conn.QueryRow(ctx,
+		"SELECT status, COALESCE(given_name, '') FROM kids WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL",
 		kidId, userId,
-	).Scan(&status)
+	).Scan(&status, &name)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return "", apperrors.NewNotFound(fmt.Sprintf("kid with id %s not found", kidId))
+			return "", "", apperrors.NewNotFound(fmt.Sprintf("kid with id %s not found", kidId))
 		}
-		return "", errors.New(fmt.Sprintf("failed to query kid status: %s", err.Error()))
+		return "", "", errors.New(fmt.Sprintf("failed to query kid: %s", err.Error()))
 	}
-	return status, nil
+	return status, name, nil
 }
 
 func (s *store) deleteEvent(ctx context.Context, id uuid.UUID) error {
@@ -408,4 +412,24 @@ func (s *store) createComment(ctx context.Context, eventId uuid.UUID, userId uui
 	c.Author = a
 
 	return &c, nil
+}
+
+// getAttendingUserIds returns the approved account holders who said yes to the event, either
+// for themselves or for one of their (not removed) kids.
+func (s *store) getAttendingUserIds(ctx context.Context, eventId uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := s.conn.Query(ctx, `
+		SELECT DISTINCT u.id
+		FROM event_responses r
+		LEFT JOIN kids k ON k.id = r.kid_id AND k.deleted_at IS NULL
+		JOIN users u ON u.id = COALESCE(r.user_id, k.user_id)
+		WHERE r.event_id = $1 AND r.response = true AND u.status = 'approved'
+	`, eventId)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to query attendees: %s", err.Error()))
+	}
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[uuid.UUID])
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to collect attendees: %s", err.Error()))
+	}
+	return ids, nil
 }

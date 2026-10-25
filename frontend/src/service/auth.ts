@@ -13,8 +13,8 @@ const authService = {
     return { user: jwtDecode<User>(accessToken), accessToken }
   },
 
-  async refreshTokens(): Promise<{ user: User; accessToken: string }> {
-    const response = await axios.post('/auth/refresh', undefined, { withCredentials: true })
+  async refreshTokens(silent = false): Promise<{ user: User; accessToken: string }> {
+    const response = await axios.post('/auth/refresh', undefined, { withCredentials: true, silent })
     const { accessToken } = response.data
     return { user: jwtDecode<User>(accessToken), accessToken }
   },

@@ -664,8 +664,8 @@ func (s *store) listMembers(ctx context.Context) ([]*Member, error) {
 }
 
 // decideApprovals sets the given accounts and kids to decision (StatusApproved or
-// StatusRejected) in one all-or-nothing transaction, returning who to notify (see
-// decisionRecipients). Only rows currently 'pending' are eligible;
+// StatusRejected) in one all-or-nothing transaction, returning the decided accounts and the
+// kids decided on their own (see ApprovalsDecided). Only rows currently 'pending' are eligible;
 // if any requested id is not pending (stale, already decided, bogus, or — for kids —
 // belonging to an account that isn't approved) the affected-row count won't match and the
 // whole batch is rolled back. When approving, a kid is only eligible if its parent is
@@ -674,7 +674,7 @@ func (s *store) listMembers(ctx context.Context) ([]*Member, error) {
 // approved kid never hangs under a non-approved parent. Rejecting a kid carries no such
 // parent guard, and rejecting an account additionally cascades to its still-pending kids so
 // none are stranded (see below).
-func (s *store) decideApprovals(ctx context.Context, userIDs, kidIDs []uuid.UUID, decision Status) (decisionRecipients, error) {
+func (s *store) decideApprovals(ctx context.Context, userIDs, kidIDs []uuid.UUID, decision Status) ([]DecidedAccount, []DecidedKid, error) {
 	// De-duplicate first: a repeated id would otherwise undercount against len() below and
 	// trip the all-or-nothing check on input that is actually valid.
 	userIDs = dedupeUUIDs(userIDs)
@@ -682,25 +682,29 @@ func (s *store) decideApprovals(ctx context.Context, userIDs, kidIDs []uuid.UUID
 
 	tx, err := s.conn.Begin(ctx)
 	if err != nil {
-		return decisionRecipients{}, errors.New("failed to begin transaction: " + err.Error())
+		return nil, nil, errors.New("failed to begin transaction: " + err.Error())
 	}
 	defer tx.Rollback(ctx)
 
-	var accountEmails []string
+	var accounts []DecidedAccount
 	if len(userIDs) > 0 {
 		rows, err := tx.Query(ctx,
-			"UPDATE users SET status = $1 WHERE id = ANY($2) AND status = 'pending' RETURNING email",
+			"UPDATE users SET status = $1 WHERE id = ANY($2) AND status = 'pending' RETURNING id, email",
 			string(decision), userIDs,
 		)
 		if err != nil {
-			return decisionRecipients{}, errors.New(fmt.Sprintf("failed to update users: %s", err.Error()))
+			return nil, nil, errors.New(fmt.Sprintf("failed to update users: %s", err.Error()))
 		}
-		accountEmails, err = pgx.CollectRows(rows, pgx.RowTo[string])
+		accounts, err = pgx.CollectRows(rows, func(row pgx.CollectableRow) (DecidedAccount, error) {
+			var a DecidedAccount
+			err := row.Scan(&a.UserID, &a.Email)
+			return a, err
+		})
 		if err != nil {
-			return decisionRecipients{}, errors.New(fmt.Sprintf("failed to collect updated emails: %s", err.Error()))
+			return nil, nil, errors.New(fmt.Sprintf("failed to collect updated accounts: %s", err.Error()))
 		}
-		if len(accountEmails) != len(userIDs) {
-			return decisionRecipients{}, apperrors.NewBadRequest("one or more accounts are not awaiting approval", nil)
+		if len(accounts) != len(userIDs) {
+			return nil, nil, apperrors.NewBadRequest("one or more accounts are not awaiting approval", nil)
 		}
 	}
 
@@ -719,10 +723,10 @@ func (s *store) decideApprovals(ctx context.Context, userIDs, kidIDs []uuid.UUID
 			`, kidIDs)
 		}
 		if err != nil {
-			return decisionRecipients{}, errors.New(fmt.Sprintf("failed to update kids: %s", err.Error()))
+			return nil, nil, errors.New(fmt.Sprintf("failed to update kids: %s", err.Error()))
 		}
 		if int(tag.RowsAffected()) != len(kidIDs) {
-			return decisionRecipients{}, apperrors.NewBadRequest("one or more kids cannot be decided (not awaiting approval, or their account is not approved)", nil)
+			return nil, nil, apperrors.NewBadRequest("one or more kids cannot be decided (not awaiting approval, or their account is not approved)", nil)
 		}
 	}
 
@@ -737,7 +741,7 @@ func (s *store) decideApprovals(ctx context.Context, userIDs, kidIDs []uuid.UUID
 			UPDATE kids SET status = 'rejected'
 			WHERE user_id = ANY($1) AND status = 'pending' AND deleted_at IS NULL
 		`, userIDs); err != nil {
-			return decisionRecipients{}, errors.New(fmt.Sprintf("failed to reject kids of rejected accounts: %s", err.Error()))
+			return nil, nil, errors.New(fmt.Sprintf("failed to reject kids of rejected accounts: %s", err.Error()))
 		}
 	}
 
@@ -745,21 +749,21 @@ func (s *store) decideApprovals(ctx context.Context, userIDs, kidIDs []uuid.UUID
 	// NOT in this batch (a later-added kid on an already-approved account). Kids decided
 	// alongside their own account — a whole-family batch — are excluded here, because the
 	// single account-level email already covers the family.
-	kidParents, err := collectKidParentNotifications(ctx, tx, kidIDs, userIDs)
+	kids, err := collectKidsDecidedAlone(ctx, tx, kidIDs, userIDs)
 	if err != nil {
-		return decisionRecipients{}, err
+		return nil, nil, err
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return decisionRecipients{}, errors.New(fmt.Sprintf("failed to commit transaction: %s", err.Error()))
+		return nil, nil, errors.New(fmt.Sprintf("failed to commit transaction: %s", err.Error()))
 	}
-	return decisionRecipients{accountEmails: accountEmails, kidParents: kidParents}, nil
+	return accounts, kids, nil
 }
 
-// collectKidParentNotifications returns the parent email + kid name for each decided kid
+// collectKidsDecidedAlone returns the parent (id + email) and kid name for each decided kid
 // (in kidIDs) whose account is not in userIDs. Runs inside the decision transaction so it
 // closes its rows before the caller commits.
-func collectKidParentNotifications(ctx context.Context, tx pgx.Tx, kidIDs, userIDs []uuid.UUID) ([]kidParentNotification, error) {
+func collectKidsDecidedAlone(ctx context.Context, tx pgx.Tx, kidIDs, userIDs []uuid.UUID) ([]DecidedKid, error) {
 	if len(kidIDs) == 0 {
 		return nil, nil
 	}
@@ -772,7 +776,7 @@ func collectKidParentNotifications(ctx context.Context, tx pgx.Tx, kidIDs, userI
 	}
 
 	rows, err := tx.Query(ctx, `
-		SELECT u.email, COALESCE(k.given_name, '')
+		SELECT u.id, u.email, COALESCE(k.given_name, '')
 		FROM kids k
 		JOIN users u ON u.id = k.user_id
 		WHERE k.id = ANY($1) AND k.user_id <> ALL($2)
@@ -782,10 +786,10 @@ func collectKidParentNotifications(ctx context.Context, tx pgx.Tx, kidIDs, userI
 	}
 	defer rows.Close()
 
-	var out []kidParentNotification
+	var out []DecidedKid
 	for rows.Next() {
-		var n kidParentNotification
-		if err := rows.Scan(&n.parentEmail, &n.kidName); err != nil {
+		var n DecidedKid
+		if err := rows.Scan(&n.ParentID, &n.ParentEmail, &n.Name); err != nil {
 			return nil, errors.New(fmt.Sprintf("failed to scan kid parent: %s", err.Error()))
 		}
 		out = append(out, n)
@@ -811,26 +815,6 @@ func dedupeUUIDs(ids []uuid.UUID) []uuid.UUID {
 		out = append(out, id)
 	}
 	return out
-}
-
-// getAdminEmails returns the emails of all approved admins, used to notify them of new
-// approval requests.
-func (s *store) getAdminEmails(ctx context.Context) ([]string, error) {
-	rows, err := s.conn.Query(ctx, `
-		SELECT u.email
-		FROM users u
-		JOIN user_roles ur ON ur.user_id = u.id
-		JOIN roles r ON r.id = ur.role_id
-		WHERE r.name = 'admin' AND u.status = 'approved'
-	`)
-	if err != nil {
-		return nil, errors.New(fmt.Sprintf("failed to query admin emails: %s", err.Error()))
-	}
-	emails, err := pgx.CollectRows(rows, pgx.RowTo[string])
-	if err != nil {
-		return nil, errors.New(fmt.Sprintf("failed to collect admin emails: %s", err.Error()))
-	}
-	return emails, nil
 }
 
 // getOwnedKid returns the kid only if it belongs to userID and hasn't been removed (any

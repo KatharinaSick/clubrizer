@@ -113,8 +113,12 @@ func (s *Service) generateAccessToken(ctx context.Context, u *User, registeredCl
 	return token.SignedString([]byte(s.cfg.JWT.AccessToken.SecretKey))
 }
 
+// refreshTokenLifetime is how long someone stays signed in without opening the app. Every
+// refresh issues a new refresh token, so active users stay signed in indefinitely.
+const refreshTokenLifetime = 16 * 24 * time.Hour
+
 func (s *Service) generateRefreshToken(registeredClaims jwt.RegisteredClaims) (string, time.Time, error) {
-	expiresAt := time.Now().Add(7 * 24 * time.Hour)
+	expiresAt := time.Now().Add(refreshTokenLifetime)
 	registeredClaims.ExpiresAt = jwt.NewNumericDate(expiresAt)
 	registeredClaims.Issuer = s.cfg.JWT.RefreshToken.Issuer
 

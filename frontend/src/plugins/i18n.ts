@@ -77,6 +77,120 @@ export default createI18n({
         cancel: 'Cancel',
         howItWorks: 'How it works',
         changelog: "What's New",
+        notifications: 'Notifications',
+      },
+      notifications: {
+        header: 'Notifications',
+        off: {
+          title: 'Never miss a thing',
+          intro: 'Get a heads-up on this device when something new happens in your club.',
+          turnOn: 'Turn on',
+        },
+        on: {
+          status: 'On for this device',
+          sendTest: 'Send test',
+          testSent: 'Sent! It should pop up in a few seconds.',
+          testMissing: 'Nothing showing up? Check that notifications are allowed for your browser in your device settings and that "Do Not Disturb" is off.',
+          testUnreachable: 'We couldn\'t reach this device. Please turn notifications off and on again, then try once more.',
+          turnOffThisDevice: 'Turn off on this device',
+        },
+        homeScreen: {
+          title: 'One quick step first',
+          intro: 'On iPhone or iPad, notifications only work once the app is on your home screen:',
+          step1: 'Tap the Share button at the bottom (the square with an arrow pointing up).',
+          step2: 'Scroll down a little and choose "Add to Home Screen".',
+          step3: 'Tap "Add" in the top right.',
+          step4: 'Open the app from your home screen and come back here.',
+        },
+        unsupported: 'This browser can\'t show notifications. Try Chrome, Firefox, Edge or Safari.',
+        blocked: {
+          title: 'Notifications are blocked',
+          message: 'To get them, allow notifications for this app in your phone or browser settings, then come back here.',
+        },
+        deviceError: 'That didn\'t work on this device. Please try again.',
+        settings: {
+          title: 'What you\'ll hear about',
+          newEvents: {
+            label: 'New events',
+            description: 'When someone adds an event.',
+          },
+          responses: {
+            label: 'Who\'s coming',
+            description: 'When someone replies to an event you created.',
+          },
+          comments: {
+            label: 'Comments',
+            description: 'On events you created or are going to.',
+          },
+          eventChanges: {
+            label: 'Cancelled events',
+            description: 'When an event you\'re going to is cancelled, back on or removed.',
+          },
+          memberRequests: {
+            label: 'Join requests',
+            description: 'When someone wants to join the club. You\'ll still get an email.',
+          },
+        },
+      },
+      pushNotifications: {
+        test: {
+          title: 'It works!',
+          body: 'Notifications are all set on this device.',
+        },
+        memberRequest: {
+          title: 'New join request',
+          body: 'Someone wants to join the club. Tap to take a look.',
+        },
+        accountApproved: {
+          title: 'Welcome to the club!',
+          body: 'You\'re in. Tap to get started.',
+        },
+        accountRejected: {
+          title: 'Your request was declined',
+          body: 'Your request to join the club wasn\'t approved.',
+        },
+        kidApproved: {
+          title: '{name} is in!',
+          body: 'You can now sign {name} up for events.',
+        },
+        kidRejected: {
+          title: '{name} wasn\'t approved',
+          body: '{name}\'s request to join the club wasn\'t approved.',
+        },
+        eventCancelled: {
+          title: 'Event cancelled',
+          body: '{title} ({date}) is cancelled.',
+        },
+        eventUncancelled: {
+          title: 'Event is back on',
+          body: '{title} ({date}) is happening after all.',
+        },
+        eventDeleted: {
+          title: 'Event removed',
+          body: '{title} ({date}) was removed.',
+        },
+        eventComment: {
+          title: '{name} commented on {title}',
+          body: '{comment}',
+        },
+        newEvent: {
+          title: 'New event: {title}',
+          body: '{date}',
+          groupTitle: '{count} new events',
+          groupBody: '{titles}',
+        },
+        eventResponse: {
+          title: '{title}',
+          body: '{answer}',
+          groupTitle: '{count} new replies to {title}',
+          groupBody: '{answers}',
+          yes: '{name} is coming',
+          no: '{name} can\'t make it',
+        },
+        fallback: {
+          title: 'LISC-2010',
+          body: 'Something new happened in your club.',
+        },
       },
       profileSetup: {
         header: 'Set Up Your Profile',
@@ -247,23 +361,65 @@ export default createI18n({
           kids: 'Kids',
         },
       },
+      notificationsAnnouncement: {
+        title: 'New: notifications',
+        message: 'Get a heads-up on your phone when there\'s a new event, someone replies or an event is cancelled.',
+        settingsHint: 'You can change this anytime in your profile under Notifications.',
+        turnOn: 'Turn on',
+        later: 'Later',
+        noThanks: 'No thanks',
+        deviceError: 'That didn\'t work on this device. Please try again.',
+        notAllowed: 'Notifications weren\'t allowed. Tap "Turn on" to try again.',
+        homeScreen: {
+          intro: 'On iPhone or iPad, add the app to your home screen first:',
+          step1: 'Tap the Share button at the bottom (the square with an arrow pointing up).',
+          step2: 'Scroll down a little and choose "Add to Home Screen".',
+          step3: 'Tap "Add" in the top right.',
+          step4: 'Open the app from your home screen. We\'ll ask you again there.',
+        },
+        done: {
+          title: 'You\'re all set!',
+          message: 'You can choose what you hear about in your profile under Notifications.',
+          close: 'Got it',
+        },
+        blocked: {
+          title: 'Notifications are blocked',
+          message: 'No problem! If you change your mind, you can allow them in your phone or browser settings.',
+          close: 'Got it',
+        },
+      },
       pendingApproval: {
         pending: {
-          title: 'Approval Pending',
-          message: 'Your account is pending approval. Hang tight — an admin will review it shortly.',
-          checkStatus: 'Check Status',
-          stillPending: 'Still pending — check back a little later.',
+          title: 'You\'re almost in!',
+          message: 'An admin will check your request soon. Hang tight, it won\'t be long.',
+          checkStatus: 'Check again',
+          stillPending: 'Not yet. Check back a little later.',
           yourKids: 'Your kids: {names}'
         },
-        rejected: {
-          title: 'Account Declined',
-          message: 'Your account request was declined. If you think this was a mistake, please reach out directly to the club.'
+        notifications: {
+          question: 'Want a heads-up as soon as you\'re in?',
+          turnOn: 'Notify me',
+          on: 'Great! We\'ll let you know on this device.',
+          homeScreen: 'On iPhone or iPad, add the app to your home screen and open it from there first. Then you can turn this on.',
+          deviceError: 'That didn\'t work on this device. Please try again.',
         },
-        cancel: 'Cancel'
+        rejected: {
+          title: 'Your request wasn\'t approved',
+          message: 'If you think this is a mistake, just reach out to the club directly.'
+        },
+        signOut: 'Sign out'
       },
       changelog: {
         header: "What's New",
         entries: [
+          {
+            date: 'October 25, 2026',
+            items: [
+              'You can now get notifications on your phone, e.g. about new events, replies and comments. Turn them on in your profile under Notifications.',
+              'You choose what you hear about.',
+              'The screen you see while waiting for approval got a fresh look, and it can let you know as soon as you\'re in.',
+            ],
+          },
           {
             date: 'August 11, 2026',
             items: [
@@ -469,6 +625,120 @@ export default createI18n({
         cancel: 'Abbrechen',
         howItWorks: 'So funktioniert die App',
         changelog: 'Neu in der App',
+        notifications: 'Benachrichtigungen',
+      },
+      notifications: {
+        header: 'Benachrichtigungen',
+        off: {
+          title: 'Nichts mehr verpassen',
+          intro: 'Erfahr auf diesem Gerät sofort, wenn sich in deinem Verein etwas tut.',
+          turnOn: 'Einschalten',
+        },
+        on: {
+          status: 'Auf diesem Gerät an',
+          sendTest: 'Testen',
+          testSent: 'Gesendet! Sie sollte gleich auftauchen.',
+          testMissing: 'Nichts angekommen? Schau, ob Benachrichtigungen für deinen Browser in den Einstellungen deines Geräts erlaubt sind und „Nicht stören“ aus ist.',
+          testUnreachable: 'Wir konnten dieses Gerät nicht erreichen. Schalte die Benachrichtigungen aus und wieder ein und versuch es dann nochmal.',
+          turnOffThisDevice: 'Auf diesem Gerät ausschalten',
+        },
+        homeScreen: {
+          title: 'Noch ein kurzer Schritt',
+          intro: 'Auf dem iPhone oder iPad klappen Benachrichtigungen erst, wenn die App auf deinem Home-Bildschirm ist:',
+          step1: 'Tipp unten auf das Teilen-Symbol (das Quadrat mit dem Pfeil nach oben).',
+          step2: 'Scroll ein Stück nach unten und wähle „Zum Home-Bildschirm“.',
+          step3: 'Tipp oben rechts auf „Hinzufügen“.',
+          step4: 'Öffne die App über deinen Home-Bildschirm und komm wieder hierher.',
+        },
+        unsupported: 'Dieser Browser kann leider keine Benachrichtigungen anzeigen. Probier es mit Chrome, Firefox, Edge oder Safari.',
+        blocked: {
+          title: 'Benachrichtigungen sind blockiert',
+          message: 'Erlaub Benachrichtigungen für diese App in den Einstellungen deines Handys oder Browsers und komm dann wieder hierher.',
+        },
+        deviceError: 'Das hat auf diesem Gerät nicht geklappt. Bitte versuch es nochmal.',
+        settings: {
+          title: 'Worüber du Bescheid bekommst',
+          newEvents: {
+            label: 'Neue Events',
+            description: 'Wenn jemand ein Event einträgt.',
+          },
+          responses: {
+            label: 'Zu- und Absagen',
+            description: 'Wenn jemand auf eines deiner Events antwortet.',
+          },
+          comments: {
+            label: 'Kommentare',
+            description: 'Bei Events, die du erstellt oder zugesagt hast.',
+          },
+          eventChanges: {
+            label: 'Abgesagte Events',
+            description: 'Wenn ein Event, zu dem du kommst, abgesagt, wieder angesetzt oder entfernt wird.',
+          },
+          memberRequests: {
+            label: 'Beitrittsanfragen',
+            description: 'Wenn jemand dem Verein beitreten möchte. Eine E-Mail bekommst du trotzdem.',
+          },
+        },
+      },
+      pushNotifications: {
+        test: {
+          title: 'Es funktioniert!',
+          body: 'Benachrichtigungen sind auf diesem Gerät startklar.',
+        },
+        memberRequest: {
+          title: 'Neue Beitrittsanfrage',
+          body: 'Jemand möchte dem Verein beitreten. Tipp hier, um sie anzusehen.',
+        },
+        accountApproved: {
+          title: 'Willkommen im Verein!',
+          body: 'Du bist dabei. Tipp hier, um loszulegen.',
+        },
+        accountRejected: {
+          title: 'Deine Anfrage wurde abgelehnt',
+          body: 'Deine Anfrage, dem Verein beizutreten, wurde leider nicht angenommen.',
+        },
+        kidApproved: {
+          title: '{name} ist dabei!',
+          body: 'Du kannst {name} jetzt für Events anmelden.',
+        },
+        kidRejected: {
+          title: '{name} wurde nicht angenommen',
+          body: '{name} wurde leider nicht in den Verein aufgenommen.',
+        },
+        eventCancelled: {
+          title: 'Event abgesagt',
+          body: '{title} ({date}) ist abgesagt.',
+        },
+        eventUncancelled: {
+          title: 'Event findet doch statt',
+          body: '{title} ({date}) ist wieder angesetzt.',
+        },
+        eventDeleted: {
+          title: 'Event entfernt',
+          body: '{title} ({date}) wurde entfernt.',
+        },
+        eventComment: {
+          title: '{name} hat {title} kommentiert',
+          body: '{comment}',
+        },
+        newEvent: {
+          title: 'Neues Event: {title}',
+          body: '{date}',
+          groupTitle: '{count} neue Events',
+          groupBody: '{titles}',
+        },
+        eventResponse: {
+          title: '{title}',
+          body: '{answer}',
+          groupTitle: '{count} neue Antworten zu {title}',
+          groupBody: '{answers}',
+          yes: '{name} kommt',
+          no: '{name} kann nicht',
+        },
+        fallback: {
+          title: 'LISC-2010',
+          body: 'In deinem Verein gibt es etwas Neues.',
+        },
       },
       profileSetup: {
         header: 'Profil einrichten',
@@ -574,19 +844,53 @@ export default createI18n({
           }
         }
       },
+      notificationsAnnouncement: {
+        title: 'Neu: Benachrichtigungen',
+        message: 'Erfahr am Handy sofort, wenn es ein neues Event gibt, jemand antwortet oder ein Event abgesagt wird.',
+        settingsHint: 'Du kannst das jederzeit in deinem Profil unter Benachrichtigungen ändern.',
+        turnOn: 'Einschalten',
+        later: 'Später',
+        noThanks: 'Nein danke',
+        deviceError: 'Das hat auf diesem Gerät nicht geklappt. Bitte versuch es nochmal.',
+        notAllowed: 'Benachrichtigungen wurden nicht erlaubt. Tipp auf „Einschalten“, um es nochmal zu versuchen.',
+        homeScreen: {
+          intro: 'Auf dem iPhone oder iPad füg die App zuerst zu deinem Home-Bildschirm hinzu:',
+          step1: 'Tipp unten auf das Teilen-Symbol (das Quadrat mit dem Pfeil nach oben).',
+          step2: 'Scroll ein Stück nach unten und wähle „Zum Home-Bildschirm“.',
+          step3: 'Tipp oben rechts auf „Hinzufügen“.',
+          step4: 'Öffne die App über deinen Home-Bildschirm. Dort fragen wir dich nochmal.',
+        },
+        done: {
+          title: 'Alles startklar!',
+          message: 'In deinem Profil unter Benachrichtigungen kannst du aussuchen, worüber du Bescheid bekommst.',
+          close: 'Alles klar',
+        },
+        blocked: {
+          title: 'Benachrichtigungen sind blockiert',
+          message: 'Kein Problem! Falls du es dir anders überlegst, kannst du sie in den Einstellungen deines Handys oder Browsers erlauben.',
+          close: 'Alles klar',
+        },
+      },
       pendingApproval: {
         pending: {
-          title: 'Dein Account wird geprüft',
-          message: 'Dein Account wird gerade geprüft. Ein Admin schaut sich das bald an.',
-          checkStatus: 'Status prüfen',
-          stillPending: 'Noch ausstehend — schau später nochmal vorbei.',
+          title: 'Fast geschafft!',
+          message: 'Ein Admin schaut sich deine Anfrage bald an. Es dauert nicht mehr lange.',
+          checkStatus: 'Nochmal schauen',
+          stillPending: 'Noch nicht. Schau später nochmal vorbei.',
           yourKids: 'Deine Kinder: {names}'
         },
-        rejected: {
-          title: 'Antrag abgelehnt',
-          message: 'Dein Antrag wurde leider abgelehnt. Wenn du denkst, dass das ein Fehler ist, melde dich direkt beim Verein.'
+        notifications: {
+          question: 'Willst du Bescheid bekommen, sobald du dabei bist?',
+          turnOn: 'Bescheid geben',
+          on: 'Super! Wir sagen dir auf diesem Gerät Bescheid.',
+          homeScreen: 'Auf dem iPhone oder iPad füg die App zuerst zu deinem Home-Bildschirm hinzu und öffne sie von dort. Dann kannst du das hier einschalten.',
+          deviceError: 'Das hat auf diesem Gerät nicht geklappt. Bitte versuch es nochmal.',
         },
-        cancel: 'Abbrechen'
+        rejected: {
+          title: 'Deine Anfrage wurde nicht angenommen',
+          message: 'Wenn du denkst, dass das ein Fehler ist, melde dich einfach direkt beim Verein.'
+        },
+        signOut: 'Abmelden'
       },
       select: {
         loading: 'Wird geladen…'
@@ -656,6 +960,14 @@ export default createI18n({
       changelog: {
         header: 'Neu in der App',
         entries: [
+          {
+            date: '25. Oktober 2026',
+            items: [
+              'Du kannst jetzt Benachrichtigungen aufs Handy bekommen, z. B. zu neuen Events, Antworten und Kommentaren. Schalte sie in deinem Profil unter Benachrichtigungen ein.',
+              'Du suchst aus, worüber du Bescheid bekommst.',
+              'Der Bildschirm, während du auf deine Freischaltung wartest, sieht jetzt frischer aus und kann dir Bescheid geben, sobald du dabei bist.',
+            ],
+          },
           {
             date: '11. August 2026',
             items: [

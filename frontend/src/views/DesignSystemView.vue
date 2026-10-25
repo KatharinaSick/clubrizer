@@ -9,6 +9,7 @@ import Alert from '@/components/Alert.vue'
 import Avatar from '@/components/Avatar.vue'
 import UserProfileModal from '@/components/UserProfileModal.vue'
 import Divider from '@/components/Divider.vue'
+import Toggle from '@/components/Toggle.vue'
 import Event from '@/components/Event.vue'
 import type { EventProps } from '@/components/EventTitle.vue'
 import Header from '@/components/Header.vue'
@@ -16,6 +17,9 @@ import MenuButton from '@/components/MenuButton.vue'
 import type { MenuItem } from '@/components/MenuButton.vue'
 import IconPencil from '@/components/icons/IconPencil.vue'
 import IconTrash from '@/components/icons/IconTrash.vue'
+import IconBell from '@/components/icons/IconBell.vue'
+import IconCircle from '@/components/IconCircle.vue'
+import NumberedSteps from '@/components/NumberedSteps.vue'
 
 const showProfileModal = ref(false)
 const showKidProfileModal = ref(false)
@@ -32,6 +36,8 @@ const menuItemsBadged: MenuItem[] = [
   { label: 'How it works', subtle: true, divider: true, onClick: () => {} },
 ]
 
+const toggleOn = ref(true)
+const toggleOff = ref(false)
 const textInput = ref('')
 const errorInput = ref('')
 const dateInput = ref('')
@@ -442,6 +448,27 @@ const spacingLayout = [
           <code class="dsToken">:loading="true"</code>
         </div>
       </div>
+
+      <h3 class="dsSubsectionTitle">Toggle</h3>
+      <p class="dsSectionDesc">
+        Use <code>&lt;Toggle&gt;</code> for on/off settings that take effect right away (no save button).
+        Takes a <code>label</code>, an optional <code>description</code> and a boolean <code>v-model</code>.
+        Set <code>disabled</code> while the change is being saved.
+      </p>
+      <div class="dsFormGrid">
+        <div class="dsComponentItem">
+          <Toggle id="ds-toggle-on" label="New events" description="When someone adds a new event." v-model="toggleOn" />
+          <code class="dsToken">v-model="true"</code>
+        </div>
+        <div class="dsComponentItem">
+          <Toggle id="ds-toggle-off" label="Comments" v-model="toggleOff" />
+          <code class="dsToken">without description</code>
+        </div>
+        <div class="dsComponentItem">
+          <Toggle id="ds-toggle-disabled" label="Saving…" :disabled="true" v-model="toggleOn" />
+          <code class="dsToken">:disabled="true"</code>
+        </div>
+      </div>
     </section>
 
     <!-- ─── EVENT CARD ─── -->
@@ -836,6 +863,16 @@ const spacingLayout = [
         devices. The backdrop uses <code>--modal-background-color</code> (<code>rgba(12,29,54,0.30)</code>). Always
         give the user a way to dismiss — add a close button in your slot content.
       </div>
+
+      <h3 class="dsSubsectionTitle">NotificationsAnnouncement</h3>
+      <p class="dsSectionDesc">
+        <code>&lt;NotificationsAnnouncement /&gt;</code> — a self-contained feature announcement built on
+        <code>&lt;Modal&gt;</code>, placed on the events screen. It opens by itself only when this device can turn
+        notifications on (or is an iPhone that first needs the app on its home screen), so it isn't previewed here.
+        Layout: <code>&lt;IconCircle&gt;</code> with a bell, title, message, a hint where to change settings, and
+        stacked actions — primary <em>Turn on</em>, secondary <em>Later</em> (asks again after 3 days), tertiary
+        <em>No thanks</em> (never again on this device). The answer is remembered per device in localStorage.
+      </p>
     </section>
 
     <!-- ─── AUTOMATIC REQUEST HANDLING ─── -->
@@ -938,7 +975,33 @@ const spacingLayout = [
           <code class="dsToken">IconTrash</code>
           <p class="dsColorLabel">Remove / delete</p>
         </div>
+        <div class="dsComponentItem dsComponentItemCenter">
+          <IconBell />
+          <code class="dsToken">IconBell</code>
+          <p class="dsColorLabel">Notifications</p>
+        </div>
       </div>
+
+      <h3 class="dsSubsectionTitle">IconCircle</h3>
+      <p class="dsSectionDesc">
+        <code>&lt;IconCircle&gt;&lt;IconBell /&gt;&lt;/IconCircle&gt;</code> — a white icon on a 56px gradient circle.
+        Gives an intro or empty state a friendly visual anchor, e.g. the notification screen when
+        notifications are off, or the notification card on the waiting screen.
+      </p>
+      <div class="dsIconRow">
+        <div class="dsComponentItem dsComponentItemCenter">
+          <IconCircle><IconBell /></IconCircle>
+          <code class="dsToken">IconCircle</code>
+        </div>
+      </div>
+
+      <h3 class="dsSubsectionTitle">NumberedSteps</h3>
+      <p class="dsSectionDesc">
+        <code>&lt;NumberedSteps :steps="steps" /&gt;</code> — a numbered list of instructions, each number in a
+        gradient circle. Takes the already translated steps as strings, so every screen keeps its own i18n keys.
+        Used for the iPhone home-screen instructions on the notification screen and announcement.
+      </p>
+      <NumberedSteps :steps="['Tap the Share button.', 'Choose Add to Home Screen.', 'Tap Add in the top right.']" />
     </section>
 
     <!-- ─── KIDS MANAGEMENT ─── -->

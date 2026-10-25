@@ -110,7 +110,12 @@ func (s *Service) CancelEvent(ctx context.Context, id string) error {
 		return apperrors.NewForbidden("you are not allowed to cancel this event")
 	}
 
-	return s.store.cancelEvent(ctx, uuidId)
+	if err := s.store.cancelEvent(ctx, uuidId); err != nil {
+		return err
+	}
+
+	s.listener.EventCancelled(ctx, EventChanged{Event: event, ActorID: userId, Attendees: s.loadAttendees(ctx, uuidId)})
+	return nil
 }
 
 func (s *Service) UncancelEvent(ctx context.Context, id string) error {
@@ -138,7 +143,12 @@ func (s *Service) UncancelEvent(ctx context.Context, id string) error {
 		return apperrors.NewForbidden("you are not allowed to restore this event")
 	}
 
-	return s.store.uncancelEvent(ctx, uuidId)
+	if err := s.store.uncancelEvent(ctx, uuidId); err != nil {
+		return err
+	}
+
+	s.listener.EventUncancelled(ctx, EventChanged{Event: event, ActorID: userId, Attendees: s.loadAttendees(ctx, uuidId)})
+	return nil
 }
 
 func (s *Service) DeleteEvent(ctx context.Context, id string) error {
@@ -162,7 +172,14 @@ func (s *Service) DeleteEvent(ctx context.Context, id string) error {
 		return apperrors.NewForbidden("you are not allowed to delete this event")
 	}
 
-	return s.store.deleteEvent(ctx, uuidId)
+	// Load attendees first — deleting the event removes their responses.
+	attendees := s.loadAttendees(ctx, uuidId)
+	if err := s.store.deleteEvent(ctx, uuidId); err != nil {
+		return err
+	}
+
+	s.listener.EventDeleted(ctx, EventChanged{Event: event, ActorID: userId, Attendees: attendees})
+	return nil
 }
 
 func (s *Service) UpsertEventResponse(ctx context.Context, eventId string, req UpsertEventResponseRequest) error {
@@ -186,14 +203,23 @@ func (s *Service) UpsertEventResponse(ctx context.Context, eventId string, req U
 	// enforced in the query (a kid belonging to someone else is reported as not
 	// found), and approval is gated here — never trust the client.
 	if req.KidID != nil {
-		status, err := s.store.getOwnedKidStatus(ctx, *req.KidID, claims.ID)
+		status, kidName, err := s.store.getOwnedKid(ctx, *req.KidID, claims.ID)
 		if err != nil {
 			return err
 		}
 		if status != "approved" {
 			return apperrors.NewForbidden("this kid is not approved yet")
 		}
-		return s.store.upsertKidEventResponse(ctx, uuidId, *req.KidID, *req.Response)
+		changed, err := s.store.upsertKidEventResponse(ctx, uuidId, *req.KidID, *req.Response)
+		if err != nil {
+			return err
+		}
+		if changed {
+			s.listener.ResponseChanged(ctx, ResponseChanged{
+				Event: event, ActorID: claims.ID, KidID: req.KidID, Name: kidName, Response: *req.Response,
+			})
+		}
+		return nil
 	}
 
 	// Own response: only participating accounts may RSVP for themselves. A guardian
@@ -201,7 +227,17 @@ func (s *Service) UpsertEventResponse(ctx context.Context, eventId string, req U
 	if !claims.SelfParticipates {
 		return apperrors.NewForbidden("this account does not participate in events itself")
 	}
-	return s.store.upsertEventResponse(ctx, uuidId, claims.ID, *req.Response)
+	changed, err := s.store.upsertEventResponse(ctx, uuidId, claims.ID, *req.Response)
+	if err != nil {
+		return err
+	}
+	// Answering the same again changes nothing, so there is nothing to tell anyone.
+	if changed {
+		s.listener.ResponseChanged(ctx, ResponseChanged{
+			Event: event, ActorID: claims.ID, Name: displayName(claims), Response: *req.Response,
+		})
+	}
+	return nil
 }
 
 func (s *Service) CreateEvent(ctx context.Context, e Event) (*Event, error) {
@@ -229,11 +265,12 @@ func (s *Service) CreateEvent(ctx context.Context, e Event) (*Event, error) {
 	// Auto-RSVP the creator as going — but only if the account participates itself.
 	// (A guardian account can't create events anyway, since it holds no member role.)
 	if claims.SelfParticipates {
-		if err := s.store.upsertEventResponse(ctx, id, userId, true); err != nil {
+		if _, err := s.store.upsertEventResponse(ctx, id, userId, true); err != nil {
 			return nil, err
 		}
 	}
 
+	s.listener.EventCreated(ctx, EventCreated{Event: &e, ActorID: userId})
 	return &e, nil
 }
 
@@ -261,12 +298,25 @@ func (s *Service) CreateComment(ctx context.Context, eventId string, req CreateC
 		return nil, apperrors.NewBadRequest("invalid event id", err)
 	}
 
-	if _, err := s.store.getEventById(ctx, uuidId); err != nil {
+	event, err := s.store.getEventById(ctx, uuidId)
+	if err != nil {
 		return nil, err
 	}
 
-	userId := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims).ID
-	return s.store.createComment(ctx, uuidId, userId, req.Body)
+	claims := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims)
+	comment, err := s.store.createComment(ctx, uuidId, claims.ID, req.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	s.listener.CommentCreated(ctx, CommentCreated{
+		Event:      event,
+		Comment:    comment,
+		AuthorID:   claims.ID,
+		AuthorName: displayName(claims),
+		Attendees:  s.loadAttendees(ctx, uuidId),
+	})
+	return comment, nil
 }
 
 // displayName returns the best available display name for the account holder,

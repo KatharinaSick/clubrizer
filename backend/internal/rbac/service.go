@@ -27,6 +27,12 @@ func (s *Service) IsAuthorized(ctx context.Context, userID uuid.UUID, permission
 	return s.store.hasPermission(ctx, userID, permissionKey)
 }
 
+// GetUserIDsWithPermission returns the approved users that hold the permission, admins
+// included. Used to pick who to notify, e.g. everyone who can approve new members.
+func (s *Service) GetUserIDsWithPermission(ctx context.Context, permissionKey string) ([]uuid.UUID, error) {
+	return s.store.getApprovedUserIDsWithPermission(ctx, permissionKey)
+}
+
 // GetEffectivePermissions returns the permission keys the user effectively holds. Admins
 // bypass individual permission checks, so they expand to the full catalog (AllPermissions);
 // everyone else gets exactly the keys assigned to their roles. Intended for surfacing

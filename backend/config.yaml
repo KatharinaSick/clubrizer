@@ -20,6 +20,10 @@ resend:
   fromAddress: noreply@clubrizer.com
 gcs:
   profilePicturesBucketName: clubrizer_profile-pictures
+webPush:
+  publicKey: ${VAPID_PUBLIC_KEY}
+  privateKey: ${VAPID_PRIVATE_KEY}
+  subject: lisc-2010@gmx.at
 otp:
   maxRequestsPerWindow: 5
   windowHours: 1

@@ -21,6 +21,7 @@ import (
 // Handler function signatures the wrappers below adapt into http.Handler — all grouped
 // here so every shape lives in one place.
 type handler[Out any] func(context.Context) (*Out, error)
+type handlerWithoutInput func(context.Context) error
 type handlerWithInput[In any] func(context.Context, In) error
 type handlerWithInputAndReturnValue[In any, Out any] func(context.Context, In) (*Out, error)
 type handlerWithIdAndReturnValue[Out any] func(context.Context, string) (*Out, error)
@@ -53,6 +54,18 @@ func handle[Out any](f handler[Out]) http.Handler {
 		}
 
 		writeResponse(w, out)
+	})
+}
+
+// handleWithoutInput is for bare actions that take no body and return nothing.
+func handleWithoutInput(f handlerWithoutInput) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := f(r.Context()); err != nil {
+			http.Error(w, err.Error(), apperrors.HttpStatusCode(err))
+			return
+		}
+
+		ok(w)
 	})
 }
 

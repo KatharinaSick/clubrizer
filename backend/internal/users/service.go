@@ -15,9 +15,10 @@ type Service struct {
 	email         *email.Client
 	storageClient *storage.Client
 	permissions   permissionReader
+	listener      listener
 }
 
-func NewService(log app.Logger, cfg *app.Config, conn *pgxpool.Pool, emailClient *email.Client, storageClient *storage.Client, permissions permissionReader) *Service {
+func NewService(log app.Logger, cfg *app.Config, conn *pgxpool.Pool, emailClient *email.Client, storageClient *storage.Client, permissions permissionReader, listener listener) *Service {
 	store := newStore(log, cfg, conn)
-	return &Service{log, cfg, store, emailClient, storageClient, permissions}
+	return &Service{log, cfg, store, emailClient, storageClient, permissions, listener}
 }

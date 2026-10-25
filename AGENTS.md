@@ -30,7 +30,7 @@ GitHub: `KatharinaSick/clubrizer`
 - **Internationalization**: vue-i18n.
 
 ## Backend Tech Stack
-- **Language**: Go (Golang) 1.26.3.
+- **Language**: Go (Golang) — see `backend/go.mod` for the version.
 - **Database Driver**: pgx/v5 (PostgreSQL).
 - **Validation**: go-playground/validator.
 - **Authentication**: golang-jwt/jwt/v5.
@@ -60,6 +60,8 @@ GitHub: `KatharinaSick/clubrizer`
   - `internal/`: Private application and library code.
 - **Error Handling**: Use custom error types where appropriate.
 - **Authorization**: Enforce access control in the backend, and handle it in the API middleware wherever possible — a route-level permission gate (e.g. `requirePermission`) keeps authorization in one predictable place instead of scattering `IsAuthorized` calls across services. Only put an authorization check inside a service when it genuinely cannot be expressed at the route level — e.g. it depends on the specific resource being loaded (an owner-or-permission check) or on the request body. Permissions may be surfaced to the frontend (e.g. in JWT claims) as a hint for showing/hiding UI, but that is never a substitute for the backend check.
+
+- **Side effects via listeners**: Domain packages (e.g. `events`, `users`) only report *what happened*; they never know about side effects like notifications or emails. After an action succeeds, the domain package calls a small unexported `listener` interface with plain fact structs (e.g. `events.EventChanged{Event, ActorID, Attendees}`). The consuming package (e.g. `notifications`) implements the listener and decides who gets what — recipients, wording, links, exclusions, user settings. Data only the domain can load (e.g. attendees before a deletion) goes into the fact struct. `main.go` wires them together; imports only go consumer → domain, never the other way. Listeners are best-effort and must never fail the action that triggered them.
 
 ### Database Migrations
 Migrations run in CI **before** the new backend version is deployed. This means the old backend is still live and serving traffic while the migration executes. Every migration must therefore be backwards-compatible with the previous backend version.

@@ -94,6 +94,7 @@ const menuItems = computed<MenuItem[]>(() => {
   const items: MenuItem[] = [
     { label: i18n.global.t('profile.edit'), onClick: startEditing },
     { label: i18n.global.t('profile.myKids'), onClick: () => router.push('/my-kids') },
+    { label: i18n.global.t('profile.notifications'), onClick: () => router.push('/notifications') },
   ]
   if (auth.canManageMembers) {
     items.push({
