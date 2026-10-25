@@ -5,8 +5,22 @@ import { useRequestStore } from '@/stores/request'
 import router from '@/router'
 import i18n from '@/plugins/i18n'
 
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    // silent marks a background request the user didn't ask for (e.g. re-registering this
+    // device for notifications after sign-in). It shows no loading bar and no global error.
+    silent?: boolean
+  }
+}
+
 interface RetryableRequest extends AxiosRequestConfig {
   _retry?: boolean
+}
+
+// The token refresh request is a silent background operation too — it's invisible to the
+// user, so it doesn't count towards the loading indicator.
+function isTracked(config?: AxiosRequestConfig): boolean {
+  return config?.url !== '/auth/refresh' && !config?.silent
 }
 
 let isRefreshingToken = false
@@ -27,9 +41,7 @@ const setUpRefreshTokenInterceptors = (): void => {
     (config) => {
       const { accessToken, isAuthenticated } = useAuthStore()
 
-      // The token refresh request is a silent background operation —
-      // it's invisible to the user, so we don't want it to trigger the loading indicator.
-      if (config.url !== '/auth/refresh') {
+      if (isTracked(config)) {
         useRequestStore().startRequest()
       }
 
@@ -39,7 +51,7 @@ const setUpRefreshTokenInterceptors = (): void => {
       return config
     },
     async (error: AxiosError) => {
-      if (error.config?.url !== '/auth/refresh') {
+      if (isTracked(error.config)) {
         useRequestStore().endRequest()
       }
       return Promise.reject(error)
@@ -48,7 +60,7 @@ const setUpRefreshTokenInterceptors = (): void => {
 
   axios.interceptors.response.use(
     (response: AxiosResponse) => {
-      if (response.config.url !== '/auth/refresh') {
+      if (isTracked(response.config)) {
         useRequestStore().endRequest()
       }
       return response
@@ -58,14 +70,15 @@ const setUpRefreshTokenInterceptors = (): void => {
       const isNoRefreshUrl = noRefreshUrls.includes(originalRequest.url ?? '')
 
       if (error.response?.status !== 401 || originalRequest._retry || isNoRefreshUrl) {
-        if (originalRequest.url !== '/auth/refresh') {
+        if (isTracked(originalRequest)) {
           useRequestStore().endRequest()
         }
         // Show a global error for everything except:
         // - 401 (handled by the refresh flow, unless it's a no-refresh URL)
         // - 422: form validation errors, handled locally by the component
+        // - silent requests: the user didn't ask for them, so they shouldn't see their errors
         const status = error.response?.status
-        if (status !== 422) {
+        if (status !== 422 && !originalRequest.silent) {
           const rawData = error.response?.data
           const message =
             (rawData != null && String(rawData).trim()) ||
@@ -81,7 +94,9 @@ const setUpRefreshTokenInterceptors = (): void => {
           refreshSubscribers.push((token: string | null) => {
             // Balance the startRequest() that was called for the original request.
             // The retry below will go through the interceptors and call startRequest() again.
-            useRequestStore().endRequest()
+            if (isTracked(originalRequest)) {
+              useRequestStore().endRequest()
+            }
             if (token === null) {
               reject(error)
               return
@@ -108,11 +123,15 @@ const setUpRefreshTokenInterceptors = (): void => {
         originalRequest.headers!.Authorization = accessToken
         // Balance the startRequest() for the original request before retrying.
         // The retry goes through the interceptors and calls startRequest() again.
-        useRequestStore().endRequest()
+        if (isTracked(originalRequest)) {
+          useRequestStore().endRequest()
+        }
         return axios(originalRequest)
       } catch (refreshError: unknown) {
         // Balance the startRequest() for the original request — it will never be retried.
-        useRequestStore().endRequest()
+        if (isTracked(originalRequest)) {
+          useRequestStore().endRequest()
+        }
         refreshSubscribers.forEach((cb) => cb(null))
         auth.logout()
         router.push('/signin')

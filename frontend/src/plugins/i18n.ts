@@ -92,7 +92,6 @@ export default createI18n({
           testSent: 'Sent! It should pop up in a few seconds.',
           testMissing: 'Nothing showing up? Check that notifications are allowed for your browser in your device settings and that "Do Not Disturb" is off.',
           turnOffThisDevice: 'Turn off on this device',
-          turnOffAllDevices: 'Turn off on all my devices',
         },
         homeScreen: {
           title: 'One quick step first',
@@ -640,7 +639,6 @@ export default createI18n({
           testSent: 'Gesendet! Sie sollte gleich auftauchen.',
           testMissing: 'Nichts angekommen? Schau, ob Benachrichtigungen für deinen Browser in den Einstellungen deines Geräts erlaubt sind und „Nicht stören“ aus ist.',
           turnOffThisDevice: 'Auf diesem Gerät ausschalten',
-          turnOffAllDevices: 'Auf all meinen Geräten ausschalten',
         },
         homeScreen: {
           title: 'Noch ein kurzer Schritt',

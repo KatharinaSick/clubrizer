@@ -88,15 +88,16 @@ export const useAuthStore = defineStore('auth', {
     },
     // checkStatus re-reads the account (e.g. whether it has been approved) through a token
     // refresh. Unlike refreshTokens it keeps the current session when the refresh fails (e.g.
-    // offline), so a check in the background can never log anyone out.
-    async checkStatus() {
+    // offline), so a check in the background can never log anyone out. Automatic checks are
+    // silent; only a check the user asked for shows its error.
+    async checkStatus(silent = false) {
       try {
-        const { user, accessToken } = await authService.refreshTokens()
+        const { user, accessToken } = await authService.refreshTokens(silent)
         this.user = user
         this.accessToken = accessToken
         this.isAuthenticated = true
       } catch {
-        // keep the current session — error is handled globally by the axios interceptor
+        // keep the current session — unless silent, the axios interceptor shows the error
       }
     },
     async logout() {

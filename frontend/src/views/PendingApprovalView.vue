@@ -30,8 +30,8 @@ const pushDeviceError = ref(false)
 // Check for a decision whenever the screen is opened or the app comes back to the front —
 // e.g. after tapping the "you're approved" notification — so nobody has to tap "Check
 // status" to find out.
-async function refreshStatus() {
-  await auth.checkStatus()
+async function refreshStatus(silent = true) {
+  await auth.checkStatus(silent)
   if (auth.user.status === 'approved') {
     router.push('/')
   }
@@ -59,7 +59,7 @@ onMounted(async () => {
 async function checkStatus() {
   isChecking.value = true
   checked.value = false
-  await refreshStatus()
+  await refreshStatus(false)
   isChecking.value = false
   checked.value = auth.user.status === 'pending'
 }

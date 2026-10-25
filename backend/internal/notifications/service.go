@@ -118,11 +118,6 @@ func (s *Service) ReleaseDevice(ctx context.Context, req ReleaseDeviceRequest) e
 	return s.store.deleteSubscriptionOfDevice(ctx, req.Endpoint, req.Auth)
 }
 
-func (s *Service) UnsubscribeAll(ctx context.Context) error {
-	userId := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims).ID
-	return s.store.deleteAllSubscriptions(ctx, userId)
-}
-
 // SendTest sends a test notification to all of the caller's devices.
 func (s *Service) SendTest(ctx context.Context) error {
 	userId := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims).ID

@@ -22,8 +22,8 @@ const notificationsService = {
     return response.data.publicKey
   },
 
-  async subscribe(subscription: PushSubscriptionPayload): Promise<void> {
-    await axios.post('/notifications/subscriptions', subscription)
+  async subscribe(subscription: PushSubscriptionPayload, silent = false): Promise<void> {
+    await axios.post('/notifications/subscriptions', subscription, { silent })
   },
 
   async isSubscribed(endpoint: string): Promise<boolean> {
@@ -37,12 +37,9 @@ const notificationsService = {
 
   // releaseDevice removes this browser's registration whoever it belongs to; the subscription's
   // secret (auth) proves we're on that device.
+  // It runs in the background (sign-in, logout), so it never shows errors.
   async releaseDevice(endpoint: string, auth: string): Promise<void> {
-    await axios.post('/notifications/subscriptions/release', { endpoint, auth })
-  },
-
-  async unsubscribeAll(): Promise<void> {
-    await axios.delete('/notifications/subscriptions/all')
+    await axios.post('/notifications/subscriptions/release', { endpoint, auth }, { silent: true })
   },
 
   async sendTest(): Promise<void> {

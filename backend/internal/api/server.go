@@ -161,7 +161,6 @@ func addRoutes(
 	mux.Handle("POST /notifications/subscriptions", notRejected(cfg, handleWithBody(notificationsService.Subscribe)))
 	mux.Handle("POST /notifications/subscriptions/status", notRejected(cfg, handleWithBodyAndReturnValue(notificationsService.GetSubscriptionStatus)))
 	mux.Handle("DELETE /notifications/subscriptions", notRejected(cfg, handleWithBody(notificationsService.Unsubscribe)))
-	mux.Handle("DELETE /notifications/subscriptions/all", notRejected(cfg, handleWithoutInput(notificationsService.UnsubscribeAll)))
 	mux.Handle("POST /notifications/test", authenticated(cfg, handleWithoutInput(notificationsService.SendTest)))
 	// Which kinds of notifications the caller gets. Approved accounts only: the only
 	// notifications pending accounts get (their approval) can't be switched off.
@@ -224,7 +223,6 @@ type notificationsService interface {
 	GetSubscriptionStatus(ctx context.Context, req notifications.SubscriptionStatusRequest) (*notifications.SubscriptionStatusResponse, error)
 	Unsubscribe(ctx context.Context, req notifications.UnsubscribeRequest) error
 	ReleaseDevice(ctx context.Context, req notifications.ReleaseDeviceRequest) error
-	UnsubscribeAll(ctx context.Context) error
 	SendTest(ctx context.Context) error
 	GetSettings(ctx context.Context) ([]*notifications.Setting, error)
 	UpdateSetting(ctx context.Context, req notifications.UpdateSettingRequest) error

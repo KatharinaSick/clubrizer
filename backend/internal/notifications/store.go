@@ -58,14 +58,6 @@ func (s *store) deleteSubscriptionOfDevice(ctx context.Context, endpoint, auth s
 	return nil
 }
 
-func (s *store) deleteAllSubscriptions(ctx context.Context, userId uuid.UUID) error {
-	_, err := s.conn.Exec(ctx, "DELETE FROM push_subscriptions WHERE user_id = $1", userId)
-	if err != nil {
-		return errors.New(fmt.Sprintf("failed to delete push subscriptions: %s", err.Error()))
-	}
-	return nil
-}
-
 // deleteSubscriptionById removes a subscription the push service reported as gone.
 func (s *store) deleteSubscriptionById(ctx context.Context, id uuid.UUID) error {
 	_, err := s.conn.Exec(ctx, "DELETE FROM push_subscriptions WHERE id = $1", id)

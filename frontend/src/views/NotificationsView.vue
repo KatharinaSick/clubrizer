@@ -16,7 +16,6 @@ import { useAuthStore } from '@/stores/auth'
 import notificationsService, { type NotificationSetting } from '@/service/notifications'
 import {
   getPushState,
-  turnOffPushOnAllDevices,
   turnOffPushOnThisDevice,
   turnOnPush,
   type PushState,
@@ -27,7 +26,7 @@ const auth = useAuthStore()
 
 // null until the device has been checked, so no state flashes up before it's known.
 const state = ref<PushState | null>(null)
-const busyAction = ref<'turnOn' | 'test' | 'offThisDevice' | 'offAllDevices' | null>(null)
+const busyAction = ref<'turnOn' | 'test' | 'offThisDevice' | null>(null)
 const testSent = ref(false)
 // Browser-side failures (e.g. the push service refusing to subscribe). API errors are
 // shown globally through RequestError instead.
@@ -92,11 +91,6 @@ const sendTest = () => run('test', async () => {
 
 const turnOffThisDevice = () => run('offThisDevice', async () => {
   await turnOffPushOnThisDevice()
-  state.value = 'off'
-})
-
-const turnOffAllDevices = () => run('offAllDevices', async () => {
-  await turnOffPushOnAllDevices()
   state.value = 'off'
 })
 </script>
@@ -185,13 +179,6 @@ const turnOffAllDevices = () => run('offAllDevices', async () => {
               theme="secondary"
               :loading="busyAction === 'offThisDevice'"
               @click="turnOffThisDevice"
-            />
-            <Button
-              :title="$t('notifications.on.turnOffAllDevices')"
-              theme="tertiary"
-              danger
-              :loading="busyAction === 'offAllDevices'"
-              @click="turnOffAllDevices"
             />
           </div>
         </section>

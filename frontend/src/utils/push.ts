@@ -61,7 +61,7 @@ export async function getPushState(): Promise<PushState> {
     return 'off'
   }
   // The browser alone doesn't know whether the backend still has this device for the current
-  // user (turned off from another device, or someone else signed in here since).
+  // user (e.g. someone else signed in here since).
   return (await notificationsService.isSubscribed(subscription.endpoint)) ? 'on' : 'off'
 }
 
@@ -126,13 +126,6 @@ export async function turnOffPushOnThisDevice(): Promise<void> {
   setOwner(null)
 }
 
-export async function turnOffPushOnAllDevices(): Promise<void> {
-  await notificationsService.unsubscribeAll()
-  const subscription = await getBrowserSubscription()
-  await subscription?.unsubscribe()
-  setOwner(null)
-}
-
 // releasePushOnLogout stops notifications to this device when signing out, so nothing arrives
 // here while nobody is signed in. Works even if the session has already expired (e.g. a failed
 // token refresh). The browser keeps its subscription and owner, so the same person gets
@@ -169,7 +162,7 @@ export async function restorePushOnSignIn(email: string): Promise<void> {
 
     const json = subscription.toJSON() as PushSubscriptionPayload
     if (getOwner() === email) {
-      await notificationsService.subscribe(json)
+      await notificationsService.subscribe(json, true)
       return
     }
 
