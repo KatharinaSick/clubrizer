@@ -49,18 +49,20 @@ func shorten(s string, max int) string {
 }
 
 const (
-	typeTest             = "test"
-	typeMemberRequest    = "memberRequest"
-	typeAccountApproved  = "accountApproved"
-	typeAccountRejected  = "accountRejected"
-	typeKidApproved      = "kidApproved"
-	typeKidRejected      = "kidRejected"
-	typeEventCancelled   = "eventCancelled"
-	typeEventUncancelled = "eventUncancelled"
-	typeEventDeleted     = "eventDeleted"
-	typeEventComment     = "eventComment"
-	typeNewEvent         = "newEvent"
-	typeEventResponse    = "eventResponse"
+	typeTest                     = "test"
+	typeMemberRequest            = "memberRequest"
+	typeAccountApproved          = "accountApproved"
+	typeAccountRejected          = "accountRejected"
+	typeKidApproved              = "kidApproved"
+	typeKidRejected              = "kidRejected"
+	typeEventCancelled           = "eventCancelled"
+	typeEventUncancelled         = "eventUncancelled"
+	typeEventTimeChanged         = "eventTimeChanged"
+	typeEventPlaceChanged        = "eventPlaceChanged"
+	typeEventTimeAndPlaceChanged = "eventTimeAndPlaceChanged"
+	typeEventComment             = "eventComment"
+	typeNewEvent                 = "newEvent"
+	typeEventResponse            = "eventResponse"
 )
 
 // Categories group message types into the switches on the notification settings screen. A
@@ -75,11 +77,13 @@ const (
 )
 
 var typeCategories = map[string]string{
-	typeNewEvent:         categoryNewEvents,
-	typeEventResponse:    categoryResponses,
-	typeEventComment:     categoryComments,
-	typeEventCancelled:   categoryEventChanges,
-	typeEventUncancelled: categoryEventChanges,
-	typeEventDeleted:     categoryEventChanges,
-	typeMemberRequest:    categoryMemberRequests,
+	typeNewEvent:                 categoryNewEvents,
+	typeEventResponse:            categoryResponses,
+	typeEventComment:             categoryComments,
+	typeEventCancelled:           categoryEventChanges,
+	typeEventUncancelled:         categoryEventChanges,
+	typeEventTimeChanged:         categoryEventChanges,
+	typeEventPlaceChanged:        categoryEventChanges,
+	typeEventTimeAndPlaceChanged: categoryEventChanges,
+	typeMemberRequest:            categoryMemberRequests,
 }

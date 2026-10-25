@@ -2,7 +2,6 @@
 import { useRoute, useRouter } from 'vue-router'
 import { computed, onMounted, ref } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
-import axios from '@/plugins/axios'
 import Alert from '@/components/Alert.vue'
 import Avatar from '@/components/Avatar.vue'
 import Button from '@/components/Button.vue'
@@ -10,7 +9,7 @@ import EventTitle from '@/components/EventTitle.vue'
 import Input from '@/components/Input.vue'
 import IconSend from '@/components/icons/IconSend.vue'
 import type { EventDetail, MyResponse, Comment, EventAttendee } from '@/service/events'
-import { upsertEventResponse, deleteEvent, cancelEvent, uncancelEvent, listComments, createComment } from '@/service/events'
+import { getEvent, upsertEventResponse, cancelEvent, uncancelEvent, listComments, createComment } from '@/service/events'
 import i18n from '@/plugins/i18n'
 import IconBack from '@/components/icons/IconBack.vue'
 import IconError from '@/components/icons/IconError.vue'
@@ -30,8 +29,6 @@ const eventId = route.params.id as string
 const event = ref<EventDetail | null>(null)
 const pendingResponse = ref<boolean | null>(null)
 const submittingIds = ref<Set<string>>(new Set())
-const showDeleteConfirm = ref(false)
-const isDeleting = ref(false)
 const showCancelConfirm = ref(false)
 const isCancelling = ref(false)
 const showRestoreConfirm = ref(false)
@@ -50,6 +47,13 @@ const isCompact = useMediaQuery('(max-width: 767px)')
 
 const menuItems = computed<MenuItem[]>(() => {
   const items: MenuItem[] = []
+  // Only upcoming, not cancelled events can be edited — the backend rejects the rest.
+  if (event.value?.canEdit && !isCancelled.value && new Date(event.value.startTime) > new Date()) {
+    items.push({
+      label: i18n.global.t('events.detail.menu.edit'),
+      onClick: () => { router.push(`/events/${eventId}/edit`) },
+    })
+  }
   if (event.value?.canCancel && !isCancelled.value) {
     items.push({
       label: i18n.global.t('events.detail.menu.cancel'),
@@ -60,13 +64,6 @@ const menuItems = computed<MenuItem[]>(() => {
     items.push({
       label: i18n.global.t('events.detail.menu.restore'),
       onClick: () => { showRestoreConfirm.value = true },
-    })
-  }
-  if (event.value?.canDelete) {
-    items.push({
-      label: i18n.global.t('events.detail.menu.delete'),
-      danger: true,
-      onClick: () => { showDeleteConfirm.value = true },
     })
   }
   return items
@@ -100,28 +97,13 @@ const confirmCancel = async () => {
   }
 }
 
-const confirmDelete = async () => {
-  if (isDeleting.value) return
-  isDeleting.value = true
-  try {
-    await deleteEvent(eventId)
-    router.replace('/events')
-  } catch {
-    // Reveal the global error banner behind the modal
-    showDeleteConfirm.value = false
-  } finally {
-    isDeleting.value = false
-  }
-}
-
 onMounted(() => {
   loadEvent()
   loadComments()
 })
 
 const loadEvent = async () => {
-  const response = await axios.get(`/events/${eventId}`)
-  event.value = response.data
+  event.value = await getEvent(eventId)
 }
 
 const loadComments = async () => {
@@ -511,9 +493,9 @@ const formattedStartTime = computed(() => {
 
     <Modal v-if="showCancelConfirm">
       <div class="eventDetailCancelConfirm">
-        <h2 class="eventDetailDeleteTitle">{{ i18n.global.t('events.detail.cancelConfirm.title') }}</h2>
-        <p class="eventDetailDeleteMessage">{{ i18n.global.t('events.detail.cancelConfirm.message') }}</p>
-        <div class="eventDetailDeleteActions">
+        <h2 class="eventDetailConfirmTitle">{{ i18n.global.t('events.detail.cancelConfirm.title') }}</h2>
+        <p class="eventDetailConfirmMessage">{{ i18n.global.t('events.detail.cancelConfirm.message') }}</p>
+        <div class="eventDetailConfirmActions">
           <Button
             :title="i18n.global.t('events.detail.cancelConfirm.confirm')"
             theme="red"
@@ -532,9 +514,9 @@ const formattedStartTime = computed(() => {
 
     <Modal v-if="showRestoreConfirm">
       <div class="eventDetailRestoreConfirm">
-        <h2 class="eventDetailDeleteTitle">{{ i18n.global.t('events.detail.restoreConfirm.title') }}</h2>
-        <p class="eventDetailDeleteMessage">{{ i18n.global.t('events.detail.restoreConfirm.message') }}</p>
-        <div class="eventDetailDeleteActions">
+        <h2 class="eventDetailConfirmTitle">{{ i18n.global.t('events.detail.restoreConfirm.title') }}</h2>
+        <p class="eventDetailConfirmMessage">{{ i18n.global.t('events.detail.restoreConfirm.message') }}</p>
+        <div class="eventDetailConfirmActions">
           <Button
             :title="i18n.global.t('events.detail.restoreConfirm.confirm')"
             theme="primary"
@@ -546,27 +528,6 @@ const formattedStartTime = computed(() => {
             theme="secondary"
             :disabled="isRestoring"
             @click="showRestoreConfirm = false"
-          />
-        </div>
-      </div>
-    </Modal>
-
-    <Modal v-if="showDeleteConfirm">
-      <div class="eventDetailDeleteConfirm">
-        <h2 class="eventDetailDeleteTitle">{{ i18n.global.t('events.detail.deleteConfirm.title') }}</h2>
-        <p class="eventDetailDeleteMessage">{{ i18n.global.t('events.detail.deleteConfirm.message') }}</p>
-        <div class="eventDetailDeleteActions">
-          <Button
-            :title="i18n.global.t('events.detail.deleteConfirm.confirm')"
-            theme="red"
-            :loading="isDeleting"
-            @click="confirmDelete"
-          />
-          <Button
-            :title="i18n.global.t('events.detail.deleteConfirm.cancel')"
-            theme="secondary"
-            :disabled="isDeleting"
-            @click="showDeleteConfirm = false"
           />
         </div>
       </div>
@@ -633,7 +594,6 @@ const formattedStartTime = computed(() => {
   z-index: 10;
 }
 
-.eventDetailDeleteConfirm,
 .eventDetailRestoreConfirm {
   display: flex;
   flex-direction: column;
@@ -652,18 +612,18 @@ const formattedStartTime = computed(() => {
   opacity: 0.5;
 }
 
-.eventDetailDeleteTitle {
+.eventDetailConfirmTitle {
   margin: 0;
   font-size: var(--font-size-large);
   font-weight: var(--font-weight-bold);
 }
 
-.eventDetailDeleteMessage {
+.eventDetailConfirmMessage {
   margin: 0;
   line-height: 1.5;
 }
 
-.eventDetailDeleteActions {
+.eventDetailConfirmActions {
   margin-top: var(--padding);
   display: flex;
   flex-direction: column;

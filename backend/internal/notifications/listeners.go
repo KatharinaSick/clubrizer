@@ -28,8 +28,36 @@ func (s *Service) EventUncancelled(ctx context.Context, change events.EventChang
 	s.notifyAttendees(ctx, change, typeEventUncancelled, eventUrl(change.Event.ID))
 }
 
-func (s *Service) EventDeleted(ctx context.Context, change events.EventChanged) {
-	s.notifyAttendees(ctx, change, typeEventDeleted, "/events")
+// EventUpdated tells the event's creator and everyone who said yes when the event moved to
+// another time or place. The creator matters when someone else (e.g. an admin) edited it.
+// Other edits, like a fixed typo in the description, aren't worth a notification.
+func (s *Service) EventUpdated(ctx context.Context, updated events.EventUpdated) {
+	before, after := updated.Before, updated.After
+	timeChanged := !before.StartTime.Equal(after.StartTime)
+	placeChanged := before.Location != after.Location
+
+	var msgType string
+	switch {
+	case timeChanged && placeChanged:
+		msgType = typeEventTimeAndPlaceChanged
+	case timeChanged:
+		msgType = typeEventTimeChanged
+	case placeChanged:
+		msgType = typeEventPlaceChanged
+	default:
+		return
+	}
+
+	recipients := slices.Concat(updated.Attendees, []uuid.UUID{after.CreatedBy})
+	s.notify(ctx, excluding(recipients, updated.ActorID), message{
+		Type: msgType,
+		Params: map[string]string{
+			"title":    after.Title,
+			"date":     after.StartTime.Format(time.RFC3339),
+			"location": after.Location,
+		},
+		URL: eventUrl(after.ID),
+	})
 }
 
 // CommentCreated tells the event's creator and everyone who said yes.

@@ -41,8 +41,9 @@ func TestTypeCategories(t *testing.T) {
 	}
 	types := []string{
 		typeTest, typeMemberRequest, typeAccountApproved, typeAccountRejected, typeKidApproved,
-		typeKidRejected, typeEventCancelled, typeEventUncancelled, typeEventDeleted,
-		typeEventComment, typeNewEvent, typeEventResponse,
+		typeKidRejected, typeEventCancelled, typeEventUncancelled, typeEventTimeChanged,
+		typeEventPlaceChanged, typeEventTimeAndPlaceChanged, typeEventComment, typeNewEvent,
+		typeEventResponse,
 	}
 
 	for _, typ := range types {

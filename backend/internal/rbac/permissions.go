@@ -5,9 +5,9 @@ package rbac
 // are the single source of truth.
 const (
 	PermissionRolesManage = "roles.manage"
-	// PermissionEventsDeleteAny allows deleting events created by other users.
-	// Admins bypass this check; event owners can always delete their own events.
-	PermissionEventsDeleteAny = "events.delete_any"
+	// PermissionEventsEditAny allows editing events created by other users.
+	// Admins bypass this check; event owners can always edit their own events.
+	PermissionEventsEditAny = "events.edit_any"
 	// PermissionEventsCancelAny allows cancelling events created by other users.
 	// Admins bypass this check; event owners can always cancel their own events.
 	PermissionEventsCancelAny = "events.cancel_any"
@@ -21,7 +21,7 @@ const (
 // permissions. Keep this in sync when adding a permission constant above.
 var AllPermissions = []string{
 	PermissionRolesManage,
-	PermissionEventsDeleteAny,
+	PermissionEventsEditAny,
 	PermissionEventsCancelAny,
 	PermissionUsersApprove,
 }

@@ -123,8 +123,8 @@ export default createI18n({
             description: 'On events you created or are going to.',
           },
           eventChanges: {
-            label: 'Cancelled events',
-            description: 'When an event you\'re going to is cancelled, back on or removed.',
+            label: 'Event changes',
+            description: 'When an event you\'re going to gets a new time or place, is cancelled or back on.',
           },
           memberRequests: {
             label: 'Join requests',
@@ -165,9 +165,17 @@ export default createI18n({
           title: 'Event is back on',
           body: '{title} ({date}) is happening after all.',
         },
-        eventDeleted: {
-          title: 'Event removed',
-          body: '{title} ({date}) was removed.',
+        eventTimeChanged: {
+          title: '{title} has a new time',
+          body: 'New time: {date}',
+        },
+        eventPlaceChanged: {
+          title: '{title} has a new place',
+          body: 'New place: {location}',
+        },
+        eventTimeAndPlaceChanged: {
+          title: '{title} has changed',
+          body: 'New time and place: {date}, {location}',
         },
         eventComment: {
           title: '{name} commented on {title}',
@@ -237,16 +245,12 @@ export default createI18n({
         },
         new: {
           header: 'Create Event',
-          title: 'Title',
-          date: 'Date',
-          time: 'Time',
-          location: 'Location',
-          category: 'Category',
-          description: 'Description',
           create: 'Create',
-          required: 'Required',
-          pastDate: 'Date cannot be in the past',
-          timeInvalid: 'Please enter a time in HH:MM format'
+        },
+        edit: {
+          header: 'Edit Event',
+          save: 'Save',
+          notEditable: 'This event can no longer be edited.',
         },
         createdBy: 'by',
         detail: {
@@ -255,15 +259,9 @@ export default createI18n({
           at: 'at',
           menu: {
             label: 'More options',
-            delete: 'Delete event',
+            edit: 'Edit event',
             cancel: 'Cancel event',
             restore: 'Restore event',
-          },
-          deleteConfirm: {
-            title: 'Delete this event?',
-            message: 'This permanently deletes the event for everyone. This cannot be undone.',
-            confirm: 'Delete',
-            cancel: 'Cancel',
           },
           cancelConfirm: {
             title: 'Cancel this event?',
@@ -295,6 +293,16 @@ export default createI18n({
             empty: 'No comments yet. Write the first one!',
           }
         }
+      },
+      eventForm: {
+        title: 'Title',
+        date: 'Date',
+        time: 'Time',
+        location: 'Location',
+        description: 'Description',
+        required: 'Required',
+        timeInvalid: 'Please enter a time in HH:MM format',
+        timeInPast: 'This time has already passed',
       },
       select: {
         loading: 'Loading…'
@@ -418,6 +426,9 @@ export default createI18n({
               'You can now get notifications on your phone, e.g. about new events, replies and comments. Turn them on in your profile under Notifications.',
               'You choose what you hear about.',
               'The screen you see while waiting for approval got a fresh look, and it can let you know as soon as you\'re in.',
+              'You can now edit events you created. Open the event and tap the three dots in the top right corner.',
+              'If an event you\'re going to gets a new time or place, you\'ll get a notification.',
+              'Events can no longer be deleted. If an event isn\'t happening, cancel it instead, so everyone who was going finds out.',
             ],
           },
           {
@@ -671,8 +682,8 @@ export default createI18n({
             description: 'Bei Events, die du erstellt oder zugesagt hast.',
           },
           eventChanges: {
-            label: 'Abgesagte Events',
-            description: 'Wenn ein Event, zu dem du kommst, abgesagt, wieder angesetzt oder entfernt wird.',
+            label: 'Änderungen an Events',
+            description: 'Wenn ein Event, zu dem du kommst, eine neue Zeit oder einen neuen Ort bekommt, abgesagt oder wieder angesetzt wird.',
           },
           memberRequests: {
             label: 'Beitrittsanfragen',
@@ -713,9 +724,17 @@ export default createI18n({
           title: 'Event findet doch statt',
           body: '{title} ({date}) ist wieder angesetzt.',
         },
-        eventDeleted: {
-          title: 'Event entfernt',
-          body: '{title} ({date}) wurde entfernt.',
+        eventTimeChanged: {
+          title: '{title} hat eine neue Zeit',
+          body: 'Neue Zeit: {date}',
+        },
+        eventPlaceChanged: {
+          title: '{title} hat einen neuen Ort',
+          body: 'Neuer Ort: {location}',
+        },
+        eventTimeAndPlaceChanged: {
+          title: '{title} hat sich geändert',
+          body: 'Neue Zeit und neuer Ort: {date}, {location}',
         },
         eventComment: {
           title: '{name} hat {title} kommentiert',
@@ -785,16 +804,12 @@ export default createI18n({
         },
         new: {
           header: 'Neues Event',
-          title: 'Name',
-          date: 'Datum',
-          time: 'Uhrzeit',
-          location: 'Ort',
-          category: 'Kategorie',
-          description: 'Beschreibung',
           create: 'Erstellen',
-          required: 'Pflichtfeld',
-          pastDate: 'Datum darf nicht in der Vergangenheit liegen',
-          timeInvalid: 'Bitte gib eine Uhrzeit im Format HH:MM ein'
+        },
+        edit: {
+          header: 'Event bearbeiten',
+          save: 'Speichern',
+          notEditable: 'Dieses Event kann nicht mehr bearbeitet werden.',
         },
         createdBy: 'von',
         detail: {
@@ -803,15 +818,9 @@ export default createI18n({
           at: 'um',
           menu: {
             label: 'Mehr Optionen',
-            delete: 'Event löschen',
+            edit: 'Event bearbeiten',
             cancel: 'Event absagen',
             restore: 'Event wiederherstellen',
-          },
-          deleteConfirm: {
-            title: 'Event wirklich löschen?',
-            message: 'Das Event wird für alle dauerhaft gelöscht. Das kann nicht rückgängig gemacht werden.',
-            confirm: 'Löschen',
-            cancel: 'Abbrechen',
           },
           cancelConfirm: {
             title: 'Event absagen?',
@@ -892,6 +901,16 @@ export default createI18n({
         },
         signOut: 'Abmelden'
       },
+      eventForm: {
+        title: 'Name',
+        date: 'Datum',
+        time: 'Uhrzeit',
+        location: 'Ort',
+        description: 'Beschreibung',
+        required: 'Pflichtfeld',
+        timeInvalid: 'Bitte gib eine Uhrzeit im Format HH:MM ein',
+        timeInPast: 'Diese Uhrzeit ist schon vorbei',
+      },
       select: {
         loading: 'Wird geladen…'
       },
@@ -966,6 +985,9 @@ export default createI18n({
               'Du kannst jetzt Benachrichtigungen aufs Handy bekommen, z. B. zu neuen Events, Antworten und Kommentaren. Schalte sie in deinem Profil unter Benachrichtigungen ein.',
               'Du suchst aus, worüber du Bescheid bekommst.',
               'Der Bildschirm, während du auf deine Freischaltung wartest, sieht jetzt frischer aus und kann dir Bescheid geben, sobald du dabei bist.',
+              'Du kannst Events, die du erstellt hast, jetzt bearbeiten. Öffne das Event und tippe oben rechts auf die drei Punkte.',
+              'Wenn ein Event, zu dem du kommst, eine neue Zeit oder einen neuen Ort bekommt, bekommst du eine Benachrichtigung.',
+              'Events können nicht mehr gelöscht werden. Wenn ein Event nicht stattfindet, sag es stattdessen ab, damit alle, die kommen wollten, Bescheid wissen.',
             ],
           },
           {

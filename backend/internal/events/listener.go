@@ -12,7 +12,7 @@ import (
 type listener interface {
 	EventCancelled(ctx context.Context, change EventChanged)
 	EventUncancelled(ctx context.Context, change EventChanged)
-	EventDeleted(ctx context.Context, change EventChanged)
+	EventUpdated(ctx context.Context, updated EventUpdated)
 	CommentCreated(ctx context.Context, created CommentCreated)
 	EventCreated(ctx context.Context, created EventCreated)
 	ResponseChanged(ctx context.Context, changed ResponseChanged)
@@ -23,7 +23,15 @@ type EventChanged struct {
 	Event   *Event
 	ActorID uuid.UUID
 	// Attendees are the account holders who said yes, for themselves or one of their kids.
-	// Loaded before the change, since deleting an event also deletes its responses.
+	Attendees []uuid.UUID
+}
+
+// EventUpdated describes an edit of an event by ActorID. Before and After are the event as
+// it was and as it is now, so the listener can tell what changed.
+type EventUpdated struct {
+	Before    *Event
+	After     *Event
+	ActorID   uuid.UUID
 	Attendees []uuid.UUID
 }
 

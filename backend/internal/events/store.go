@@ -307,24 +307,20 @@ func (s *store) getOwnedKid(ctx context.Context, kidId uuid.UUID, userId uuid.UU
 	return status, name, nil
 }
 
-func (s *store) deleteEvent(ctx context.Context, id uuid.UUID) error {
-	tx, err := s.conn.Begin(ctx)
+// updateEvent reports whether the event was updated. It only updates events that are
+// neither cancelled nor started, so a cancel that lands between the service's checks and
+// this update can't be overwritten.
+func (s *store) updateEvent(ctx context.Context, id uuid.UUID, req UpdateEventRequest) (bool, error) {
+	tag, err := s.conn.Exec(
+		ctx,
+		"UPDATE events SET title = $1, description = $2, location = $3, start_time = $4 "+
+			"WHERE id = $5 AND cancelled_at IS NULL AND start_time > NOW()",
+		req.Title, req.Description, req.Location, req.StartTime, id,
+	)
 	if err != nil {
-		return errors.New(fmt.Sprintf("failed to begin transaction: %s", err.Error()))
+		return false, errors.New(fmt.Sprintf("failed to update event: %s", err.Error()))
 	}
-	defer tx.Rollback(ctx)
-
-	if _, err := tx.Exec(ctx, "DELETE FROM event_responses WHERE event_id = $1", id); err != nil {
-		return errors.New(fmt.Sprintf("failed to delete event responses: %s", err.Error()))
-	}
-	if _, err := tx.Exec(ctx, "DELETE FROM events WHERE id = $1", id); err != nil {
-		return errors.New(fmt.Sprintf("failed to delete event: %s", err.Error()))
-	}
-
-	if err := tx.Commit(ctx); err != nil {
-		return errors.New(fmt.Sprintf("failed to commit transaction: %s", err.Error()))
-	}
-	return nil
+	return tag.RowsAffected() > 0, nil
 }
 
 func (s *store) cancelEvent(ctx context.Context, id uuid.UUID) error {
