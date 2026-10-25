@@ -10,7 +10,7 @@ import EventTitle from '@/components/EventTitle.vue'
 import Input from '@/components/Input.vue'
 import IconSend from '@/components/icons/IconSend.vue'
 import type { EventDetail, MyResponse, Comment, EventAttendee } from '@/service/events'
-import { upsertEventResponse, deleteEvent, cancelEvent, uncancelEvent, listComments, createComment } from '@/service/events'
+import { upsertEventResponse, cancelEvent, uncancelEvent, listComments, createComment } from '@/service/events'
 import i18n from '@/plugins/i18n'
 import IconBack from '@/components/icons/IconBack.vue'
 import IconError from '@/components/icons/IconError.vue'
@@ -30,8 +30,6 @@ const eventId = route.params.id as string
 const event = ref<EventDetail | null>(null)
 const pendingResponse = ref<boolean | null>(null)
 const submittingIds = ref<Set<string>>(new Set())
-const showDeleteConfirm = ref(false)
-const isDeleting = ref(false)
 const showCancelConfirm = ref(false)
 const isCancelling = ref(false)
 const showRestoreConfirm = ref(false)
@@ -50,6 +48,13 @@ const isCompact = useMediaQuery('(max-width: 767px)')
 
 const menuItems = computed<MenuItem[]>(() => {
   const items: MenuItem[] = []
+  // Only upcoming, not cancelled events can be edited — the backend rejects the rest.
+  if (event.value?.canEdit && !isCancelled.value && new Date(event.value.startTime) > new Date()) {
+    items.push({
+      label: i18n.global.t('events.detail.menu.edit'),
+      onClick: () => { router.push(`/events/${eventId}/edit`) },
+    })
+  }
   if (event.value?.canCancel && !isCancelled.value) {
     items.push({
       label: i18n.global.t('events.detail.menu.cancel'),
@@ -60,13 +65,6 @@ const menuItems = computed<MenuItem[]>(() => {
     items.push({
       label: i18n.global.t('events.detail.menu.restore'),
       onClick: () => { showRestoreConfirm.value = true },
-    })
-  }
-  if (event.value?.canDelete) {
-    items.push({
-      label: i18n.global.t('events.detail.menu.delete'),
-      danger: true,
-      onClick: () => { showDeleteConfirm.value = true },
     })
   }
   return items
@@ -97,20 +95,6 @@ const confirmCancel = async () => {
     showCancelConfirm.value = false
   } finally {
     isCancelling.value = false
-  }
-}
-
-const confirmDelete = async () => {
-  if (isDeleting.value) return
-  isDeleting.value = true
-  try {
-    await deleteEvent(eventId)
-    router.replace('/events')
-  } catch {
-    // Reveal the global error banner behind the modal
-    showDeleteConfirm.value = false
-  } finally {
-    isDeleting.value = false
   }
 }
 
@@ -550,27 +534,6 @@ const formattedStartTime = computed(() => {
         </div>
       </div>
     </Modal>
-
-    <Modal v-if="showDeleteConfirm">
-      <div class="eventDetailDeleteConfirm">
-        <h2 class="eventDetailDeleteTitle">{{ i18n.global.t('events.detail.deleteConfirm.title') }}</h2>
-        <p class="eventDetailDeleteMessage">{{ i18n.global.t('events.detail.deleteConfirm.message') }}</p>
-        <div class="eventDetailDeleteActions">
-          <Button
-            :title="i18n.global.t('events.detail.deleteConfirm.confirm')"
-            theme="red"
-            :loading="isDeleting"
-            @click="confirmDelete"
-          />
-          <Button
-            :title="i18n.global.t('events.detail.deleteConfirm.cancel')"
-            theme="secondary"
-            :disabled="isDeleting"
-            @click="showDeleteConfirm = false"
-          />
-        </div>
-      </div>
-    </Modal>
   </div>
 </template>
 
@@ -633,7 +596,6 @@ const formattedStartTime = computed(() => {
   z-index: 10;
 }
 
-.eventDetailDeleteConfirm,
 .eventDetailRestoreConfirm {
   display: flex;
   flex-direction: column;

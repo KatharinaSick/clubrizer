@@ -307,22 +307,14 @@ func (s *store) getOwnedKid(ctx context.Context, kidId uuid.UUID, userId uuid.UU
 	return status, name, nil
 }
 
-func (s *store) deleteEvent(ctx context.Context, id uuid.UUID) error {
-	tx, err := s.conn.Begin(ctx)
+func (s *store) updateEvent(ctx context.Context, id uuid.UUID, req UpdateEventRequest) error {
+	_, err := s.conn.Exec(
+		ctx,
+		"UPDATE events SET title = $1, description = $2, location = $3, start_time = $4 WHERE id = $5",
+		req.Title, req.Description, req.Location, req.StartTime, id,
+	)
 	if err != nil {
-		return errors.New(fmt.Sprintf("failed to begin transaction: %s", err.Error()))
-	}
-	defer tx.Rollback(ctx)
-
-	if _, err := tx.Exec(ctx, "DELETE FROM event_responses WHERE event_id = $1", id); err != nil {
-		return errors.New(fmt.Sprintf("failed to delete event responses: %s", err.Error()))
-	}
-	if _, err := tx.Exec(ctx, "DELETE FROM events WHERE id = $1", id); err != nil {
-		return errors.New(fmt.Sprintf("failed to delete event: %s", err.Error()))
-	}
-
-	if err := tx.Commit(ctx); err != nil {
-		return errors.New(fmt.Sprintf("failed to commit transaction: %s", err.Error()))
+		return errors.New(fmt.Sprintf("failed to update event: %s", err.Error()))
 	}
 	return nil
 }

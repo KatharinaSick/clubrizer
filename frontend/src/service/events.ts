@@ -60,7 +60,7 @@ export interface EventResponses {
 export interface EventDetail extends Event {
   category: Category
   responses: EventResponses
-  canDelete?: boolean
+  canEdit?: boolean
   canCancel?: boolean
 }
 
@@ -80,6 +80,22 @@ export const listPastEvents = async (): Promise<Event[]> => {
 export const createEvent = async (event: CreateEventRequest): Promise<Event> => {
   const response = await axios.post('/events', event)
   return response.data
+}
+
+export interface UpdateEventRequest {
+  title: string
+  description: string | null
+  startTime: Date
+  location: string
+}
+
+export const getEvent = async (eventId: string): Promise<EventDetail> => {
+  const response = await axios.get(`/events/${eventId}`)
+  return response.data
+}
+
+export const updateEvent = async (eventId: string, event: UpdateEventRequest): Promise<void> => {
+  await axios.put(`/events/${eventId}`, event)
 }
 
 // upsertEventResponse sets a response for one person. Omit kidId for the account
@@ -109,10 +125,6 @@ export const listComments = async (eventId: string): Promise<Comment[]> => {
 export const createComment = async (eventId: string, body: string): Promise<Comment> => {
   const response = await axios.post(`/events/${eventId}/comments`, { body })
   return response.data
-}
-
-export const deleteEvent = async (eventId: string): Promise<void> => {
-  await axios.delete(`/events/${eventId}`)
 }
 
 export const cancelEvent = async (eventId: string): Promise<void> => {

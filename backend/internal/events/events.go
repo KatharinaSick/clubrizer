@@ -50,11 +50,11 @@ func (s *Service) GetEvent(ctx context.Context, id string) (*Event, error) {
 	}
 	event.Responses = responses
 
-	canDelete, err := s.canDeleteEvent(ctx, userId, event.CreatedBy)
+	canEdit, err := s.canEditEvent(ctx, userId, event.CreatedBy)
 	if err != nil {
 		return nil, err
 	}
-	event.CanDelete = &canDelete
+	event.CanEdit = &canEdit
 
 	canCancel, err := s.canCancelEvent(ctx, userId, event.CreatedBy)
 	if err != nil {
@@ -65,14 +65,14 @@ func (s *Service) GetEvent(ctx context.Context, id string) (*Event, error) {
 	return event, nil
 }
 
-// canDeleteEvent reports whether the user may delete the event with the given creator.
-// The event's owner can always delete it; everyone else needs the delete-any permission
+// canEditEvent reports whether the user may edit the event with the given creator.
+// The event's owner can always edit it; everyone else needs the edit-any permission
 // (which admins bypass).
-func (s *Service) canDeleteEvent(ctx context.Context, userId, creatorId uuid.UUID) (bool, error) {
+func (s *Service) canEditEvent(ctx context.Context, userId, creatorId uuid.UUID) (bool, error) {
 	if userId == creatorId {
 		return true, nil
 	}
-	return s.rbac.IsAuthorized(ctx, userId, rbac.PermissionEventsDeleteAny)
+	return s.rbac.IsAuthorized(ctx, userId, rbac.PermissionEventsEditAny)
 }
 
 // canCancelEvent reports whether the user may cancel the event with the given creator.
@@ -151,7 +151,10 @@ func (s *Service) UncancelEvent(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *Service) DeleteEvent(ctx context.Context, id string) error {
+// UpdateEvent changes an event's title, description, location and start time. Only events
+// that haven't started yet and aren't cancelled can be edited, and they can't be moved into
+// the past.
+func (s *Service) UpdateEvent(ctx context.Context, id string, req UpdateEventRequest) error {
 	uuidId, err := uuid.Parse(id)
 	if err != nil {
 		return apperrors.NewBadRequest("invalid event id", err)
@@ -164,21 +167,36 @@ func (s *Service) DeleteEvent(ctx context.Context, id string) error {
 
 	userId := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims).ID
 
-	authorized, err := s.canDeleteEvent(ctx, userId, event.CreatedBy)
+	authorized, err := s.canEditEvent(ctx, userId, event.CreatedBy)
 	if err != nil {
 		return err
 	}
 	if !authorized {
-		return apperrors.NewForbidden("you are not allowed to delete this event")
+		return apperrors.NewForbidden("you are not allowed to edit this event")
 	}
 
-	// Load attendees first — deleting the event removes their responses.
-	attendees := s.loadAttendees(ctx, uuidId)
-	if err := s.store.deleteEvent(ctx, uuidId); err != nil {
+	if event.CancelledAt != nil {
+		return apperrors.NewBadRequest("cancelled events can't be edited", nil)
+	}
+	if !event.StartTime.After(time.Now()) {
+		return apperrors.NewBadRequest("this event has already taken place", nil)
+	}
+	if req.StartTime.Before(time.Now()) {
+		return apperrors.NewBadRequest("start time must be in the future", nil)
+	}
+
+	if err := s.store.updateEvent(ctx, uuidId, req); err != nil {
 		return err
 	}
 
-	s.listener.EventDeleted(ctx, EventChanged{Event: event, ActorID: userId, Attendees: attendees})
+	updated := *event
+	updated.Title = req.Title
+	updated.Description = req.Description
+	updated.Location = req.Location
+	updated.StartTime = req.StartTime
+	s.listener.EventUpdated(ctx, EventUpdated{
+		Before: event, After: &updated, ActorID: userId, Attendees: s.loadAttendees(ctx, uuidId),
+	})
 	return nil
 }
 

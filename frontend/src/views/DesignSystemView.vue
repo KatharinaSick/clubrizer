@@ -20,8 +20,16 @@ import IconTrash from '@/components/icons/IconTrash.vue'
 import IconBell from '@/components/icons/IconBell.vue'
 import IconCircle from '@/components/IconCircle.vue'
 import NumberedSteps from '@/components/NumberedSteps.vue'
+import EventForm from '@/components/EventForm.vue'
 
 const showProfileModal = ref(false)
+
+const sampleEventFormValues = {
+  title: 'Training',
+  description: 'Bring water and running shoes.',
+  startTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+  location: 'Sports hall',
+}
 const showKidProfileModal = ref(false)
 
 const menuItems: MenuItem[] = [
@@ -468,6 +476,24 @@ const spacingLayout = [
           <Toggle id="ds-toggle-disabled" label="Saving…" :disabled="true" v-model="toggleOn" />
           <code class="dsToken">:disabled="true"</code>
         </div>
+      </div>
+    </section>
+
+    <!-- ─── EVENT FORM ─── -->
+    <section class="dsSection">
+      <h2 class="dsSectionTitle">Event Form</h2>
+      <p class="dsSectionDesc">
+        <code>&lt;EventForm submit-title="Save" :initial-values="values" @submit="fn" /&gt;</code> — the
+        shared form of the create (<code>NewEventView</code>) and edit (<code>EditEventView</code>)
+        screens: title, date, time, location and description, plus a <code>&lt;RequestError&gt;</code>
+        and the submit button. It validates the required fields itself and emits the values on
+        submit; saving them is up to the screen. Pass <code>initial-values</code> to edit an existing
+        event, or <code>initial-title</code> to only prefill the title of a new one, and
+        <code>loading</code> while saving. The category isn't part of the form — it's chosen before
+        creating and can't be changed afterwards.
+      </p>
+      <div class="dsEventPreview">
+        <EventForm submit-title="Save" :initial-values="sampleEventFormValues" @submit="() => {}" />
       </div>
     </section>
 

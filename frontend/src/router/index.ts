@@ -21,6 +21,12 @@ const router = createRouter({
       meta: { showNavigation: false, activeNav: 'events', requiresAuth: true }
     },
     {
+      path: '/events/:id/edit',
+      name: 'edit-event',
+      component: () => import('../views/EditEventView.vue'),
+      meta: { showNavigation: false, activeNav: 'events', requiresAuth: true }
+    },
+    {
       path: '/events/:id',
       name: 'event-detail',
       component: () => import('../views/EventDetailView.vue'),

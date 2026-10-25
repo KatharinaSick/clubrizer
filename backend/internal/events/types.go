@@ -38,8 +38,17 @@ type Event struct {
 	Creator     Creator         `db:"-" json:"creator"`
 	CancelledAt *time.Time      `db:"cancelled_at" json:"cancelledAt,omitempty"`
 	Responses   *EventResponses `db:"-" json:"responses,omitempty"`
-	CanDelete   *bool           `db:"-" json:"canDelete,omitempty"`
+	CanEdit     *bool           `db:"-" json:"canEdit,omitempty"`
 	CanCancel   *bool           `db:"-" json:"canCancel,omitempty"`
+}
+
+// UpdateEventRequest is the body of an event edit. The category is fixed once an event
+// is created, since it decides who may create the event in the first place.
+type UpdateEventRequest struct {
+	Title       string    `json:"title" validate:"required,notblank"`
+	Description string    `json:"description"`
+	Location    string    `json:"location" validate:"required,notblank"`
+	StartTime   time.Time `json:"startTime" validate:"required"`
 }
 
 type EventAttendee struct {
