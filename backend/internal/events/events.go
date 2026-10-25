@@ -185,8 +185,12 @@ func (s *Service) UpdateEvent(ctx context.Context, id string, req UpdateEventReq
 		return apperrors.NewBadRequest("start time must be in the future", nil)
 	}
 
-	if err := s.store.updateEvent(ctx, uuidId, req); err != nil {
+	updatedRow, err := s.store.updateEvent(ctx, uuidId, req)
+	if err != nil {
 		return err
+	}
+	if !updatedRow {
+		return apperrors.NewBadRequest("this event can't be edited anymore", nil)
 	}
 
 	updated := *event

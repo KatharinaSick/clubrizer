@@ -2,7 +2,6 @@
 import { useRoute, useRouter } from 'vue-router'
 import { computed, onMounted, ref } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
-import axios from '@/plugins/axios'
 import Alert from '@/components/Alert.vue'
 import Avatar from '@/components/Avatar.vue'
 import Button from '@/components/Button.vue'
@@ -10,7 +9,7 @@ import EventTitle from '@/components/EventTitle.vue'
 import Input from '@/components/Input.vue'
 import IconSend from '@/components/icons/IconSend.vue'
 import type { EventDetail, MyResponse, Comment, EventAttendee } from '@/service/events'
-import { upsertEventResponse, cancelEvent, uncancelEvent, listComments, createComment } from '@/service/events'
+import { getEvent, upsertEventResponse, cancelEvent, uncancelEvent, listComments, createComment } from '@/service/events'
 import i18n from '@/plugins/i18n'
 import IconBack from '@/components/icons/IconBack.vue'
 import IconError from '@/components/icons/IconError.vue'
@@ -104,8 +103,7 @@ onMounted(() => {
 })
 
 const loadEvent = async () => {
-  const response = await axios.get(`/events/${eventId}`)
-  event.value = response.data
+  event.value = await getEvent(eventId)
 }
 
 const loadComments = async () => {
@@ -495,9 +493,9 @@ const formattedStartTime = computed(() => {
 
     <Modal v-if="showCancelConfirm">
       <div class="eventDetailCancelConfirm">
-        <h2 class="eventDetailDeleteTitle">{{ i18n.global.t('events.detail.cancelConfirm.title') }}</h2>
-        <p class="eventDetailDeleteMessage">{{ i18n.global.t('events.detail.cancelConfirm.message') }}</p>
-        <div class="eventDetailDeleteActions">
+        <h2 class="eventDetailConfirmTitle">{{ i18n.global.t('events.detail.cancelConfirm.title') }}</h2>
+        <p class="eventDetailConfirmMessage">{{ i18n.global.t('events.detail.cancelConfirm.message') }}</p>
+        <div class="eventDetailConfirmActions">
           <Button
             :title="i18n.global.t('events.detail.cancelConfirm.confirm')"
             theme="red"
@@ -516,9 +514,9 @@ const formattedStartTime = computed(() => {
 
     <Modal v-if="showRestoreConfirm">
       <div class="eventDetailRestoreConfirm">
-        <h2 class="eventDetailDeleteTitle">{{ i18n.global.t('events.detail.restoreConfirm.title') }}</h2>
-        <p class="eventDetailDeleteMessage">{{ i18n.global.t('events.detail.restoreConfirm.message') }}</p>
-        <div class="eventDetailDeleteActions">
+        <h2 class="eventDetailConfirmTitle">{{ i18n.global.t('events.detail.restoreConfirm.title') }}</h2>
+        <p class="eventDetailConfirmMessage">{{ i18n.global.t('events.detail.restoreConfirm.message') }}</p>
+        <div class="eventDetailConfirmActions">
           <Button
             :title="i18n.global.t('events.detail.restoreConfirm.confirm')"
             theme="primary"
@@ -614,18 +612,18 @@ const formattedStartTime = computed(() => {
   opacity: 0.5;
 }
 
-.eventDetailDeleteTitle {
+.eventDetailConfirmTitle {
   margin: 0;
   font-size: var(--font-size-large);
   font-weight: var(--font-weight-bold);
 }
 
-.eventDetailDeleteMessage {
+.eventDetailConfirmMessage {
   margin: 0;
   line-height: 1.5;
 }
 
-.eventDetailDeleteActions {
+.eventDetailConfirmActions {
   margin-top: var(--padding);
   display: flex;
   flex-direction: column;

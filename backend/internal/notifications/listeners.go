@@ -28,7 +28,8 @@ func (s *Service) EventUncancelled(ctx context.Context, change events.EventChang
 	s.notifyAttendees(ctx, change, typeEventUncancelled, eventUrl(change.Event.ID))
 }
 
-// EventUpdated tells everyone who said yes when the event moved to another time or place.
+// EventUpdated tells the event's creator and everyone who said yes when the event moved to
+// another time or place. The creator matters when someone else (e.g. an admin) edited it.
 // Other edits, like a fixed typo in the description, aren't worth a notification.
 func (s *Service) EventUpdated(ctx context.Context, updated events.EventUpdated) {
 	before, after := updated.Before, updated.After
@@ -47,7 +48,8 @@ func (s *Service) EventUpdated(ctx context.Context, updated events.EventUpdated)
 		return
 	}
 
-	s.notify(ctx, excluding(updated.Attendees, updated.ActorID), message{
+	recipients := slices.Concat(updated.Attendees, []uuid.UUID{after.CreatedBy})
+	s.notify(ctx, excluding(recipients, updated.ActorID), message{
 		Type: msgType,
 		Params: map[string]string{
 			"title":    after.Title,

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Alert from '@/components/Alert.vue'
 import Header from '@/components/Header.vue'
 import EventForm from '@/components/EventForm.vue'
 import type { EventFormValues } from '@/components/EventForm.vue'
@@ -13,10 +14,23 @@ const route = useRoute()
 const eventId = route.params.id as string
 
 const initialValues = ref<EventFormValues | null>(null)
+const notEditable = ref(false)
 const saveLoading = ref(false)
 
 onMounted(async () => {
-  const event = await getEvent(eventId)
+  let event
+  try {
+    event = await getEvent(eventId)
+  } catch {
+    // The error is shown by <RequestError />.
+    return
+  }
+  // The edit page can also be opened from a link or the browser history, so check here
+  // too that the event may still be edited. The backend enforces this as well.
+  if (!event.canEdit || event.cancelledAt || new Date(event.startTime) <= new Date()) {
+    notEditable.value = true
+    return
+  }
   initialValues.value = {
     title: event.title,
     description: event.description,
@@ -25,17 +39,26 @@ onMounted(async () => {
   }
 })
 
-const save = (values: EventFormValues) => {
-  saveLoading.value = true
+// Go back to the event after saving. If the edit page was opened directly, there is no
+// previous page in the app to go back to, so open the event instead.
+const leave = () => {
+  if (window.history.state?.back) {
+    router.back()
+  } else {
+    router.replace({ name: 'event-detail', params: { id: eventId } })
+  }
+}
 
-  updateEvent(eventId, values)
-    .then(() => {
-      saveLoading.value = false
-      router.back()
-    })
-    .catch(() => {
-      saveLoading.value = false
-    })
+const save = async (values: EventFormValues) => {
+  saveLoading.value = true
+  try {
+    await updateEvent(eventId, values)
+    leave()
+  } catch {
+    // The error is shown by <RequestError /> inside the form.
+  } finally {
+    saveLoading.value = false
+  }
 }
 </script>
 
@@ -54,6 +77,11 @@ const save = (values: EventFormValues) => {
         :loading="saveLoading"
         :initial-values="initialValues"
         @submit="save"
+      />
+      <Alert
+        v-else-if="notEditable"
+        :message="i18n.global.t('events.edit.notEditable')"
+        variant="info"
       />
       <RequestError v-else />
     </div>

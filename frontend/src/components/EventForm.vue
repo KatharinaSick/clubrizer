@@ -63,6 +63,9 @@ const validate = () => {
   } else if (isDesktop.value && !isValidTime(form.value.time)) {
     validationErrors.value.time = i18n.global.t('eventForm.timeInvalid')
     isValid = false
+  } else if (form.value.date && combineDateAndTime(form.value.date, form.value.time) <= new Date()) {
+    validationErrors.value.time = i18n.global.t('eventForm.timeInPast')
+    isValid = false
   }
   if (!form.value.location) {
     validationErrors.value.location = i18n.global.t('eventForm.required')

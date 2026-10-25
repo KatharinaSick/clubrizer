@@ -250,6 +250,7 @@ export default createI18n({
         edit: {
           header: 'Edit Event',
           save: 'Save',
+          notEditable: 'This event can no longer be edited.',
         },
         createdBy: 'by',
         detail: {
@@ -301,6 +302,7 @@ export default createI18n({
         description: 'Description',
         required: 'Required',
         timeInvalid: 'Please enter a time in HH:MM format',
+        timeInPast: 'This time has already passed',
       },
       select: {
         loading: 'Loading…'
@@ -807,6 +809,7 @@ export default createI18n({
         edit: {
           header: 'Event bearbeiten',
           save: 'Speichern',
+          notEditable: 'Dieses Event kann nicht mehr bearbeitet werden.',
         },
         createdBy: 'von',
         detail: {
@@ -906,6 +909,7 @@ export default createI18n({
         description: 'Beschreibung',
         required: 'Pflichtfeld',
         timeInvalid: 'Bitte gib eine Uhrzeit im Format HH:MM ein',
+        timeInPast: 'Diese Uhrzeit ist schon vorbei',
       },
       select: {
         loading: 'Wird geladen…'
