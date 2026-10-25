@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import authService from '@/service/auth'
 import usersService from '@/service/users'
 import { useStorage } from '@vueuse/core'
+import { unregisterPushOnLogout } from '@/utils/push'
 
 export type UserStatus = 'onboarding' | 'pending' | 'approved' | 'rejected'
 
@@ -83,6 +84,8 @@ export const useAuthStore = defineStore('auth', {
       }
     },
     async logout() {
+      // While still signed in, so the backend can remove this device.
+      await unregisterPushOnLogout()
       try {
         await authService.logout()
       } catch {

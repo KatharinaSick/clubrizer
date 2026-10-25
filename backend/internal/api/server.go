@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/katharinasick/clubrizer/internal/app"
 	"github.com/katharinasick/clubrizer/internal/events"
+	"github.com/katharinasick/clubrizer/internal/notifications"
 	"github.com/katharinasick/clubrizer/internal/rbac"
 	"github.com/katharinasick/clubrizer/internal/users"
 	"github.com/rs/cors"
@@ -20,10 +21,11 @@ func NewHandler(
 	cfg app.Config,
 	userService userService,
 	eventsService eventsService,
+	notificationsService notificationsService,
 	auth authorizer,
 ) http.Handler {
 	mux := http.NewServeMux()
-	addRoutes(mux, cfg, userService, eventsService, auth)
+	addRoutes(mux, cfg, userService, eventsService, notificationsService, auth)
 
 	handler := cors.New(cors.Options{
 		AllowedOrigins: cfg.Cors.AllowedOrigins,
@@ -90,6 +92,7 @@ func addRoutes(
 	cfg app.Config,
 	userService userService,
 	eventsService eventsService,
+	notificationsService notificationsService,
 	auth authorizer,
 ) {
 	// Authentication & Users
@@ -150,6 +153,14 @@ func addRoutes(
 
 	mux.Handle("GET /events/{id}/comments", authenticated(cfg, handleWithIdAndReturnList(eventsService.ListComments)))
 	mux.Handle("POST /events/{id}/comments", authenticated(cfg, handleWithIdAndBodyAndReturnValue(eventsService.CreateComment)))
+
+	// Push notifications — every route only ever touches the caller's own devices.
+	mux.Handle("GET /notifications/vapid-public-key", authenticated(cfg, handle(notificationsService.GetVapidPublicKey)))
+	mux.Handle("POST /notifications/subscriptions", authenticated(cfg, handleWithBody(notificationsService.Subscribe)))
+	mux.Handle("POST /notifications/subscriptions/status", authenticated(cfg, handleWithBodyAndReturnValue(notificationsService.GetSubscriptionStatus)))
+	mux.Handle("DELETE /notifications/subscriptions", authenticated(cfg, handleWithBody(notificationsService.Unsubscribe)))
+	mux.Handle("DELETE /notifications/subscriptions/all", authenticated(cfg, handleWithoutInput(notificationsService.UnsubscribeAll)))
+	mux.Handle("POST /notifications/test", authenticated(cfg, handleWithoutInput(notificationsService.SendTest)))
 }
 
 type userService interface {
@@ -194,4 +205,13 @@ type eventsService interface {
 	UncancelEvent(ctx context.Context, id string) error
 	ListComments(ctx context.Context, eventId string) ([]*events.Comment, error)
 	CreateComment(ctx context.Context, eventId string, req events.CreateCommentRequest) (*events.Comment, error)
+}
+
+type notificationsService interface {
+	GetVapidPublicKey(ctx context.Context) (*notifications.VapidPublicKeyResponse, error)
+	Subscribe(ctx context.Context, req notifications.SubscribeRequest) error
+	GetSubscriptionStatus(ctx context.Context, req notifications.SubscriptionStatusRequest) (*notifications.SubscriptionStatusResponse, error)
+	Unsubscribe(ctx context.Context, req notifications.UnsubscribeRequest) error
+	UnsubscribeAll(ctx context.Context) error
+	SendTest(ctx context.Context) error
 }

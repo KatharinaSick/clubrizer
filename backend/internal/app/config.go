@@ -45,6 +45,15 @@ type Config struct {
 		ProfilePicturesBucketName string `yaml:"profilePicturesBucketName"`
 	} `yaml:"gcs"`
 
+	// WebPush holds the VAPID key pair (generate with `go run ./cmd/vapidkeys`) and the
+	// contact address push services can reach us at. The subject is a plain email address;
+	// the webpush library adds the "mailto:" prefix.
+	WebPush struct {
+		PublicKey  string `yaml:"publicKey"`
+		PrivateKey string `yaml:"privateKey"`
+		Subject    string `yaml:"subject"`
+	} `yaml:"webPush"`
+
 	OTP struct {
 		MaxRequestsPerWindow int `yaml:"maxRequestsPerWindow"`
 		WindowHours          int `yaml:"windowHours"`

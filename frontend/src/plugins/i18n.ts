@@ -77,6 +77,44 @@ export default createI18n({
         cancel: 'Cancel',
         howItWorks: 'How it works',
         changelog: "What's New",
+        notifications: 'Notifications',
+      },
+      notifications: {
+        header: 'Notifications',
+        off: {
+          intro: 'Get a message on this device when something new happens in your club.',
+          turnOn: 'Turn on notifications',
+        },
+        on: {
+          intro: 'Notifications are turned on for this device.',
+          sendTest: 'Send test notification',
+          testSent: 'Sent! It should show up in a few seconds.',
+          testMissing: 'Didn\'t get anything? Check that notifications for your browser are allowed in your device settings, and that "Do Not Disturb" is off.',
+          turnOffThisDevice: 'Turn off on this device',
+          turnOffAllDevices: 'Turn off on all my devices',
+        },
+        homeScreen: {
+          intro: 'To get notifications on your iPhone or iPad, add the app to your home screen first:',
+          step1: 'Tap the Share button (the square with the arrow pointing up).',
+          step2: 'Choose "Add to Home Screen".',
+          step3: 'Open the app from your home screen and come back to this page.',
+        },
+        unsupported: 'Notifications are not possible in this browser. Try opening the app in Chrome, Firefox, Edge or Safari.',
+        blocked: {
+          title: 'Notifications are blocked',
+          message: 'You blocked notifications for this app earlier. To get them, allow notifications for this app in your phone or browser settings, then come back here.',
+        },
+        deviceError: 'Notifications could not be turned on for this device. Please try again later.',
+      },
+      pushNotifications: {
+        test: {
+          title: 'It works! 🎉',
+          body: 'Notifications are set up on this device.',
+        },
+        fallback: {
+          title: 'LISC-2010',
+          body: 'Something new happened in your club.',
+        },
       },
       profileSetup: {
         header: 'Set Up Your Profile',
@@ -469,6 +507,44 @@ export default createI18n({
         cancel: 'Abbrechen',
         howItWorks: 'So funktioniert die App',
         changelog: 'Neu in der App',
+        notifications: 'Benachrichtigungen',
+      },
+      notifications: {
+        header: 'Benachrichtigungen',
+        off: {
+          intro: 'Bekomme auf diesem Gerät eine Nachricht, wenn sich in deinem Verein etwas tut.',
+          turnOn: 'Benachrichtigungen einschalten',
+        },
+        on: {
+          intro: 'Benachrichtigungen sind auf diesem Gerät eingeschaltet.',
+          sendTest: 'Test-Benachrichtigung senden',
+          testSent: 'Gesendet! Sie sollte in ein paar Sekunden ankommen.',
+          testMissing: 'Nichts angekommen? Prüfe, ob Benachrichtigungen für deinen Browser in den Einstellungen deines Geräts erlaubt sind und „Nicht stören“ ausgeschaltet ist.',
+          turnOffThisDevice: 'Auf diesem Gerät ausschalten',
+          turnOffAllDevices: 'Auf all meinen Geräten ausschalten',
+        },
+        homeScreen: {
+          intro: 'Damit du auf deinem iPhone oder iPad Benachrichtigungen bekommst, füge die App zuerst zu deinem Home-Bildschirm hinzu:',
+          step1: 'Tippe auf den Teilen-Knopf (das Viereck mit dem Pfeil nach oben).',
+          step2: 'Wähle „Zum Home-Bildschirm“.',
+          step3: 'Öffne die App über deinen Home-Bildschirm und komm wieder auf diese Seite.',
+        },
+        unsupported: 'In diesem Browser sind Benachrichtigungen leider nicht möglich. Probiere die App in Chrome, Firefox, Edge oder Safari zu öffnen.',
+        blocked: {
+          title: 'Benachrichtigungen sind blockiert',
+          message: 'Du hast Benachrichtigungen für diese App früher einmal blockiert. Erlaube sie in den Einstellungen deines Handys oder Browsers und komm dann wieder hierher.',
+        },
+        deviceError: 'Benachrichtigungen konnten auf diesem Gerät nicht eingeschaltet werden. Bitte versuche es später noch einmal.',
+      },
+      pushNotifications: {
+        test: {
+          title: 'Es funktioniert! 🎉',
+          body: 'Benachrichtigungen sind auf diesem Gerät eingerichtet.',
+        },
+        fallback: {
+          title: 'LISC-2010',
+          body: 'In deinem Verein gibt es etwas Neues.',
+        },
       },
       profileSetup: {
         header: 'Profil einrichten',
