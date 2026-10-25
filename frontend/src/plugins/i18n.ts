@@ -361,6 +361,27 @@ export default createI18n({
           kids: 'Kids',
         },
       },
+      notificationsAnnouncement: {
+        title: 'New: notifications',
+        message: 'Get a heads-up on your phone when there\'s a new event, someone replies or an event is cancelled.',
+        settingsHint: 'You can change this anytime in your profile under Notifications.',
+        turnOn: 'Turn on',
+        later: 'Later',
+        noThanks: 'No thanks',
+        deviceError: 'That didn\'t work on this device. Please try again.',
+        homeScreen: {
+          intro: 'On iPhone or iPad, add the app to your home screen first:',
+          step1: 'Tap the Share button at the bottom (the square with an arrow pointing up).',
+          step2: 'Scroll down a little and choose "Add to Home Screen".',
+          step3: 'Tap "Add" in the top right.',
+          step4: 'Open the app from your home screen. We\'ll ask you again there.',
+        },
+        done: {
+          title: 'You\'re all set!',
+          message: 'You can choose what you hear about in your profile under Notifications.',
+          close: 'Got it',
+        },
+      },
       pendingApproval: {
         pending: {
           title: 'You\'re almost in!',
@@ -385,6 +406,14 @@ export default createI18n({
       changelog: {
         header: "What's New",
         entries: [
+          {
+            date: 'October 25, 2026',
+            items: [
+              'You can now get notifications on your phone, e.g. about new events, replies and comments. Turn them on in your profile under Notifications.',
+              'You choose what you hear about.',
+              'The screen you see while waiting for approval got a fresh look, and it can let you know as soon as you\'re in.',
+            ],
+          },
           {
             date: 'August 11, 2026',
             items: [
@@ -809,6 +838,27 @@ export default createI18n({
           }
         }
       },
+      notificationsAnnouncement: {
+        title: 'Neu: Benachrichtigungen',
+        message: 'Erfahr am Handy sofort, wenn es ein neues Event gibt, jemand antwortet oder ein Event abgesagt wird.',
+        settingsHint: 'Du kannst das jederzeit in deinem Profil unter Benachrichtigungen ändern.',
+        turnOn: 'Einschalten',
+        later: 'Später',
+        noThanks: 'Nein danke',
+        deviceError: 'Das hat auf diesem Gerät nicht geklappt. Bitte versuch es nochmal.',
+        homeScreen: {
+          intro: 'Auf dem iPhone oder iPad füg die App zuerst zu deinem Home-Bildschirm hinzu:',
+          step1: 'Tipp unten auf das Teilen-Symbol (das Quadrat mit dem Pfeil nach oben).',
+          step2: 'Scroll ein Stück nach unten und wähle „Zum Home-Bildschirm“.',
+          step3: 'Tipp oben rechts auf „Hinzufügen“.',
+          step4: 'Öffne die App über deinen Home-Bildschirm. Dort fragen wir dich nochmal.',
+        },
+        done: {
+          title: 'Alles startklar!',
+          message: 'In deinem Profil unter Benachrichtigungen kannst du aussuchen, worüber du Bescheid bekommst.',
+          close: 'Alles klar',
+        },
+      },
       pendingApproval: {
         pending: {
           title: 'Fast geschafft!',
@@ -898,6 +948,14 @@ export default createI18n({
       changelog: {
         header: 'Neu in der App',
         entries: [
+          {
+            date: '25. Oktober 2026',
+            items: [
+              'Du kannst jetzt Benachrichtigungen aufs Handy bekommen, z. B. zu neuen Events, Antworten und Kommentaren. Schalte sie in deinem Profil unter Benachrichtigungen ein.',
+              'Du suchst aus, worüber du Bescheid bekommst.',
+              'Der Bildschirm, während du auf deine Freischaltung wartest, sieht jetzt frischer aus und kann dir Bescheid geben, sobald du dabei bist.',
+            ],
+          },
           {
             date: '11. August 2026',
             items: [

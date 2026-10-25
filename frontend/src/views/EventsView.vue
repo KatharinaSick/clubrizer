@@ -8,6 +8,7 @@ import type { EventProps } from '@/components/Event.vue'
 import Event from '@/components/Event.vue'
 import { useRouter } from 'vue-router'
 import RequestError from '@/components/RequestError.vue'
+import NotificationsAnnouncement from '@/components/NotificationsAnnouncement.vue'
 import IconArrowDown from '@/components/icons/IconArrowDown.vue'
 
 const router = useRouter()
@@ -183,6 +184,7 @@ const showYearDivider = (index: number) => {
       </div>
     </div>
     <RequestError style="margin-bottom: 12px;" />
+    <NotificationsAnnouncement />
 
     <div class="eventsGrid">
       <template v-for="(event, index) in filteredEvents" :key="event.id">

@@ -862,6 +862,16 @@ const spacingLayout = [
         devices. The backdrop uses <code>--modal-background-color</code> (<code>rgba(12,29,54,0.30)</code>). Always
         give the user a way to dismiss — add a close button in your slot content.
       </div>
+
+      <h3 class="dsSubsectionTitle">NotificationsAnnouncement</h3>
+      <p class="dsSectionDesc">
+        <code>&lt;NotificationsAnnouncement /&gt;</code> — a self-contained feature announcement built on
+        <code>&lt;Modal&gt;</code>, placed on the events screen. It opens by itself only when this device can turn
+        notifications on (or is an iPhone that first needs the app on its home screen), so it isn't previewed here.
+        Layout: <code>&lt;IconCircle&gt;</code> with a bell, title, message, a hint where to change settings, and
+        stacked actions — primary <em>Turn on</em>, secondary <em>Later</em> (asks again after 3 days), tertiary
+        <em>No thanks</em> (never again on this device). The answer is remembered per device in localStorage.
+      </p>
     </section>
 
     <!-- ─── AUTOMATIC REQUEST HANDLING ─── -->
