@@ -64,18 +64,24 @@ func (s *Service) ListApprovals(ctx context.Context) ([]*ApprovalRequest, error)
 	return requests, nil
 }
 
-// decisionRecipients is who to notify after a batch decision. accountEmails are the account
+// decisionRecipients is who to notify after a batch decision. accounts are the account
 // holders whose own status changed — one email each. kidParents are the parents of decided
 // kids whose account was NOT part of the batch, i.e. a later-added kid on an already-approved
 // account: those get a kid-specific email. Kids decided alongside their own account (a
 // whole-family batch) are intentionally absent — the single account email covers the family,
 // so a family approval sends exactly one email.
 type decisionRecipients struct {
-	accountEmails []string
-	kidParents    []kidParentNotification
+	accounts   []decidedAccount
+	kidParents []kidParentNotification
+}
+
+type decidedAccount struct {
+	userID uuid.UUID
+	email  string
 }
 
 type kidParentNotification struct {
+	parentID    uuid.UUID
 	parentEmail string
 	kidName     string
 }
@@ -105,7 +111,20 @@ func (s *Service) decide(ctx context.Context, req ApprovalDecisionRequest, decis
 	}
 
 	s.sendDecisionEmails(recipients, decision)
+	s.listener.ApprovalsDecided(ctx, recipients.decided(decision))
 	return nil
+}
+
+// decided turns the recipients into the facts handed to the listener.
+func (r decisionRecipients) decided(decision Status) ApprovalsDecided {
+	d := ApprovalsDecided{Decision: decision}
+	for _, a := range r.accounts {
+		d.AccountIDs = append(d.AccountIDs, a.userID)
+	}
+	for _, k := range r.kidParents {
+		d.Kids = append(d.Kids, DecidedKid{ParentID: k.parentID, Name: k.kidName})
+	}
+	return d
 }
 
 // sendDecisionEmails notifies the affected account holders and kid parents off the request
@@ -113,19 +132,19 @@ func (s *Service) decide(ctx context.Context, req ApprovalDecisionRequest, decis
 // it must neither block nor fail the admin's response, and errors are only logged. Runs on a
 // fresh background context so it survives the handler returning.
 func (s *Service) sendDecisionEmails(recipients decisionRecipients, decision Status) {
-	if len(recipients.accountEmails) == 0 && len(recipients.kidParents) == 0 {
+	if len(recipients.accounts) == 0 && len(recipients.kidParents) == 0 {
 		return
 	}
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), notificationTimeout)
 		defer cancel()
 
-		for _, e := range recipients.accountEmails {
+		for _, a := range recipients.accounts {
 			var mailErr error
 			if decision == StatusApproved {
-				mailErr = s.email.SendAccountApproved(ctx, e)
+				mailErr = s.email.SendAccountApproved(ctx, a.email)
 			} else {
-				mailErr = s.email.SendAccountRejected(ctx, e)
+				mailErr = s.email.SendAccountRejected(ctx, a.email)
 			}
 			if mailErr != nil {
 				s.log.Error("failed to send account decision email", "decision", decision, "error", mailErr)

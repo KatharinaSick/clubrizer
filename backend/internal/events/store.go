@@ -409,3 +409,23 @@ func (s *store) createComment(ctx context.Context, eventId uuid.UUID, userId uui
 
 	return &c, nil
 }
+
+// getAttendingUserIds returns the approved account holders who said yes to the event, either
+// for themselves or for one of their (not removed) kids.
+func (s *store) getAttendingUserIds(ctx context.Context, eventId uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := s.conn.Query(ctx, `
+		SELECT DISTINCT u.id
+		FROM event_responses r
+		LEFT JOIN kids k ON k.id = r.kid_id AND k.deleted_at IS NULL
+		JOIN users u ON u.id = COALESCE(r.user_id, k.user_id)
+		WHERE r.event_id = $1 AND r.response = true AND u.status = 'approved'
+	`, eventId)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to query attendees: %s", err.Error()))
+	}
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[uuid.UUID])
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to collect attendees: %s", err.Error()))
+	}
+	return ids, nil
+}

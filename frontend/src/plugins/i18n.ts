@@ -111,6 +111,42 @@ export default createI18n({
           title: 'It works! 🎉',
           body: 'Notifications are set up on this device.',
         },
+        memberRequest: {
+          title: 'New member request',
+          body: 'Someone new would like to join the club. Tap here to review the request.',
+        },
+        accountApproved: {
+          title: 'Welcome to the club! 🎉',
+          body: 'Your request was approved. Tap here to get started.',
+        },
+        accountRejected: {
+          title: 'Your request was declined',
+          body: 'Unfortunately, your request to join the club was not approved.',
+        },
+        kidApproved: {
+          title: '{name} was approved 🎉',
+          body: 'You can now sign {name} up for events.',
+        },
+        kidRejected: {
+          title: '{name} was not approved',
+          body: 'Unfortunately, {name} was not approved for the club.',
+        },
+        eventCancelled: {
+          title: 'Event cancelled',
+          body: '{title} ({date}) has been cancelled.',
+        },
+        eventUncancelled: {
+          title: 'Event is back on 🎉',
+          body: '{title} ({date}) is happening after all.',
+        },
+        eventDeleted: {
+          title: 'Event deleted',
+          body: '{title} ({date}) has been deleted.',
+        },
+        eventComment: {
+          title: '{name} commented on {title}',
+          body: '{comment}',
+        },
         fallback: {
           title: 'LISC-2010',
           body: 'Something new happened in your club.',
@@ -292,6 +328,13 @@ export default createI18n({
           checkStatus: 'Check Status',
           stillPending: 'Still pending — check back a little later.',
           yourKids: 'Your kids: {names}'
+        },
+        notifications: {
+          question: 'Want a message on your phone as soon as you\'re approved?',
+          turnOn: 'Yes, notify me',
+          on: 'Great! We\'ll let you know on this device.',
+          homeScreen: 'On an iPhone or iPad, add the app to your home screen first and open it from there — then you can turn this on.',
+          deviceError: 'That didn\'t work on this device. Please try again later.',
         },
         rejected: {
           title: 'Account Declined',
@@ -541,6 +584,42 @@ export default createI18n({
           title: 'Es funktioniert! 🎉',
           body: 'Benachrichtigungen sind auf diesem Gerät eingerichtet.',
         },
+        memberRequest: {
+          title: 'Neue Mitgliedsanfrage',
+          body: 'Jemand Neues möchte dem Verein beitreten. Tippe hier, um die Anfrage anzusehen.',
+        },
+        accountApproved: {
+          title: 'Willkommen im Verein! 🎉',
+          body: 'Deine Anfrage wurde angenommen. Tippe hier, um loszulegen.',
+        },
+        accountRejected: {
+          title: 'Deine Anfrage wurde abgelehnt',
+          body: 'Deine Anfrage, dem Verein beizutreten, wurde leider nicht angenommen.',
+        },
+        kidApproved: {
+          title: '{name} wurde angenommen 🎉',
+          body: 'Du kannst {name} jetzt für Events anmelden.',
+        },
+        kidRejected: {
+          title: '{name} wurde nicht angenommen',
+          body: '{name} wurde leider nicht in den Verein aufgenommen.',
+        },
+        eventCancelled: {
+          title: 'Event abgesagt',
+          body: '{title} ({date}) wurde abgesagt.',
+        },
+        eventUncancelled: {
+          title: 'Event findet doch statt 🎉',
+          body: '{title} ({date}) findet doch statt.',
+        },
+        eventDeleted: {
+          title: 'Event gelöscht',
+          body: '{title} ({date}) wurde gelöscht.',
+        },
+        eventComment: {
+          title: '{name} hat {title} kommentiert',
+          body: '{comment}',
+        },
         fallback: {
           title: 'LISC-2010',
           body: 'In deinem Verein gibt es etwas Neues.',
@@ -657,6 +736,13 @@ export default createI18n({
           checkStatus: 'Status prüfen',
           stillPending: 'Noch ausstehend — schau später nochmal vorbei.',
           yourKids: 'Deine Kinder: {names}'
+        },
+        notifications: {
+          question: 'Möchtest du eine Nachricht aufs Handy bekommen, sobald du angenommen wurdest?',
+          turnOn: 'Ja, gib mir Bescheid',
+          on: 'Super! Wir sagen dir auf diesem Gerät Bescheid.',
+          homeScreen: 'Auf dem iPhone oder iPad füge die App zuerst zu deinem Home-Bildschirm hinzu und öffne sie von dort – dann kannst du das hier einschalten.',
+          deviceError: 'Das hat auf diesem Gerät leider nicht geklappt. Bitte versuche es später noch einmal.',
         },
         rejected: {
           title: 'Antrag abgelehnt',

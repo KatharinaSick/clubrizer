@@ -37,16 +37,3 @@ type SubscriptionStatusResponse struct {
 type VapidPublicKeyResponse struct {
 	PublicKey string `json:"publicKey"`
 }
-
-// Message is the payload delivered to the service worker. It only describes what happened —
-// the service worker turns Type into a translated text, so all user-facing wording stays in
-// the frontend's i18n.
-type Message struct {
-	Type string `json:"type"`
-	// URL is the in-app path opened when the notification is tapped.
-	URL string `json:"url,omitempty"`
-}
-
-const (
-	MessageTypeTest = "test"
-)

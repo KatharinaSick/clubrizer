@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -118,4 +119,21 @@ func (s *store) getAllCategoryIDs(ctx context.Context) ([]uuid.UUID, error) {
 		ids = append(ids, id)
 	}
 	return ids, rows.Err()
+}
+
+// getApprovedUserIDsWithPermission returns approved users that are admins or hold the
+// permission through one of their roles.
+func (s *store) getApprovedUserIDsWithPermission(ctx context.Context, permissionKey string) ([]uuid.UUID, error) {
+	rows, err := s.conn.Query(ctx, `
+		SELECT DISTINCT u.id
+		FROM users u
+		JOIN user_roles ur ON ur.user_id = u.id
+		JOIN roles r ON r.id = ur.role_id
+		LEFT JOIN role_permissions rp ON rp.role_id = ur.role_id
+		WHERE u.status = 'approved' AND (r.name = 'admin' OR rp.permission_key = $1)
+	`, permissionKey)
+	if err != nil {
+		return nil, err
+	}
+	return pgx.CollectRows(rows, pgx.RowTo[uuid.UUID])
 }

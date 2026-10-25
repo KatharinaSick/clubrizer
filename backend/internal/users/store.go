@@ -686,20 +686,24 @@ func (s *store) decideApprovals(ctx context.Context, userIDs, kidIDs []uuid.UUID
 	}
 	defer tx.Rollback(ctx)
 
-	var accountEmails []string
+	var accounts []decidedAccount
 	if len(userIDs) > 0 {
 		rows, err := tx.Query(ctx,
-			"UPDATE users SET status = $1 WHERE id = ANY($2) AND status = 'pending' RETURNING email",
+			"UPDATE users SET status = $1 WHERE id = ANY($2) AND status = 'pending' RETURNING id, email",
 			string(decision), userIDs,
 		)
 		if err != nil {
 			return decisionRecipients{}, errors.New(fmt.Sprintf("failed to update users: %s", err.Error()))
 		}
-		accountEmails, err = pgx.CollectRows(rows, pgx.RowTo[string])
+		accounts, err = pgx.CollectRows(rows, func(row pgx.CollectableRow) (decidedAccount, error) {
+			var a decidedAccount
+			err := row.Scan(&a.userID, &a.email)
+			return a, err
+		})
 		if err != nil {
-			return decisionRecipients{}, errors.New(fmt.Sprintf("failed to collect updated emails: %s", err.Error()))
+			return decisionRecipients{}, errors.New(fmt.Sprintf("failed to collect updated accounts: %s", err.Error()))
 		}
-		if len(accountEmails) != len(userIDs) {
+		if len(accounts) != len(userIDs) {
 			return decisionRecipients{}, apperrors.NewBadRequest("one or more accounts are not awaiting approval", nil)
 		}
 	}
@@ -753,10 +757,10 @@ func (s *store) decideApprovals(ctx context.Context, userIDs, kidIDs []uuid.UUID
 	if err := tx.Commit(ctx); err != nil {
 		return decisionRecipients{}, errors.New(fmt.Sprintf("failed to commit transaction: %s", err.Error()))
 	}
-	return decisionRecipients{accountEmails: accountEmails, kidParents: kidParents}, nil
+	return decisionRecipients{accounts: accounts, kidParents: kidParents}, nil
 }
 
-// collectKidParentNotifications returns the parent email + kid name for each decided kid
+// collectKidParentNotifications returns the parent (id + email) and kid name for each decided kid
 // (in kidIDs) whose account is not in userIDs. Runs inside the decision transaction so it
 // closes its rows before the caller commits.
 func collectKidParentNotifications(ctx context.Context, tx pgx.Tx, kidIDs, userIDs []uuid.UUID) ([]kidParentNotification, error) {
@@ -772,7 +776,7 @@ func collectKidParentNotifications(ctx context.Context, tx pgx.Tx, kidIDs, userI
 	}
 
 	rows, err := tx.Query(ctx, `
-		SELECT u.email, COALESCE(k.given_name, '')
+		SELECT u.id, u.email, COALESCE(k.given_name, '')
 		FROM kids k
 		JOIN users u ON u.id = k.user_id
 		WHERE k.id = ANY($1) AND k.user_id <> ALL($2)
@@ -785,7 +789,7 @@ func collectKidParentNotifications(ctx context.Context, tx pgx.Tx, kidIDs, userI
 	var out []kidParentNotification
 	for rows.Next() {
 		var n kidParentNotification
-		if err := rows.Scan(&n.parentEmail, &n.kidName); err != nil {
+		if err := rows.Scan(&n.parentID, &n.parentEmail, &n.kidName); err != nil {
 			return nil, errors.New(fmt.Sprintf("failed to scan kid parent: %s", err.Error()))
 		}
 		out = append(out, n)

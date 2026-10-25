@@ -16,13 +16,14 @@ type rbacService interface {
 
 // Service is responsible for everything related to handling events.
 type Service struct {
-	log   app.Logger
-	cfg   *app.Config
-	store *store
-	rbac  rbacService
+	log      app.Logger
+	cfg      *app.Config
+	store    *store
+	rbac     rbacService
+	listener listener
 }
 
-func NewService(log app.Logger, cfg *app.Config, conn *pgxpool.Pool, rbac rbacService) *Service {
+func NewService(log app.Logger, cfg *app.Config, conn *pgxpool.Pool, rbac rbacService, listener listener) *Service {
 	store := newStore(log, cfg, conn)
-	return &Service{log, cfg, store, rbac}
+	return &Service{log, cfg, store, rbac, listener}
 }

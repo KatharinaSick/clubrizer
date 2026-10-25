@@ -74,6 +74,7 @@ func (s *Service) FinishOnboarding(ctx context.Context) (*FinishOnboardingRespon
 	// token replay doesn't re-notify. Fire-and-forget — see notifyAdminsOfNewApprovalRequest.
 	if transitioned {
 		s.notifyAdminsOfNewApprovalRequest(u)
+		s.listener.ApprovalRequested(ctx, ApprovalRequested{UserID: u.ID})
 	}
 
 	accessToken, refreshToken, refreshTokenExpiresAt, err := s.generateTokens(ctx, u)

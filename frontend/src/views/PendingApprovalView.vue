@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useDocumentVisibility } from '@vueuse/core'
 import { useAuthStore } from '@/stores/auth'
 import Button from '@/components/Button.vue'
+import RequestError from '@/components/RequestError.vue'
 import kidsService from '@/service/kids'
 import router from '@/router'
+import { isAxiosError } from 'axios'
+import { getPushState, turnOnPush, type PushState } from '@/utils/push'
 
 const auth = useAuthStore()
 const isChecking = ref(false)
@@ -15,8 +19,34 @@ const checked = ref(false)
 const kidNames = ref<string[]>([])
 const kidNamesLine = computed(() => kidNames.value.join(', '))
 
+// Offer push notifications so the applicant hears about the decision without checking back.
+// Only shown while it can actually be turned on (or explains the iPhone home-screen step);
+// blocked or unsupported browsers just don't see the offer.
+const pushState = ref<PushState | null>(null)
+const isTurningOnPush = ref(false)
+const pushDeviceError = ref(false)
+
+// Check for a decision whenever the screen is opened or the app comes back to the front —
+// e.g. after tapping the "you're approved" notification — so nobody has to tap "Check
+// status" to find out.
+async function refreshStatus() {
+  await auth.checkStatus()
+  if (auth.user.status === 'approved') {
+    router.push('/')
+  }
+}
+
+const visibility = useDocumentVisibility()
+watch(visibility, (v) => {
+  if (v === 'visible' && auth.user.status === 'pending') {
+    refreshStatus()
+  }
+})
+
 onMounted(async () => {
   if (auth.user.status !== 'pending') return
+  refreshStatus()
+  getPushState().then(s => { pushState.value = s }).catch(() => {})
   try {
     const kids = await kidsService.listKids()
     kidNames.value = kids.map((k) => k.givenName ?? '').filter(Boolean)
@@ -28,12 +58,23 @@ onMounted(async () => {
 async function checkStatus() {
   isChecking.value = true
   checked.value = false
-  await auth.refreshTokens()
+  await refreshStatus()
   isChecking.value = false
-  if (auth.user.status === 'approved') {
-    router.push('/')
-  } else {
-    checked.value = true
+  checked.value = auth.user.status === 'pending'
+}
+
+async function turnOnNotifications() {
+  isTurningOnPush.value = true
+  pushDeviceError.value = false
+  try {
+    pushState.value = await turnOnPush()
+  } catch (e) {
+    // API errors are shown globally; browser-side failures are shown here.
+    if (!isAxiosError(e)) {
+      pushDeviceError.value = true
+    }
+  } finally {
+    isTurningOnPush.value = false
   }
 }
 
@@ -72,6 +113,31 @@ async function cancel() {
         @click="checkStatus"
       />
       <p v-if="checked" class="pendingApprovalStillPending">{{ $t('pendingApproval.pending.stillPending') }}</p>
+    </div>
+
+    <div
+      v-if="auth.user.status === 'pending' && (pushState === 'off' || pushState === 'on' || pushState === 'needsHomeScreen')"
+      class="pendingApprovalCenter pendingApprovalNotifications"
+    >
+      <template v-if="pushState === 'off'">
+        <p class="pendingApprovalNotificationsText">{{ $t('pendingApproval.notifications.question') }}</p>
+        <Button
+          :title="$t('pendingApproval.notifications.turnOn')"
+          theme="tertiary"
+          accent
+          :loading="isTurningOnPush"
+          @click="turnOnNotifications"
+        />
+      </template>
+      <p v-else-if="pushState === 'on'" class="pendingApprovalNotificationsText">
+        {{ $t('pendingApproval.notifications.on') }}
+      </p>
+      <template v-else>
+        <p class="pendingApprovalNotificationsText">{{ $t('pendingApproval.notifications.question') }}</p>
+        <p class="pendingApprovalStillPending">{{ $t('pendingApproval.notifications.homeScreen') }}</p>
+      </template>
+      <p v-if="pushDeviceError" class="pendingApprovalStillPending">{{ $t('pendingApproval.notifications.deviceError') }}</p>
+      <RequestError class="pendingApprovalNotificationsError" />
     </div>
 
     <div class="pendingApprovalCenter pendingApprovalCancel">
@@ -126,6 +192,19 @@ async function cancel() {
   font-size: var(--font-size-small);
   color: var(--text-gray);
   text-align: center;
+}
+
+.pendingApprovalNotifications {
+  max-width: 400px;
+}
+
+.pendingApprovalNotificationsText {
+  margin: 0 0 var(--gap) 0;
+}
+
+.pendingApprovalNotificationsError {
+  margin-top: var(--gap);
+  text-align: left;
 }
 
 @media (min-width: 768px) {

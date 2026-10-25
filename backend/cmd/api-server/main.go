@@ -41,15 +41,16 @@ func main() {
 	}
 
 	rbacService := rbac.NewService(dbPool)
+	notificationsService := notifications.NewService(log, cfg, dbPool, rbacService)
 
 	httpServer := &http.Server{
 		Addr: net.JoinHostPort("", cfg.Server.Port),
 		Handler: api.NewHandler(
 			log,
 			*cfg,
-			users.NewService(log, cfg, dbPool, emailClient, storageClient, rbacService),
-			events.NewService(log, cfg, dbPool, rbacService),
-			notifications.NewService(log, cfg, dbPool),
+			users.NewService(log, cfg, dbPool, emailClient, storageClient, rbacService, notificationsService),
+			events.NewService(log, cfg, dbPool, rbacService, notificationsService),
+			notificationsService,
 			rbacService,
 		),
 		IdleTimeout:  time.Minute,

@@ -110,7 +110,12 @@ func (s *Service) CancelEvent(ctx context.Context, id string) error {
 		return apperrors.NewForbidden("you are not allowed to cancel this event")
 	}
 
-	return s.store.cancelEvent(ctx, uuidId)
+	if err := s.store.cancelEvent(ctx, uuidId); err != nil {
+		return err
+	}
+
+	s.listener.EventCancelled(ctx, EventChanged{Event: event, ActorID: userId, Attendees: s.loadAttendees(ctx, uuidId)})
+	return nil
 }
 
 func (s *Service) UncancelEvent(ctx context.Context, id string) error {
@@ -138,7 +143,12 @@ func (s *Service) UncancelEvent(ctx context.Context, id string) error {
 		return apperrors.NewForbidden("you are not allowed to restore this event")
 	}
 
-	return s.store.uncancelEvent(ctx, uuidId)
+	if err := s.store.uncancelEvent(ctx, uuidId); err != nil {
+		return err
+	}
+
+	s.listener.EventUncancelled(ctx, EventChanged{Event: event, ActorID: userId, Attendees: s.loadAttendees(ctx, uuidId)})
+	return nil
 }
 
 func (s *Service) DeleteEvent(ctx context.Context, id string) error {
@@ -162,7 +172,14 @@ func (s *Service) DeleteEvent(ctx context.Context, id string) error {
 		return apperrors.NewForbidden("you are not allowed to delete this event")
 	}
 
-	return s.store.deleteEvent(ctx, uuidId)
+	// Load attendees first — deleting the event removes their responses.
+	attendees := s.loadAttendees(ctx, uuidId)
+	if err := s.store.deleteEvent(ctx, uuidId); err != nil {
+		return err
+	}
+
+	s.listener.EventDeleted(ctx, EventChanged{Event: event, ActorID: userId, Attendees: attendees})
+	return nil
 }
 
 func (s *Service) UpsertEventResponse(ctx context.Context, eventId string, req UpsertEventResponseRequest) error {
@@ -261,12 +278,25 @@ func (s *Service) CreateComment(ctx context.Context, eventId string, req CreateC
 		return nil, apperrors.NewBadRequest("invalid event id", err)
 	}
 
-	if _, err := s.store.getEventById(ctx, uuidId); err != nil {
+	event, err := s.store.getEventById(ctx, uuidId)
+	if err != nil {
 		return nil, err
 	}
 
-	userId := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims).ID
-	return s.store.createComment(ctx, uuidId, userId, req.Body)
+	claims := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims)
+	comment, err := s.store.createComment(ctx, uuidId, claims.ID, req.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	s.listener.CommentCreated(ctx, CommentCreated{
+		Event:      event,
+		Comment:    comment,
+		AuthorID:   claims.ID,
+		AuthorName: displayName(claims),
+		Attendees:  s.loadAttendees(ctx, uuidId),
+	})
+	return comment, nil
 }
 
 // displayName returns the best available display name for the account holder,

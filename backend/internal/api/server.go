@@ -154,12 +154,14 @@ func addRoutes(
 	mux.Handle("GET /events/{id}/comments", authenticated(cfg, handleWithIdAndReturnList(eventsService.ListComments)))
 	mux.Handle("POST /events/{id}/comments", authenticated(cfg, handleWithIdAndBodyAndReturnValue(eventsService.CreateComment)))
 
-	// Push notifications — every route only ever touches the caller's own devices.
-	mux.Handle("GET /notifications/vapid-public-key", authenticated(cfg, handle(notificationsService.GetVapidPublicKey)))
-	mux.Handle("POST /notifications/subscriptions", authenticated(cfg, handleWithBody(notificationsService.Subscribe)))
-	mux.Handle("POST /notifications/subscriptions/status", authenticated(cfg, handleWithBodyAndReturnValue(notificationsService.GetSubscriptionStatus)))
-	mux.Handle("DELETE /notifications/subscriptions", authenticated(cfg, handleWithBody(notificationsService.Unsubscribe)))
-	mux.Handle("DELETE /notifications/subscriptions/all", authenticated(cfg, handleWithoutInput(notificationsService.UnsubscribeAll)))
+	// Push notifications — every route only ever touches the caller's own devices. Open to any
+	// non-rejected account, so people waiting for approval can turn notifications on and hear
+	// about the decision (logging out removes the device, which pending accounts can do too).
+	mux.Handle("GET /notifications/vapid-public-key", notRejected(cfg, handle(notificationsService.GetVapidPublicKey)))
+	mux.Handle("POST /notifications/subscriptions", notRejected(cfg, handleWithBody(notificationsService.Subscribe)))
+	mux.Handle("POST /notifications/subscriptions/status", notRejected(cfg, handleWithBodyAndReturnValue(notificationsService.GetSubscriptionStatus)))
+	mux.Handle("DELETE /notifications/subscriptions", notRejected(cfg, handleWithBody(notificationsService.Unsubscribe)))
+	mux.Handle("DELETE /notifications/subscriptions/all", notRejected(cfg, handleWithoutInput(notificationsService.UnsubscribeAll)))
 	mux.Handle("POST /notifications/test", authenticated(cfg, handleWithoutInput(notificationsService.SendTest)))
 }
 
