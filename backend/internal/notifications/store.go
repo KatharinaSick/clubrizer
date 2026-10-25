@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/katharinasick/clubrizer/internal/app"
 )
@@ -41,6 +42,16 @@ func (s *store) upsertSubscription(ctx context.Context, userId uuid.UUID, endpoi
 // can remove another user's device.
 func (s *store) deleteSubscription(ctx context.Context, userId uuid.UUID, endpoint string) error {
 	_, err := s.conn.Exec(ctx, "DELETE FROM push_subscriptions WHERE user_id = $1 AND endpoint = $2", userId, endpoint)
+	if err != nil {
+		return errors.New(fmt.Sprintf("failed to delete push subscription: %s", err.Error()))
+	}
+	return nil
+}
+
+// deleteSubscriptionOfDevice removes the subscription with this endpoint and secret, no matter
+// which user it belongs to — matching the secret proves the caller is on that device.
+func (s *store) deleteSubscriptionOfDevice(ctx context.Context, endpoint, auth string) error {
+	_, err := s.conn.Exec(ctx, "DELETE FROM push_subscriptions WHERE endpoint = $1 AND auth = $2", endpoint, auth)
 	if err != nil {
 		return errors.New(fmt.Sprintf("failed to delete push subscription: %s", err.Error()))
 	}
@@ -101,4 +112,17 @@ func (s *store) getSubscriptionsByUser(ctx context.Context, userId uuid.UUID) ([
 	}
 
 	return subs, nil
+}
+
+// getEmails returns the email addresses of the given users.
+func (s *store) getEmails(ctx context.Context, userIds []uuid.UUID) ([]string, error) {
+	rows, err := s.conn.Query(ctx, "SELECT email FROM users WHERE id = ANY($1)", userIds)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to query emails: %s", err.Error()))
+	}
+	emails, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to collect emails: %s", err.Error()))
+	}
+	return emails, nil
 }

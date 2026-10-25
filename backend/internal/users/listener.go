@@ -16,19 +16,25 @@ type listener interface {
 
 // ApprovalRequested describes an account that was just submitted for approval.
 type ApprovalRequested struct {
-	UserID uuid.UUID
+	Applicant *User
 }
 
-// ApprovalsDecided describes one approve/reject batch. AccountIDs are the accounts whose own
+// ApprovalsDecided describes one approve/reject batch. Accounts are the accounts whose own
 // status changed; kids decided together with their account are covered by it. Kids lists
 // kids decided on their own, i.e. added later to an already-approved account.
 type ApprovalsDecided struct {
-	Decision   Status
-	AccountIDs []uuid.UUID
-	Kids       []DecidedKid
+	Decision Status
+	Accounts []DecidedAccount
+	Kids     []DecidedKid
+}
+
+type DecidedAccount struct {
+	UserID uuid.UUID
+	Email  string
 }
 
 type DecidedKid struct {
-	ParentID uuid.UUID
-	Name     string
+	ParentID    uuid.UUID
+	ParentEmail string
+	Name        string
 }

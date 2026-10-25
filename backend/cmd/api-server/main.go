@@ -41,7 +41,7 @@ func main() {
 	}
 
 	rbacService := rbac.NewService(dbPool)
-	notificationsService := notifications.NewService(log, cfg, dbPool, rbacService)
+	notificationsService := notifications.NewService(log, cfg, dbPool, rbacService, emailClient)
 
 	httpServer := &http.Server{
 		Addr: net.JoinHostPort("", cfg.Server.Port),

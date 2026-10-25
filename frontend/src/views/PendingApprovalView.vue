@@ -67,7 +67,7 @@ async function turnOnNotifications() {
   isTurningOnPush.value = true
   pushDeviceError.value = false
   try {
-    pushState.value = await turnOnPush()
+    pushState.value = await turnOnPush(auth.user.email)
   } catch (e) {
     // API errors are shown globally; browser-side failures are shown here.
     if (!isAxiosError(e)) {

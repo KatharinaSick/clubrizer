@@ -28,6 +28,12 @@ const notificationsService = {
     await axios.delete('/notifications/subscriptions', { data: { endpoint } })
   },
 
+  // releaseDevice removes this browser's registration whoever it belongs to; the subscription's
+  // secret (auth) proves we're on that device.
+  async releaseDevice(endpoint: string, auth: string): Promise<void> {
+    await axios.post('/notifications/subscriptions/release', { endpoint, auth })
+  },
+
   async unsubscribeAll(): Promise<void> {
     await axios.delete('/notifications/subscriptions/all')
   },

@@ -10,7 +10,9 @@ interface RetryableRequest extends AxiosRequestConfig {
 }
 
 let isRefreshingToken = false
-let refreshSubscribers: ((token: string) => void)[] = []
+// Requests waiting for a running refresh. They get the new token, or null if the refresh
+// failed — then they are rejected instead of retried without a token.
+let refreshSubscribers: ((token: string | null) => void)[] = []
 
 // These endpoints are part of the auth flow itself — a 401 from them should
 // never trigger a token refresh attempt.
@@ -75,11 +77,15 @@ const setUpRefreshTokenInterceptors = (): void => {
 
       // A refresh is already in progress — queue this request to retry once done.
       if (isRefreshingToken) {
-        return new Promise((resolve) => {
-          refreshSubscribers.push((token: string) => {
+        return new Promise((resolve, reject) => {
+          refreshSubscribers.push((token: string | null) => {
             // Balance the startRequest() that was called for the original request.
             // The retry below will go through the interceptors and call startRequest() again.
             useRequestStore().endRequest()
+            if (token === null) {
+              reject(error)
+              return
+            }
             originalRequest.headers = { ...originalRequest.headers }
             originalRequest.headers!.Authorization = token
             resolve(axios(originalRequest))
@@ -90,10 +96,13 @@ const setUpRefreshTokenInterceptors = (): void => {
       originalRequest._retry = true
       isRefreshingToken = true
 
-      const { refreshTokens, logout, accessToken } = useAuthStore()
+      // Keep the store itself, not destructured values: the new access token only exists
+      // after the refresh, so it has to be read from the store afterwards.
+      const auth = useAuthStore()
 
       try {
-        await refreshTokens()
+        await auth.refreshTokens()
+        const accessToken = auth.accessToken
         refreshSubscribers.forEach((cb) => cb(accessToken))
         originalRequest.headers = { ...originalRequest.headers }
         originalRequest.headers!.Authorization = accessToken
@@ -104,8 +113,8 @@ const setUpRefreshTokenInterceptors = (): void => {
       } catch (refreshError: unknown) {
         // Balance the startRequest() for the original request — it will never be retried.
         useRequestStore().endRequest()
-        refreshSubscribers.forEach((cb) => cb(''))
-        logout()
+        refreshSubscribers.forEach((cb) => cb(null))
+        auth.logout()
         router.push('/signin')
         return Promise.reject(refreshError)
       } finally {

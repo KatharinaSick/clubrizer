@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import authService from '@/service/auth'
 import usersService from '@/service/users'
 import { useStorage } from '@vueuse/core'
-import { unregisterPushOnLogout } from '@/utils/push'
+import { restorePushOnSignIn, unregisterPushOnLogout } from '@/utils/push'
 
 export type UserStatus = 'onboarding' | 'pending' | 'approved' | 'rejected'
 
@@ -47,6 +47,8 @@ export const useAuthStore = defineStore('auth', {
       this.user = user
       this.accessToken = accessToken
       this.isAuthenticated = true
+      // Not awaited: sign-in shouldn't wait for the push service.
+      void restorePushOnSignIn(user.email)
     },
     async updateProfile(firstName: string, lastName: string, nickName?: string) {
       const { user, accessToken } = await usersService.updateProfile(firstName, lastName, nickName)
@@ -68,6 +70,9 @@ export const useAuthStore = defineStore('auth', {
       this.user = user
       this.accessToken = accessToken
     },
+    // refreshTokens swaps the refresh cookie for a new access token. On failure the session
+    // stays cleared and the error is rethrown, so the 401 interceptor can log out and send the
+    // user to sign in.
     async refreshTokens() {
       this.isLoading = true
       this.isAuthenticated = false
@@ -77,8 +82,6 @@ export const useAuthStore = defineStore('auth', {
         this.user = user
         this.accessToken = accessToken
         this.isAuthenticated = true
-      } catch {
-        // error is handled globally by the axios interceptor
       } finally {
         this.isLoading = false
       }
@@ -97,8 +100,12 @@ export const useAuthStore = defineStore('auth', {
       }
     },
     async logout() {
-      // While still signed in, so the backend can remove this device.
-      await unregisterPushOnLogout()
+      // While still signed in, so the backend can remove this device. Skipped when the session
+      // is already gone (e.g. a failed token refresh): the request would only fail with a 401
+      // and set off yet another refresh.
+      if (this.isAuthenticated) {
+        await unregisterPushOnLogout()
+      }
       try {
         await authService.logout()
       } catch {

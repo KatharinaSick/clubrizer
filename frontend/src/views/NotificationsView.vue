@@ -6,6 +6,7 @@ import Header from '@/components/Header.vue'
 import Button from '@/components/Button.vue'
 import Alert from '@/components/Alert.vue'
 import RequestError from '@/components/RequestError.vue'
+import { useAuthStore } from '@/stores/auth'
 import notificationsService from '@/service/notifications'
 import {
   getPushState,
@@ -16,6 +17,7 @@ import {
 } from '@/utils/push'
 
 const router = useRouter()
+const auth = useAuthStore()
 
 // null until the device has been checked, so no state flashes up before it's known.
 const state = ref<PushState | null>(null)
@@ -47,7 +49,7 @@ async function run(action: typeof busyAction.value, fn: () => Promise<void>) {
 }
 
 const turnOn = () => run('turnOn', async () => {
-  state.value = await turnOnPush()
+  state.value = await turnOnPush(auth.user.email)
 })
 
 const sendTest = () => run('test', async () => {

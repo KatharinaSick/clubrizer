@@ -161,6 +161,7 @@ func addRoutes(
 	mux.Handle("POST /notifications/subscriptions", notRejected(cfg, handleWithBody(notificationsService.Subscribe)))
 	mux.Handle("POST /notifications/subscriptions/status", notRejected(cfg, handleWithBodyAndReturnValue(notificationsService.GetSubscriptionStatus)))
 	mux.Handle("DELETE /notifications/subscriptions", notRejected(cfg, handleWithBody(notificationsService.Unsubscribe)))
+	mux.Handle("POST /notifications/subscriptions/release", notRejected(cfg, handleWithBody(notificationsService.ReleaseDevice)))
 	mux.Handle("DELETE /notifications/subscriptions/all", notRejected(cfg, handleWithoutInput(notificationsService.UnsubscribeAll)))
 	mux.Handle("POST /notifications/test", authenticated(cfg, handleWithoutInput(notificationsService.SendTest)))
 }
@@ -214,6 +215,7 @@ type notificationsService interface {
 	Subscribe(ctx context.Context, req notifications.SubscribeRequest) error
 	GetSubscriptionStatus(ctx context.Context, req notifications.SubscriptionStatusRequest) (*notifications.SubscriptionStatusResponse, error)
 	Unsubscribe(ctx context.Context, req notifications.UnsubscribeRequest) error
+	ReleaseDevice(ctx context.Context, req notifications.ReleaseDeviceRequest) error
 	UnsubscribeAll(ctx context.Context) error
 	SendTest(ctx context.Context) error
 }

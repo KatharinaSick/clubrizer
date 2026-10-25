@@ -52,7 +52,32 @@ export async function getPushState(): Promise<PushState> {
 
 // turnOnPush asks for permission and registers this device. Must be called directly from a
 // tap/click — browsers (especially Safari) only show the permission prompt for user actions.
-export async function turnOnPush(): Promise<PushState> {
+// The email of whoever turned notifications on in this browser. Kept across logouts, so the
+// same person signing in again gets their notifications back without turning them on again,
+// while a different person signing in releases the device (see restorePushOnSignIn).
+const OWNER_KEY = 'push.owner'
+
+function getOwner(): string | null {
+  try {
+    return localStorage.getItem(OWNER_KEY)
+  } catch {
+    return null
+  }
+}
+
+function setOwner(email: string | null) {
+  try {
+    if (email === null) {
+      localStorage.removeItem(OWNER_KEY)
+    } else {
+      localStorage.setItem(OWNER_KEY, email)
+    }
+  } catch {
+    // storage unavailable — notifications then just need turning on again after a logout
+  }
+}
+
+export async function turnOnPush(ownerEmail: string): Promise<PushState> {
   const permission = await Notification.requestPermission()
   if (permission === 'denied') {
     return 'blocked'
@@ -72,6 +97,7 @@ export async function turnOnPush(): Promise<PushState> {
   }
 
   await notificationsService.subscribe(subscription.toJSON() as PushSubscriptionPayload)
+  setOwner(ownerEmail)
   return 'on'
 }
 
@@ -82,24 +108,59 @@ export async function turnOffPushOnThisDevice(): Promise<void> {
   }
   await notificationsService.unsubscribe(subscription.endpoint)
   await subscription.unsubscribe()
+  setOwner(null)
 }
 
 export async function turnOffPushOnAllDevices(): Promise<void> {
   await notificationsService.unsubscribeAll()
   const subscription = await getBrowserSubscription()
   await subscription?.unsubscribe()
+  setOwner(null)
 }
 
-// unregisterPushOnLogout removes this device before signing out, so the next person using
-// it doesn't get the previous user's notifications. Never blocks the logout.
+// unregisterPushOnLogout stops notifications to this device before signing out, so nothing
+// arrives here while nobody is signed in. The browser keeps its subscription and owner, so the
+// same person gets notifications back on their next sign-in. Never blocks the logout.
 export async function unregisterPushOnLogout(): Promise<void> {
   if (!isSupported() || Notification.permission !== 'granted') {
     return
   }
   try {
-    await turnOffPushOnThisDevice()
+    const subscription = await getBrowserSubscription()
+    if (subscription) {
+      await notificationsService.unsubscribe(subscription.endpoint)
+    }
   } catch {
     // ignore — logging out matters more
+  }
+}
+
+// restorePushOnSignIn runs after every sign-in. If the same person turned notifications on in
+// this browser before, they are quietly registered again. If it was someone else, their
+// registration is removed from this device — even if their session expired without logging
+// out — so their notifications stop arriving here; the new person can turn notifications on
+// for themselves. Best-effort: never blocks or fails the sign-in.
+export async function restorePushOnSignIn(email: string): Promise<void> {
+  if (!isSupported() || Notification.permission !== 'granted') {
+    return
+  }
+  try {
+    const subscription = await getBrowserSubscription()
+    if (!subscription) {
+      return
+    }
+
+    const json = subscription.toJSON() as PushSubscriptionPayload
+    if (getOwner() === email) {
+      await notificationsService.subscribe(json)
+      return
+    }
+
+    await notificationsService.releaseDevice(json.endpoint, json.keys.auth)
+    await subscription.unsubscribe()
+    setOwner(null)
+  } catch {
+    // ignore — notifications can always be turned on again on the notifications screen
   }
 }
 

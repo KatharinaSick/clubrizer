@@ -34,7 +34,8 @@ var allowedPushHosts = []string{
 // pushTTL is how long a push service keeps a message for an offline device.
 const pushTTL = 24 * time.Hour
 
-// notifyTimeout bounds how long Notify may hold up the request that triggered it.
+// notifyTimeout bounds how long notify (push) and sendEmails may each hold up the request
+// that triggered them.
 const notifyTimeout = 10 * time.Second
 
 // notifyConcurrency is how many users Notify sends to at the same time.
@@ -47,6 +48,7 @@ type Service struct {
 	cfg        *app.Config
 	store      *store
 	rbac       rbacService
+	email      emailSender
 	httpClient *http.Client
 }
 
@@ -54,13 +56,22 @@ type rbacService interface {
 	GetUserIDsWithPermission(ctx context.Context, permissionKey string) ([]uuid.UUID, error)
 }
 
-func NewService(log app.Logger, cfg *app.Config, conn *pgxpool.Pool, rbac rbacService) *Service {
+// emailSender is the part of the email client used for notification emails.
+type emailSender interface {
+	SendAccountApproved(ctx context.Context, to string) error
+	SendAccountRejected(ctx context.Context, to string) error
+	SendKidApproved(ctx context.Context, to, kidName string) error
+	SendKidRejected(ctx context.Context, to, kidName string) error
+	SendNewApprovalRequest(ctx context.Context, to []string, applicantName string) error
+}
+
+func NewService(log app.Logger, cfg *app.Config, conn *pgxpool.Pool, rbac rbacService, email emailSender) *Service {
 	if cfg.WebPush.PublicKey == "" || cfg.WebPush.PrivateKey == "" {
 		log.Warn("VAPID keys are not configured, push notifications will not work. Generate them with `go run ./cmd/vapidkeys`.")
 	}
 
 	store := newStore(log, cfg, conn)
-	return &Service{log, cfg, store, rbac, &http.Client{Timeout: 10 * time.Second}}
+	return &Service{log, cfg, store, rbac, email, &http.Client{Timeout: 10 * time.Second}}
 }
 
 func (s *Service) GetVapidPublicKey(_ context.Context) (*VapidPublicKeyResponse, error) {
@@ -96,6 +107,13 @@ func (s *Service) Unsubscribe(ctx context.Context, req UnsubscribeRequest) error
 	return s.store.deleteSubscription(ctx, userId, req.Endpoint)
 }
 
+// ReleaseDevice removes this device's subscription even if it belongs to someone else, e.g. a
+// previous user whose session expired without logging out. The app calls it when a different
+// person signs in on the device, so the previous person's notifications stop arriving there.
+func (s *Service) ReleaseDevice(ctx context.Context, req ReleaseDeviceRequest) error {
+	return s.store.deleteSubscriptionOfDevice(ctx, req.Endpoint, req.Auth)
+}
+
 func (s *Service) UnsubscribeAll(ctx context.Context) error {
 	userId := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims).ID
 	return s.store.deleteAllSubscriptions(ctx, userId)
@@ -129,7 +147,7 @@ func (s *Service) notify(ctx context.Context, userIds []uuid.UUID, msg message) 
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), notifyTimeout)
+	ctx, cancel := detached(ctx)
 	defer cancel()
 
 	var wg sync.WaitGroup
@@ -236,4 +254,10 @@ func dedupe(ids []uuid.UUID) []uuid.UUID {
 		}
 	}
 	return out
+}
+
+// detached returns a context that outlives the request (a client hanging up must not cancel
+// sends for an action that already happened), bounded by notifyTimeout.
+func detached(ctx context.Context) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.WithoutCancel(ctx), notifyTimeout)
 }

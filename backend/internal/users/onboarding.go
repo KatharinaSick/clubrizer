@@ -70,11 +70,10 @@ func (s *Service) FinishOnboarding(ctx context.Context) (*FinishOnboardingRespon
 		return nil, nil, err
 	}
 
-	// Only notify admins on a real onboarding→pending transition, so a double-submit or a
-	// token replay doesn't re-notify. Fire-and-forget — see notifyAdminsOfNewApprovalRequest.
+	// Only report a real onboarding→pending transition, so a double-submit or a token replay
+	// doesn't notify the approvers again.
 	if transitioned {
-		s.notifyAdminsOfNewApprovalRequest(u)
-		s.listener.ApprovalRequested(ctx, ApprovalRequested{UserID: u.ID})
+		s.listener.ApprovalRequested(ctx, ApprovalRequested{Applicant: u})
 	}
 
 	accessToken, refreshToken, refreshTokenExpiresAt, err := s.generateTokens(ctx, u)
