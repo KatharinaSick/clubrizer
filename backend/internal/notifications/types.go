@@ -45,3 +45,14 @@ type SubscriptionStatusResponse struct {
 type VapidPublicKeyResponse struct {
 	PublicKey string `json:"publicKey"`
 }
+
+// Setting is one switch on the notification settings screen.
+type Setting struct {
+	Category string `json:"category"`
+	Enabled  bool   `json:"enabled"`
+}
+
+type UpdateSettingRequest struct {
+	Category string `json:"category" validate:"required,max=64"`
+	Enabled  *bool  `json:"enabled" validate:"required"`
+}

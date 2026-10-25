@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -16,6 +17,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/katharinasick/clubrizer/internal/app"
 	"github.com/katharinasick/clubrizer/internal/apperrors"
+	"github.com/katharinasick/clubrizer/internal/rbac"
 	"github.com/katharinasick/clubrizer/internal/users"
 )
 
@@ -53,6 +55,7 @@ type Service struct {
 }
 
 type rbacService interface {
+	IsAuthorized(ctx context.Context, userID uuid.UUID, permissionKey string) (bool, error)
 	GetUserIDsWithPermission(ctx context.Context, permissionKey string) ([]uuid.UUID, error)
 }
 
@@ -133,7 +136,56 @@ func (s *Service) SendTest(ctx context.Context) error {
 	return nil
 }
 
-// notify sends the message to every device of the given users. It is best-effort and never
+// GetSettings lists the notification settings screen's switches for the caller. Member
+// requests only show up for people who can approve members, as nobody else gets them.
+func (s *Service) GetSettings(ctx context.Context) ([]*Setting, error) {
+	userId := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims).ID
+
+	categories, err := s.availableCategories(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	optOuts, err := s.store.getOptOuts(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	settings := make([]*Setting, 0, len(categories))
+	for _, c := range categories {
+		settings = append(settings, &Setting{Category: c, Enabled: !optOuts[c]})
+	}
+	return settings, nil
+}
+
+// UpdateSetting switches one category on or off for the caller. Only categories listed by
+// GetSettings can be changed — checked here because it depends on the request body.
+func (s *Service) UpdateSetting(ctx context.Context, req UpdateSettingRequest) error {
+	userId := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims).ID
+
+	categories, err := s.availableCategories(ctx, userId)
+	if err != nil {
+		return err
+	}
+	if !slices.Contains(categories, req.Category) {
+		return apperrors.NewBadRequest("unknown notification category", nil)
+	}
+	return s.store.setOptOut(ctx, userId, req.Category, !*req.Enabled)
+}
+
+func (s *Service) availableCategories(ctx context.Context, userId uuid.UUID) ([]string, error) {
+	categories := []string{categoryNewEvents, categoryResponses, categoryComments, categoryEventChanges}
+	canApprove, err := s.rbac.IsAuthorized(ctx, userId, rbac.PermissionUsersApprove)
+	if err != nil {
+		return nil, err
+	}
+	if canApprove {
+		categories = append(categories, categoryMemberRequests)
+	}
+	return categories, nil
+}
+
+// notify sends the message to every device of the given users, except those who switched its
+// category off on the notification settings screen. It is best-effort and never
 // fails the caller: the action that triggered it (a comment, an approval, ...) has already
 // happened, so errors are only logged.
 //
@@ -150,9 +202,16 @@ func (s *Service) notify(ctx context.Context, userIds []uuid.UUID, msg message) 
 	ctx, cancel := detached(ctx)
 	defer cancel()
 
+	userIds, err := s.withoutOptedOut(ctx, typeCategories[msg.Type], dedupe(userIds))
+	if err != nil {
+		// Rather send nothing than notify people who asked not to be.
+		s.log.Error("failed to load notification settings", "type", msg.Type, "error", err)
+		return
+	}
+
 	var wg sync.WaitGroup
 	limit := make(chan struct{}, notifyConcurrency)
-	for _, userId := range dedupe(userIds) {
+	for _, userId := range userIds {
 		wg.Add(1)
 		limit <- struct{}{}
 		go func() {
@@ -227,6 +286,19 @@ func (s *Service) send(ctx context.Context, sub *Subscription, payload []byte) b
 		s.log.Warn("push service rejected notification", "subscription", sub.ID, "status", resp.StatusCode)
 		return false
 	}
+}
+
+// withoutOptedOut drops the users who switched the category off. An empty category means the
+// message is always sent.
+func (s *Service) withoutOptedOut(ctx context.Context, category string, userIds []uuid.UUID) ([]uuid.UUID, error) {
+	if category == "" || len(userIds) == 0 {
+		return userIds, nil
+	}
+	optedOut, err := s.store.getOptedOutUserIds(ctx, category, userIds)
+	if err != nil {
+		return nil, err
+	}
+	return slices.DeleteFunc(userIds, func(id uuid.UUID) bool { return optedOut[id] }), nil
 }
 
 func isAllowedEndpoint(endpoint string) bool {

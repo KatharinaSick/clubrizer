@@ -26,3 +26,24 @@ const (
 	typeNewEvent         = "newEvent"
 	typeEventResponse    = "eventResponse"
 )
+
+// Categories group message types into the switches on the notification settings screen. A
+// user who switched a category off gets no push notifications of its types; emails are not
+// affected. Types without a category (test, approval decisions) are always sent.
+const (
+	categoryNewEvents      = "newEvents"
+	categoryResponses      = "responses"
+	categoryComments       = "comments"
+	categoryEventChanges   = "eventChanges"
+	categoryMemberRequests = "memberRequests"
+)
+
+var typeCategories = map[string]string{
+	typeNewEvent:         categoryNewEvents,
+	typeEventResponse:    categoryResponses,
+	typeEventComment:     categoryComments,
+	typeEventCancelled:   categoryEventChanges,
+	typeEventUncancelled: categoryEventChanges,
+	typeEventDeleted:     categoryEventChanges,
+	typeMemberRequest:    categoryMemberRequests,
+}

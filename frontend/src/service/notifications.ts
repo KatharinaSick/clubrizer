@@ -9,6 +9,13 @@ export interface PushSubscriptionPayload {
   }
 }
 
+// One switch on the notification settings screen. The backend decides which categories a
+// user can see (member requests only for people who can approve members).
+export interface NotificationSetting {
+  category: string
+  enabled: boolean
+}
+
 const notificationsService = {
   async getVapidPublicKey(): Promise<string> {
     const response = await axios.get('/notifications/vapid-public-key')
@@ -40,6 +47,15 @@ const notificationsService = {
 
   async sendTest(): Promise<void> {
     await axios.post('/notifications/test')
+  },
+
+  async getSettings(): Promise<NotificationSetting[]> {
+    const response = await axios.get('/notifications/settings')
+    return response.data
+  },
+
+  async updateSetting(category: string, enabled: boolean): Promise<void> {
+    await axios.put('/notifications/settings', { category, enabled })
   },
 }
 

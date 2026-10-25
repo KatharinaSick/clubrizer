@@ -9,6 +9,7 @@ import Alert from '@/components/Alert.vue'
 import Avatar from '@/components/Avatar.vue'
 import UserProfileModal from '@/components/UserProfileModal.vue'
 import Divider from '@/components/Divider.vue'
+import Toggle from '@/components/Toggle.vue'
 import Event from '@/components/Event.vue'
 import type { EventProps } from '@/components/EventTitle.vue'
 import Header from '@/components/Header.vue'
@@ -16,6 +17,8 @@ import MenuButton from '@/components/MenuButton.vue'
 import type { MenuItem } from '@/components/MenuButton.vue'
 import IconPencil from '@/components/icons/IconPencil.vue'
 import IconTrash from '@/components/icons/IconTrash.vue'
+import IconBell from '@/components/icons/IconBell.vue'
+import IconCircle from '@/components/IconCircle.vue'
 
 const showProfileModal = ref(false)
 const showKidProfileModal = ref(false)
@@ -32,6 +35,8 @@ const menuItemsBadged: MenuItem[] = [
   { label: 'How it works', subtle: true, divider: true, onClick: () => {} },
 ]
 
+const toggleOn = ref(true)
+const toggleOff = ref(false)
 const textInput = ref('')
 const errorInput = ref('')
 const dateInput = ref('')
@@ -440,6 +445,27 @@ const spacingLayout = [
         <div class="dsComponentItem">
           <Select id="ds-select-loading" placeholder="Loading categories…" :options="[]" :loading="true" v-model="selectLoadingValue" />
           <code class="dsToken">:loading="true"</code>
+        </div>
+      </div>
+
+      <h3 class="dsSubsectionTitle">Toggle</h3>
+      <p class="dsSectionDesc">
+        Use <code>&lt;Toggle&gt;</code> for on/off settings that take effect right away (no save button).
+        Takes a <code>label</code>, an optional <code>description</code> and a boolean <code>v-model</code>.
+        Set <code>disabled</code> while the change is being saved.
+      </p>
+      <div class="dsFormGrid">
+        <div class="dsComponentItem">
+          <Toggle id="ds-toggle-on" label="New events" description="When someone adds a new event." v-model="toggleOn" />
+          <code class="dsToken">v-model="true"</code>
+        </div>
+        <div class="dsComponentItem">
+          <Toggle id="ds-toggle-off" label="Comments" v-model="toggleOff" />
+          <code class="dsToken">without description</code>
+        </div>
+        <div class="dsComponentItem">
+          <Toggle id="ds-toggle-disabled" label="Saving…" :disabled="true" v-model="toggleOn" />
+          <code class="dsToken">:disabled="true"</code>
         </div>
       </div>
     </section>
@@ -937,6 +963,24 @@ const spacingLayout = [
           <IconTrash />
           <code class="dsToken">IconTrash</code>
           <p class="dsColorLabel">Remove / delete</p>
+        </div>
+        <div class="dsComponentItem dsComponentItemCenter">
+          <IconBell />
+          <code class="dsToken">IconBell</code>
+          <p class="dsColorLabel">Notifications</p>
+        </div>
+      </div>
+
+      <h3 class="dsSubsectionTitle">IconCircle</h3>
+      <p class="dsSectionDesc">
+        <code>&lt;IconCircle&gt;&lt;IconBell /&gt;&lt;/IconCircle&gt;</code> — a white icon on a 56px gradient circle.
+        Gives an intro or empty state a friendly visual anchor, e.g. the notification screen when
+        notifications are off, or the notification card on the waiting screen.
+      </p>
+      <div class="dsIconRow">
+        <div class="dsComponentItem dsComponentItemCenter">
+          <IconCircle><IconBell /></IconCircle>
+          <code class="dsToken">IconCircle</code>
         </div>
       </div>
     </section>

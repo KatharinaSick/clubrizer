@@ -82,66 +82,92 @@ export default createI18n({
       notifications: {
         header: 'Notifications',
         off: {
-          intro: 'Get a message on this device when something new happens in your club.',
-          turnOn: 'Turn on notifications',
+          title: 'Never miss a thing',
+          intro: 'Get a heads-up on this device when something new happens in your club.',
+          turnOn: 'Turn on',
         },
         on: {
-          intro: 'Notifications are turned on for this device.',
-          sendTest: 'Send test notification',
-          testSent: 'Sent! It should show up in a few seconds.',
-          testMissing: 'Didn\'t get anything? Check that notifications for your browser are allowed in your device settings, and that "Do Not Disturb" is off.',
+          status: 'On for this device',
+          sendTest: 'Send test',
+          testSent: 'Sent! It should pop up in a few seconds.',
+          testMissing: 'Nothing showing up? Check that notifications are allowed for your browser in your device settings and that "Do Not Disturb" is off.',
           turnOffThisDevice: 'Turn off on this device',
           turnOffAllDevices: 'Turn off on all my devices',
         },
         homeScreen: {
-          intro: 'To get notifications on your iPhone or iPad, add the app to your home screen first:',
-          step1: 'Tap the Share button (the square with the arrow pointing up).',
-          step2: 'Choose "Add to Home Screen".',
-          step3: 'Open the app from your home screen and come back to this page.',
+          title: 'One quick step first',
+          intro: 'On iPhone or iPad, notifications only work once the app is on your home screen:',
+          step1: 'Tap the Share button at the bottom (the square with an arrow pointing up).',
+          step2: 'Scroll down a little and choose "Add to Home Screen".',
+          step3: 'Tap "Add" in the top right.',
+          step4: 'Open the app from your home screen and come back here.',
         },
-        unsupported: 'Notifications are not possible in this browser. Try opening the app in Chrome, Firefox, Edge or Safari.',
+        unsupported: 'This browser can\'t show notifications. Try Chrome, Firefox, Edge or Safari.',
         blocked: {
           title: 'Notifications are blocked',
-          message: 'You blocked notifications for this app earlier. To get them, allow notifications for this app in your phone or browser settings, then come back here.',
+          message: 'To get them, allow notifications for this app in your phone or browser settings, then come back here.',
         },
-        deviceError: 'Notifications could not be turned on for this device. Please try again later.',
+        deviceError: 'That didn\'t work on this device. Please try again.',
+        settings: {
+          title: 'What you\'ll hear about',
+          newEvents: {
+            label: 'New events',
+            description: 'When someone adds an event.',
+          },
+          responses: {
+            label: 'Who\'s coming',
+            description: 'When someone replies to an event you created.',
+          },
+          comments: {
+            label: 'Comments',
+            description: 'On events you created or are going to.',
+          },
+          eventChanges: {
+            label: 'Cancelled events',
+            description: 'When an event you\'re going to is cancelled, back on or removed.',
+          },
+          memberRequests: {
+            label: 'Join requests',
+            description: 'When someone wants to join the club. You\'ll still get an email.',
+          },
+        },
       },
       pushNotifications: {
         test: {
-          title: 'It works! 🎉',
-          body: 'Notifications are set up on this device.',
+          title: 'It works!',
+          body: 'Notifications are all set on this device.',
         },
         memberRequest: {
-          title: 'New member request',
-          body: 'Someone new would like to join the club. Tap here to review the request.',
+          title: 'New join request',
+          body: 'Someone wants to join the club. Tap to take a look.',
         },
         accountApproved: {
-          title: 'Welcome to the club! 🎉',
-          body: 'Your request was approved. Tap here to get started.',
+          title: 'Welcome to the club!',
+          body: 'You\'re in. Tap to get started.',
         },
         accountRejected: {
           title: 'Your request was declined',
-          body: 'Unfortunately, your request to join the club was not approved.',
+          body: 'Your request to join the club wasn\'t approved.',
         },
         kidApproved: {
-          title: '{name} was approved 🎉',
+          title: '{name} is in!',
           body: 'You can now sign {name} up for events.',
         },
         kidRejected: {
-          title: '{name} was not approved',
-          body: 'Unfortunately, {name} was not approved for the club.',
+          title: '{name} wasn\'t approved',
+          body: '{name}\'s request to join the club wasn\'t approved.',
         },
         eventCancelled: {
           title: 'Event cancelled',
-          body: '{title} ({date}) has been cancelled.',
+          body: '{title} ({date}) is cancelled.',
         },
         eventUncancelled: {
-          title: 'Event is back on 🎉',
+          title: 'Event is back on',
           body: '{title} ({date}) is happening after all.',
         },
         eventDeleted: {
-          title: 'Event deleted',
-          body: '{title} ({date}) has been deleted.',
+          title: 'Event removed',
+          body: '{title} ({date}) was removed.',
         },
         eventComment: {
           title: '{name} commented on {title}',
@@ -154,12 +180,12 @@ export default createI18n({
           groupBody: '{titles}',
         },
         eventResponse: {
-          title: '{name} responded to {title}',
+          title: '{title}',
           body: '{answer}',
-          groupTitle: '{count} new responses to {title}',
+          groupTitle: '{count} new replies to {title}',
           groupBody: '{answers}',
-          yes: '✅ Is coming',
-          no: '❌ Can’t come',
+          yes: '{name} is coming',
+          no: '{name} can\'t make it',
         },
         fallback: {
           title: 'LISC-2010',
@@ -337,24 +363,24 @@ export default createI18n({
       },
       pendingApproval: {
         pending: {
-          title: 'Approval Pending',
-          message: 'Your account is pending approval. Hang tight — an admin will review it shortly.',
-          checkStatus: 'Check Status',
-          stillPending: 'Still pending — check back a little later.',
+          title: 'You\'re almost in!',
+          message: 'An admin will check your request soon. Hang tight, it won\'t be long.',
+          checkStatus: 'Check again',
+          stillPending: 'Not yet. Check back a little later.',
           yourKids: 'Your kids: {names}'
         },
         notifications: {
-          question: 'Want a message on your phone as soon as you\'re approved?',
-          turnOn: 'Yes, notify me',
+          question: 'Want a heads-up as soon as you\'re in?',
+          turnOn: 'Notify me',
           on: 'Great! We\'ll let you know on this device.',
-          homeScreen: 'On an iPhone or iPad, add the app to your home screen first and open it from there — then you can turn this on.',
-          deviceError: 'That didn\'t work on this device. Please try again later.',
+          homeScreen: 'On iPhone or iPad, add the app to your home screen and open it from there first. Then you can turn this on.',
+          deviceError: 'That didn\'t work on this device. Please try again.',
         },
         rejected: {
-          title: 'Account Declined',
-          message: 'Your account request was declined. If you think this was a mistake, please reach out directly to the club.'
+          title: 'Your request wasn\'t approved',
+          message: 'If you think this is a mistake, just reach out to the club directly.'
         },
-        cancel: 'Cancel'
+        signOut: 'Sign out'
       },
       changelog: {
         header: "What's New",
@@ -569,49 +595,75 @@ export default createI18n({
       notifications: {
         header: 'Benachrichtigungen',
         off: {
-          intro: 'Bekomme auf diesem Gerät eine Nachricht, wenn sich in deinem Verein etwas tut.',
-          turnOn: 'Benachrichtigungen einschalten',
+          title: 'Nichts mehr verpassen',
+          intro: 'Erfahr auf diesem Gerät sofort, wenn sich in deinem Verein etwas tut.',
+          turnOn: 'Einschalten',
         },
         on: {
-          intro: 'Benachrichtigungen sind auf diesem Gerät eingeschaltet.',
-          sendTest: 'Test-Benachrichtigung senden',
-          testSent: 'Gesendet! Sie sollte in ein paar Sekunden ankommen.',
-          testMissing: 'Nichts angekommen? Prüfe, ob Benachrichtigungen für deinen Browser in den Einstellungen deines Geräts erlaubt sind und „Nicht stören“ ausgeschaltet ist.',
+          status: 'Auf diesem Gerät an',
+          sendTest: 'Testen',
+          testSent: 'Gesendet! Sie sollte gleich auftauchen.',
+          testMissing: 'Nichts angekommen? Schau, ob Benachrichtigungen für deinen Browser in den Einstellungen deines Geräts erlaubt sind und „Nicht stören“ aus ist.',
           turnOffThisDevice: 'Auf diesem Gerät ausschalten',
           turnOffAllDevices: 'Auf all meinen Geräten ausschalten',
         },
         homeScreen: {
-          intro: 'Damit du auf deinem iPhone oder iPad Benachrichtigungen bekommst, füge die App zuerst zu deinem Home-Bildschirm hinzu:',
-          step1: 'Tippe auf den Teilen-Knopf (das Viereck mit dem Pfeil nach oben).',
-          step2: 'Wähle „Zum Home-Bildschirm“.',
-          step3: 'Öffne die App über deinen Home-Bildschirm und komm wieder auf diese Seite.',
+          title: 'Noch ein kurzer Schritt',
+          intro: 'Auf dem iPhone oder iPad klappen Benachrichtigungen erst, wenn die App auf deinem Home-Bildschirm ist:',
+          step1: 'Tipp unten auf das Teilen-Symbol (das Quadrat mit dem Pfeil nach oben).',
+          step2: 'Scroll ein Stück nach unten und wähle „Zum Home-Bildschirm“.',
+          step3: 'Tipp oben rechts auf „Hinzufügen“.',
+          step4: 'Öffne die App über deinen Home-Bildschirm und komm wieder hierher.',
         },
-        unsupported: 'In diesem Browser sind Benachrichtigungen leider nicht möglich. Probiere die App in Chrome, Firefox, Edge oder Safari zu öffnen.',
+        unsupported: 'Dieser Browser kann leider keine Benachrichtigungen anzeigen. Probier es mit Chrome, Firefox, Edge oder Safari.',
         blocked: {
           title: 'Benachrichtigungen sind blockiert',
-          message: 'Du hast Benachrichtigungen für diese App früher einmal blockiert. Erlaube sie in den Einstellungen deines Handys oder Browsers und komm dann wieder hierher.',
+          message: 'Erlaub Benachrichtigungen für diese App in den Einstellungen deines Handys oder Browsers und komm dann wieder hierher.',
         },
-        deviceError: 'Benachrichtigungen konnten auf diesem Gerät nicht eingeschaltet werden. Bitte versuche es später noch einmal.',
+        deviceError: 'Das hat auf diesem Gerät nicht geklappt. Bitte versuch es nochmal.',
+        settings: {
+          title: 'Worüber du Bescheid bekommst',
+          newEvents: {
+            label: 'Neue Events',
+            description: 'Wenn jemand ein Event einträgt.',
+          },
+          responses: {
+            label: 'Zu- und Absagen',
+            description: 'Wenn jemand auf eines deiner Events antwortet.',
+          },
+          comments: {
+            label: 'Kommentare',
+            description: 'Bei Events, die du erstellt oder zugesagt hast.',
+          },
+          eventChanges: {
+            label: 'Abgesagte Events',
+            description: 'Wenn ein Event, zu dem du kommst, abgesagt, wieder angesetzt oder entfernt wird.',
+          },
+          memberRequests: {
+            label: 'Beitrittsanfragen',
+            description: 'Wenn jemand dem Verein beitreten möchte. Eine E-Mail bekommst du trotzdem.',
+          },
+        },
       },
       pushNotifications: {
         test: {
-          title: 'Es funktioniert! 🎉',
-          body: 'Benachrichtigungen sind auf diesem Gerät eingerichtet.',
+          title: 'Es funktioniert!',
+          body: 'Benachrichtigungen sind auf diesem Gerät startklar.',
         },
         memberRequest: {
-          title: 'Neue Mitgliedsanfrage',
-          body: 'Jemand Neues möchte dem Verein beitreten. Tippe hier, um die Anfrage anzusehen.',
+          title: 'Neue Beitrittsanfrage',
+          body: 'Jemand möchte dem Verein beitreten. Tipp hier, um sie anzusehen.',
         },
         accountApproved: {
-          title: 'Willkommen im Verein! 🎉',
-          body: 'Deine Anfrage wurde angenommen. Tippe hier, um loszulegen.',
+          title: 'Willkommen im Verein!',
+          body: 'Du bist dabei. Tipp hier, um loszulegen.',
         },
         accountRejected: {
           title: 'Deine Anfrage wurde abgelehnt',
           body: 'Deine Anfrage, dem Verein beizutreten, wurde leider nicht angenommen.',
         },
         kidApproved: {
-          title: '{name} wurde angenommen 🎉',
+          title: '{name} ist dabei!',
           body: 'Du kannst {name} jetzt für Events anmelden.',
         },
         kidRejected: {
@@ -620,15 +672,15 @@ export default createI18n({
         },
         eventCancelled: {
           title: 'Event abgesagt',
-          body: '{title} ({date}) wurde abgesagt.',
+          body: '{title} ({date}) ist abgesagt.',
         },
         eventUncancelled: {
-          title: 'Event findet doch statt 🎉',
-          body: '{title} ({date}) findet doch statt.',
+          title: 'Event findet doch statt',
+          body: '{title} ({date}) ist wieder angesetzt.',
         },
         eventDeleted: {
-          title: 'Event gelöscht',
-          body: '{title} ({date}) wurde gelöscht.',
+          title: 'Event entfernt',
+          body: '{title} ({date}) wurde entfernt.',
         },
         eventComment: {
           title: '{name} hat {title} kommentiert',
@@ -641,12 +693,12 @@ export default createI18n({
           groupBody: '{titles}',
         },
         eventResponse: {
-          title: '{name} hat auf {title} geantwortet',
+          title: '{title}',
           body: '{answer}',
           groupTitle: '{count} neue Antworten zu {title}',
           groupBody: '{answers}',
-          yes: '✅ Kommt',
-          no: '❌ Kommt nicht',
+          yes: '{name} kommt',
+          no: '{name} kann nicht',
         },
         fallback: {
           title: 'LISC-2010',
@@ -759,24 +811,24 @@ export default createI18n({
       },
       pendingApproval: {
         pending: {
-          title: 'Dein Account wird geprüft',
-          message: 'Dein Account wird gerade geprüft. Ein Admin schaut sich das bald an.',
-          checkStatus: 'Status prüfen',
-          stillPending: 'Noch ausstehend — schau später nochmal vorbei.',
+          title: 'Fast geschafft!',
+          message: 'Ein Admin schaut sich deine Anfrage bald an. Es dauert nicht mehr lange.',
+          checkStatus: 'Nochmal schauen',
+          stillPending: 'Noch nicht. Schau später nochmal vorbei.',
           yourKids: 'Deine Kinder: {names}'
         },
         notifications: {
-          question: 'Möchtest du eine Nachricht aufs Handy bekommen, sobald du angenommen wurdest?',
-          turnOn: 'Ja, gib mir Bescheid',
+          question: 'Willst du Bescheid bekommen, sobald du dabei bist?',
+          turnOn: 'Bescheid geben',
           on: 'Super! Wir sagen dir auf diesem Gerät Bescheid.',
-          homeScreen: 'Auf dem iPhone oder iPad füge die App zuerst zu deinem Home-Bildschirm hinzu und öffne sie von dort – dann kannst du das hier einschalten.',
-          deviceError: 'Das hat auf diesem Gerät leider nicht geklappt. Bitte versuche es später noch einmal.',
+          homeScreen: 'Auf dem iPhone oder iPad füg die App zuerst zu deinem Home-Bildschirm hinzu und öffne sie von dort. Dann kannst du das hier einschalten.',
+          deviceError: 'Das hat auf diesem Gerät nicht geklappt. Bitte versuch es nochmal.',
         },
         rejected: {
-          title: 'Antrag abgelehnt',
-          message: 'Dein Antrag wurde leider abgelehnt. Wenn du denkst, dass das ein Fehler ist, melde dich direkt beim Verein.'
+          title: 'Deine Anfrage wurde nicht angenommen',
+          message: 'Wenn du denkst, dass das ein Fehler ist, melde dich einfach direkt beim Verein.'
         },
-        cancel: 'Abbrechen'
+        signOut: 'Abmelden'
       },
       select: {
         loading: 'Wird geladen…'

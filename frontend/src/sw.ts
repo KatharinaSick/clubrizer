@@ -53,7 +53,7 @@ function groupOf(message: PushMessage): Group | undefined {
     case 'eventResponse':
       return {
         tag: `rsvp-${params.eventId}`,
-        item: `${params.name} ${params.response === 'yes' ? '✅' : '❌'}`,
+        item: answerOf(params),
         summary: (items) => ({
           params: {
             count: String(items.length),
@@ -147,12 +147,17 @@ function parseMessage(data: PushMessageData | null): PushMessage {
   return { type: 'fallback' }
 }
 
+function answerOf(params: Record<string, string>): string {
+  const response = params.response === 'yes' ? 'yes' : 'no'
+  return i18n.global.t(`pushNotifications.eventResponse.${response}`, { name: params.name ?? '' })
+}
+
 // A "date" param arrives as a timestamp and is shown in the device's language and timezone.
-// A "response" param ("yes"/"no") becomes the translated "answer".
+// A "response" param ("yes"/"no") becomes the translated "answer", e.g. "Anna is coming".
 function formatParams(params: Record<string, string> | undefined): Record<string, string> {
   const formatted = { ...params }
   if (formatted.response === 'yes' || formatted.response === 'no') {
-    formatted.answer = i18n.global.t(`pushNotifications.eventResponse.${formatted.response}`)
+    formatted.answer = answerOf(formatted)
   }
   if (formatted.date) {
     formatted.date = new Date(formatted.date).toLocaleString(navigator.language, {

@@ -27,3 +27,24 @@ func TestIsAllowedEndpoint(t *testing.T) {
 		}
 	}
 }
+
+// Every message type must be deliberately either switchable or always sent, so a new type
+// can't silently bypass the settings screen.
+func TestTypeCategories(t *testing.T) {
+	alwaysSent := map[string]bool{
+		typeTest: true, typeAccountApproved: true, typeAccountRejected: true,
+		typeKidApproved: true, typeKidRejected: true,
+	}
+	types := []string{
+		typeTest, typeMemberRequest, typeAccountApproved, typeAccountRejected, typeKidApproved,
+		typeKidRejected, typeEventCancelled, typeEventUncancelled, typeEventDeleted,
+		typeEventComment, typeNewEvent, typeEventResponse,
+	}
+
+	for _, typ := range types {
+		_, switchable := typeCategories[typ]
+		if switchable == alwaysSent[typ] {
+			t.Errorf("type %q: switchable = %v, always sent = %v; want exactly one", typ, switchable, alwaysSent[typ])
+		}
+	}
+}

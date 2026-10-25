@@ -139,3 +139,48 @@ func (s *store) getApprovedUserIds(ctx context.Context) ([]uuid.UUID, error) {
 	}
 	return ids, nil
 }
+
+// getOptOuts returns the categories the user switched off.
+func (s *store) getOptOuts(ctx context.Context, userId uuid.UUID) (map[string]bool, error) {
+	rows, err := s.conn.Query(ctx, "SELECT category FROM notification_opt_outs WHERE user_id = $1", userId)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to query notification opt-outs: %s", err.Error()))
+	}
+	categories, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to collect notification opt-outs: %s", err.Error()))
+	}
+	optOuts := make(map[string]bool, len(categories))
+	for _, c := range categories {
+		optOuts[c] = true
+	}
+	return optOuts, nil
+}
+
+// getOptedOutUserIds returns which of the given users switched the category off.
+func (s *store) getOptedOutUserIds(ctx context.Context, category string, userIds []uuid.UUID) (map[uuid.UUID]bool, error) {
+	rows, err := s.conn.Query(ctx, "SELECT user_id FROM notification_opt_outs WHERE category = $1 AND user_id = ANY($2)", category, userIds)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to query notification opt-outs: %s", err.Error()))
+	}
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[uuid.UUID])
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to collect notification opt-outs: %s", err.Error()))
+	}
+	optedOut := make(map[uuid.UUID]bool, len(ids))
+	for _, id := range ids {
+		optedOut[id] = true
+	}
+	return optedOut, nil
+}
+
+func (s *store) setOptOut(ctx context.Context, userId uuid.UUID, category string, optOut bool) error {
+	query := "DELETE FROM notification_opt_outs WHERE user_id = $1 AND category = $2"
+	if optOut {
+		query = "INSERT INTO notification_opt_outs (user_id, category) VALUES ($1, $2) ON CONFLICT (user_id, category) DO NOTHING"
+	}
+	if _, err := s.conn.Exec(ctx, query, userId, category); err != nil {
+		return errors.New(fmt.Sprintf("failed to update notification opt-out: %s", err.Error()))
+	}
+	return nil
+}

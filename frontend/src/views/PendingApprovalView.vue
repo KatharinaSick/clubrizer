@@ -4,6 +4,7 @@ import { useDocumentVisibility } from '@vueuse/core'
 import { useAuthStore } from '@/stores/auth'
 import Button from '@/components/Button.vue'
 import RequestError from '@/components/RequestError.vue'
+import IconBell from '@/components/icons/IconBell.vue'
 import kidsService from '@/service/kids'
 import router from '@/router'
 import { isAxiosError } from 'axios'
@@ -86,62 +87,62 @@ async function cancel() {
 
 <template>
   <div class="pendingApprovalContainer">
-    <div class="pendingApprovalCenter">
-      <img :alt="$t('team')" class="pendingApprovalLogo" src="@/assets/logo.svg" />
-      <h1 class="pendingApprovalTitle">{{ $t('team') }}</h1>
-    </div>
+    <img :alt="$t('team')" class="pendingApprovalLogo" src="@/assets/logo.svg" />
 
-    <div class="pendingApprovalCenter">
+    <div class="pendingApprovalHero">
       <template v-if="auth.user.status === 'rejected'">
-        <h1>{{ $t('pendingApproval.rejected.title') }}</h1>
-        <p>{{ $t('pendingApproval.rejected.message') }}</p>
+        <h1 class="pendingApprovalTitle">{{ $t('pendingApproval.rejected.title') }}</h1>
+        <p class="pendingApprovalMessage">{{ $t('pendingApproval.rejected.message') }}</p>
       </template>
       <template v-else>
-        <h1>{{ $t('pendingApproval.pending.title') }}</h1>
-        <p>{{ $t('pendingApproval.pending.message') }}</p>
-        <p v-if="kidNames.length > 0" class="pendingApprovalKids">
+        <h1 class="pendingApprovalTitle">{{ $t('pendingApproval.pending.title') }}</h1>
+        <p class="pendingApprovalMessage">{{ $t('pendingApproval.pending.message') }}</p>
+        <p v-if="kidNames.length > 0" class="pendingApprovalHint">
           {{ $t('pendingApproval.pending.yourKids', { names: kidNamesLine }) }}
         </p>
       </template>
     </div>
 
-    <div v-if="auth.user.status !== 'rejected'" class="pendingApprovalCenter">
-      <Button
-        :title="$t('pendingApproval.pending.checkStatus')"
-        :loading="isChecking"
-        theme="secondary"
-        @click="checkStatus"
-      />
-      <p v-if="checked" class="pendingApprovalStillPending">{{ $t('pendingApproval.pending.stillPending') }}</p>
-    </div>
-
-    <div
-      v-if="auth.user.status === 'pending' && (pushState === 'off' || pushState === 'on' || pushState === 'needsHomeScreen')"
-      class="pendingApprovalCenter pendingApprovalNotifications"
-    >
-      <template v-if="pushState === 'off'">
-        <p class="pendingApprovalNotificationsText">{{ $t('pendingApproval.notifications.question') }}</p>
+    <template v-if="auth.user.status !== 'rejected'">
+      <div
+        v-if="auth.user.status === 'pending' && (pushState === 'off' || pushState === 'on' || pushState === 'needsHomeScreen')"
+        class="pendingApprovalNotifications"
+      >
+        <IconBell class="pendingApprovalNotificationsIcon" />
+        <div class="pendingApprovalNotificationsBody">
+          <p class="pendingApprovalNotificationsText">
+            {{ pushState === 'on' ? $t('pendingApproval.notifications.on') : $t('pendingApproval.notifications.question') }}
+          </p>
+          <p v-if="pushState === 'needsHomeScreen'" class="pendingApprovalHint">
+            {{ $t('pendingApproval.notifications.homeScreen') }}
+          </p>
+          <p v-if="pushDeviceError" class="pendingApprovalHint">{{ $t('pendingApproval.notifications.deviceError') }}</p>
+        </div>
         <Button
+          v-if="pushState === 'off'"
           :title="$t('pendingApproval.notifications.turnOn')"
-          theme="tertiary"
-          accent
+          theme="secondary"
+          inline
           :loading="isTurningOnPush"
           @click="turnOnNotifications"
         />
-      </template>
-      <p v-else-if="pushState === 'on'" class="pendingApprovalNotificationsText">
-        {{ $t('pendingApproval.notifications.on') }}
-      </p>
-      <template v-else>
-        <p class="pendingApprovalNotificationsText">{{ $t('pendingApproval.notifications.question') }}</p>
-        <p class="pendingApprovalStillPending">{{ $t('pendingApproval.notifications.homeScreen') }}</p>
-      </template>
-      <p v-if="pushDeviceError" class="pendingApprovalStillPending">{{ $t('pendingApproval.notifications.deviceError') }}</p>
-      <RequestError class="pendingApprovalNotificationsError" />
-    </div>
+      </div>
 
-    <div class="pendingApprovalCenter pendingApprovalCancel">
-      <Button :title="$t('pendingApproval.cancel')" theme="red" @click="cancel" />
+      <div class="pendingApprovalCheck">
+        <Button
+          :title="$t('pendingApproval.pending.checkStatus')"
+          :loading="isChecking"
+          theme="secondary"
+          @click="checkStatus"
+        />
+        <p v-if="checked" class="pendingApprovalHint">{{ $t('pendingApproval.pending.stillPending') }}</p>
+      </div>
+    </template>
+
+    <RequestError class="pendingApprovalError" />
+
+    <div class="pendingApprovalSignOut">
+      <Button :title="$t('pendingApproval.signOut')" theme="tertiary" @click="cancel" />
     </div>
   </div>
 </template>
@@ -149,74 +150,107 @@ async function cancel() {
 <style scoped>
 .pendingApprovalContainer {
   width: 100%;
-  height: 100%;
+  min-height: 100%;
+  max-width: 400px;
+  margin: 0 auto;
   box-sizing: border-box;
-  padding-top: 64px;
+  padding-top: calc(var(--padding) * 6);
 
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 48px;
-}
-
-.pendingApprovalCancel {
-  margin-top: auto;
-}
-
-.pendingApprovalCenter {
-  text-align: center;
+  gap: calc(var(--padding) * 3);
 }
 
 .pendingApprovalLogo {
-  height: 100px;
+  height: 80px;
+  margin-bottom: calc(var(--padding) * 2);
+}
+
+.pendingApprovalHero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gap);
+  text-align: center;
+  margin-top: var(--padding);
 }
 
 .pendingApprovalTitle {
-  margin: 8px 0 0 0;
-  text-transform: uppercase;
-  letter-spacing: .1rem;
-  background-image: var(--gradient);
-  color: transparent;
-  background-clip: text;
-  -webkit-background-clip: text;
+  margin: var(--gap) 0 0 0;
+  font-size: var(--font-size-large);
+  font-weight: var(--font-weight-bold);
 }
 
-.pendingApprovalKids {
-  margin: 4px 0 0 0;
-  font-size: var(--font-size-small);
-  color: var(--text-gray);
+.pendingApprovalMessage {
+  margin: 0;
 }
 
-.pendingApprovalStillPending {
-  margin: 12px 0 0 0;
+.pendingApprovalHint {
+  margin: 0;
   font-size: var(--font-size-small);
   color: var(--text-gray);
-  text-align: center;
 }
 
 .pendingApprovalNotifications {
-  max-width: 400px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--padding);
+  background: var(--light-gray);
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  gap: var(--padding);
+}
+
+.pendingApprovalNotificationsIcon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  color: var(--blue);
+}
+
+.pendingApprovalNotificationsBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .pendingApprovalNotificationsText {
-  margin: 0 0 var(--gap) 0;
+  margin: 0;
+  font-size: var(--font-size-small);
 }
 
-.pendingApprovalNotificationsError {
-  margin-top: var(--gap);
-  text-align: left;
+.pendingApprovalCheck {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  text-align: center;
+}
+
+.pendingApprovalError {
+  width: 100%;
+}
+
+.pendingApprovalSignOut {
+  margin-top: auto;
+  padding-bottom: var(--padding);
 }
 
 @media (min-width: 768px) {
   .pendingApprovalContainer {
     justify-content: center;
     padding-top: 0;
-    max-width: 400px;
-    margin: 0 auto;
   }
 
-  .pendingApprovalCancel {
-    margin-top: -24px;
+  .pendingApprovalLogo {
+    margin-bottom: 0;
+  }
+
+  .pendingApprovalSignOut {
+    margin-top: 0;
   }
 }
 </style>
