@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { isAxiosError } from 'axios'
 import Modal from '@/components/Modal.vue'
 import Button from '@/components/Button.vue'
 import IconCircle from '@/components/IconCircle.vue'
+import NumberedSteps from '@/components/NumberedSteps.vue'
 import IconBell from '@/components/icons/IconBell.vue'
 import RequestError from '@/components/RequestError.vue'
+import i18n from '@/plugins/i18n'
 import { useAuthStore } from '@/stores/auth'
 import { getPushState, turnOnPush } from '@/utils/push'
 
@@ -21,12 +23,14 @@ const LATER_DAYS = 3
 
 const auth = useAuthStore()
 
-const step = ref<'intro' | 'homeScreen' | 'done' | null>(null)
+const step = ref<'intro' | 'homeScreen' | 'blocked' | 'done' | null>(null)
 const isTurningOn = ref(false)
 // Browser-side failures; API errors are shown by RequestError.
 const deviceError = ref(false)
+// The browser's permission prompt was closed without an answer — asking again may work.
+const notAllowed = ref(false)
 
-const homeScreenSteps = [1, 2, 3, 4]
+const homeScreenSteps = computed(() => [1, 2, 3, 4].map((n) => i18n.global.t(`notificationsAnnouncement.homeScreen.step${n}`)))
 
 onMounted(async () => {
   if (!isDue()) return
@@ -60,11 +64,18 @@ function remember(value: string) {
 async function turnOn() {
   isTurningOn.value = true
   deviceError.value = false
+  notAllowed.value = false
   try {
     const state = await turnOnPush(auth.user.email)
     if (state === 'on') {
       remember(DISMISSED)
       step.value = 'done'
+    } else if (state === 'blocked') {
+      // Only the phone or browser settings can undo this, so there's nothing left to offer.
+      remember(DISMISSED)
+      step.value = 'blocked'
+    } else {
+      notAllowed.value = true
     }
   } catch (e) {
     if (!isAxiosError(e)) {
@@ -99,21 +110,25 @@ function noThanks() {
         </div>
       </template>
 
+      <template v-else-if="step === 'blocked'">
+        <h2 class="notificationsAnnouncementTitle">{{ $t('notificationsAnnouncement.blocked.title') }}</h2>
+        <p class="notificationsAnnouncementText">{{ $t('notificationsAnnouncement.blocked.message') }}</p>
+        <div class="notificationsAnnouncementActions">
+          <Button :title="$t('notificationsAnnouncement.blocked.close')" @click="step = null" />
+        </div>
+      </template>
+
       <template v-else>
         <h2 class="notificationsAnnouncementTitle">{{ $t('notificationsAnnouncement.title') }}</h2>
         <p class="notificationsAnnouncementText">{{ $t('notificationsAnnouncement.message') }}</p>
 
         <template v-if="step === 'homeScreen'">
           <p class="notificationsAnnouncementText">{{ $t('notificationsAnnouncement.homeScreen.intro') }}</p>
-          <ol class="notificationsAnnouncementSteps">
-            <li v-for="n in homeScreenSteps" :key="n" class="notificationsAnnouncementStep">
-              <span class="notificationsAnnouncementStepNumber">{{ n }}</span>
-              <span class="notificationsAnnouncementStepText">{{ $t(`notificationsAnnouncement.homeScreen.step${n}`) }}</span>
-            </li>
-          </ol>
+          <NumberedSteps class="notificationsAnnouncementSteps" :steps="homeScreenSteps" />
         </template>
 
         <p class="notificationsAnnouncementHint">{{ $t('notificationsAnnouncement.settingsHint') }}</p>
+        <p v-if="notAllowed" class="notificationsAnnouncementHint">{{ $t('notificationsAnnouncement.notAllowed') }}</p>
         <p v-if="deviceError" class="notificationsAnnouncementHint">{{ $t('notificationsAnnouncement.deviceError') }}</p>
         <RequestError class="notificationsAnnouncementError" />
 
@@ -169,39 +184,7 @@ function noThanks() {
 }
 
 .notificationsAnnouncementSteps {
-  list-style: none;
   margin: var(--gap) 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--padding);
-  text-align: left;
-}
-
-.notificationsAnnouncementStep {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--padding);
-}
-
-.notificationsAnnouncementStepNumber {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: var(--gradient);
-  color: var(--white);
-  font-size: var(--font-size-small);
-  font-weight: var(--font-weight-bold);
-}
-
-.notificationsAnnouncementStepText {
-  padding-top: 4px;
-  font-size: var(--font-size-small);
-  line-height: 1.5;
 }
 
 .notificationsAnnouncementError {

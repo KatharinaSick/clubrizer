@@ -254,34 +254,39 @@ func (s *store) getEventResponses(ctx context.Context, eventId uuid.UUID, r resp
 	return responses, nil
 }
 
-func (s *store) upsertEventResponse(ctx context.Context, eventId uuid.UUID, userId uuid.UUID, response bool) error {
+// upsertEventResponse stores the user's answer and reports whether it changed — answering the
+// same again touches no row.
+func (s *store) upsertEventResponse(ctx context.Context, eventId uuid.UUID, userId uuid.UUID, response bool) (bool, error) {
 	// The WHERE predicate is required to match the unique index on (event_id, user_id):
 	// since user_id became nullable (migration 000010, for kid responses), that index is
 	// partial — WHERE user_id IS NOT NULL — on CockroachDB, which rewrites a unique index
 	// over a nullable column as partial. Without the predicate the arbiter doesn't match
 	// (SQLSTATE 42P10). Mirrors the kid upsert. Safe on Postgres too: a predicate may infer
 	// a non-partial index there.
-	_, err := s.conn.Exec(ctx, `
+	tag, err := s.conn.Exec(ctx, `
 		INSERT INTO event_responses (event_id, user_id, response)
 		VALUES ($1, $2, $3)
 		ON CONFLICT (event_id, user_id) WHERE user_id IS NOT NULL DO UPDATE SET response = EXCLUDED.response
+		WHERE event_responses.response <> EXCLUDED.response
 	`, eventId, userId, response)
 	if err != nil {
-		return errors.New(fmt.Sprintf("failed to upsert event response: %s", err.Error()))
+		return false, errors.New(fmt.Sprintf("failed to upsert event response: %s", err.Error()))
 	}
-	return nil
+	return tag.RowsAffected() > 0, nil
 }
 
-func (s *store) upsertKidEventResponse(ctx context.Context, eventId uuid.UUID, kidId uuid.UUID, response bool) error {
-	_, err := s.conn.Exec(ctx, `
+// upsertKidEventResponse stores the kid's answer and reports whether it changed.
+func (s *store) upsertKidEventResponse(ctx context.Context, eventId uuid.UUID, kidId uuid.UUID, response bool) (bool, error) {
+	tag, err := s.conn.Exec(ctx, `
 		INSERT INTO event_responses (event_id, kid_id, response)
 		VALUES ($1, $2, $3)
 		ON CONFLICT (event_id, kid_id) WHERE kid_id IS NOT NULL DO UPDATE SET response = EXCLUDED.response
+		WHERE event_responses.response <> EXCLUDED.response
 	`, eventId, kidId, response)
 	if err != nil {
-		return errors.New(fmt.Sprintf("failed to upsert kid event response: %s", err.Error()))
+		return false, errors.New(fmt.Sprintf("failed to upsert kid event response: %s", err.Error()))
 	}
-	return nil
+	return tag.RowsAffected() > 0, nil
 }
 
 // getOwnedKid returns the kid's approval status and given name only if it belongs to userId

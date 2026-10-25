@@ -214,7 +214,7 @@ async function cancel() {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: calc(var(--gap) / 2);
 }
 
 .pendingApprovalNotificationsText {

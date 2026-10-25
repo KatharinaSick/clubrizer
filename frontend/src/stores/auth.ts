@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import authService from '@/service/auth'
 import usersService from '@/service/users'
 import { useStorage } from '@vueuse/core'
-import { restorePushOnSignIn, unregisterPushOnLogout } from '@/utils/push'
+import { releasePushOnLogout, restorePushOnSignIn } from '@/utils/push'
 
 export type UserStatus = 'onboarding' | 'pending' | 'approved' | 'rejected'
 
@@ -100,12 +100,9 @@ export const useAuthStore = defineStore('auth', {
       }
     },
     async logout() {
-      // While still signed in, so the backend can remove this device. Skipped when the session
-      // is already gone (e.g. a failed token refresh): the request would only fail with a 401
-      // and set off yet another refresh.
-      if (this.isAuthenticated) {
-        await unregisterPushOnLogout()
-      }
+      // Also when the session is already gone (e.g. a failed token refresh) — releasing the
+      // device needs no session.
+      await releasePushOnLogout()
       try {
         await authService.logout()
       } catch {

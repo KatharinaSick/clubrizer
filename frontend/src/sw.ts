@@ -28,14 +28,20 @@ interface PushMessage {
 // Some types are grouped: several in a row are combined into one notification instead of
 // piling up (e.g. ten new events added at once). The notification keeps the items it shows
 // in its data, so the next push can replace it with an updated summary without alerting
-// again. Once it's dismissed, the count starts over. Browsers that can't look up shown
+// again. Once it's dismissed, the count starts over. An item replaces an earlier one with the
+// same key, e.g. someone changing their answer is still one answer. Browsers that can't look up shown
 // notifications (getNotifications) simply show each one on its own.
 interface Group {
   tag: string
   // item is this push's line in the summary
-  item: string
+  item: GroupItem
   // summary turns all items so far into the grouped notification's params and link
   summary: (items: string[]) => { params: Record<string, string>; url: string }
+}
+
+interface GroupItem {
+  key: string
+  text: string
 }
 
 function groupOf(message: PushMessage): Group | undefined {
@@ -44,7 +50,7 @@ function groupOf(message: PushMessage): Group | undefined {
     case 'newEvent':
       return {
         tag: 'new-events',
-        item: params.title ?? '',
+        item: { key: params.eventId ?? '', text: params.title ?? '' },
         summary: (items) => ({
           params: { count: String(items.length), titles: items.join(', ') },
           url: '/events',
@@ -53,7 +59,7 @@ function groupOf(message: PushMessage): Group | undefined {
     case 'eventResponse':
       return {
         tag: `rsvp-${params.eventId}`,
-        item: answerOf(params),
+        item: { key: params.respondentId ?? '', text: answerOf(params) },
         summary: (items) => ({
           params: {
             count: String(items.length),
@@ -84,9 +90,9 @@ async function show(message: PushMessage) {
 
   const group = key === 'fallback' ? undefined : groupOf(message)
   if (group) {
-    const items = [...(await previousItems(group.tag)), group.item]
+    const items = [...(await previousItems(group.tag)).filter((i) => i.key !== group.item.key), group.item]
     if (items.length > 1) {
-      const summary = group.summary(items)
+      const summary = group.summary(items.map((i) => i.text))
       params = summary.params
       title = t(`pushNotifications.${key}.groupTitle`, params)
       options.body = t(`pushNotifications.${key}.groupBody`, params)
@@ -102,14 +108,19 @@ async function show(message: PushMessage) {
 }
 
 // previousItems returns the items of the notification with this tag that is still shown, if any.
-async function previousItems(tag: string): Promise<string[]> {
+async function previousItems(tag: string): Promise<GroupItem[]> {
   try {
     const [previous] = await self.registration.getNotifications({ tag })
-    const items = previous?.data?.items
-    return Array.isArray(items) ? items : []
+    const items: unknown = previous?.data?.items
+    return Array.isArray(items) ? items.filter(isGroupItem) : []
   } catch {
     return []
   }
+}
+
+function isGroupItem(item: unknown): item is GroupItem {
+  return typeof item === 'object' && item !== null
+    && typeof (item as GroupItem).key === 'string' && typeof (item as GroupItem).text === 'string'
 }
 
 // Tapping a notification brings the app to the front (or opens it) on the linked page.

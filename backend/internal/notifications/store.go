@@ -75,8 +75,12 @@ func (s *store) deleteSubscriptionById(ctx context.Context, id uuid.UUID) error 
 	return nil
 }
 
-func (s *store) touchSubscription(ctx context.Context, id uuid.UUID) error {
-	_, err := s.conn.Exec(ctx, "UPDATE push_subscriptions SET last_used_at = current_timestamp WHERE id = $1", id)
+// touchSubscriptions records that the push service accepted a message for these devices.
+func (s *store) touchSubscriptions(ctx context.Context, ids []uuid.UUID) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	_, err := s.conn.Exec(ctx, "UPDATE push_subscriptions SET last_used_at = current_timestamp WHERE id = ANY($1)", ids)
 	if err != nil {
 		return errors.New(fmt.Sprintf("failed to update push subscription: %s", err.Error()))
 	}
@@ -92,8 +96,10 @@ func (s *store) hasSubscription(ctx context.Context, userId uuid.UUID, endpoint 
 	return exists, nil
 }
 
-func (s *store) getSubscriptionsByUser(ctx context.Context, userId uuid.UUID) ([]*Subscription, error) {
-	rows, err := s.conn.Query(ctx, "SELECT id, user_id, endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = $1", userId)
+// getSubscriptionsByUsers returns every device of the given users. Duplicate ids are fine —
+// each device is returned once.
+func (s *store) getSubscriptionsByUsers(ctx context.Context, userIds []uuid.UUID) ([]*Subscription, error) {
+	rows, err := s.conn.Query(ctx, "SELECT id, user_id, endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = ANY($1)", userIds)
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("failed to query push subscriptions: %s", err.Error()))
 	}

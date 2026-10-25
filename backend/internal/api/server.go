@@ -156,18 +156,22 @@ func addRoutes(
 
 	// Push notifications — every route only ever touches the caller's own devices. Open to any
 	// non-rejected account, so people waiting for approval can turn notifications on and hear
-	// about the decision (logging out removes the device, which pending accounts can do too).
+	// about the decision.
 	mux.Handle("GET /notifications/vapid-public-key", notRejected(cfg, handle(notificationsService.GetVapidPublicKey)))
 	mux.Handle("POST /notifications/subscriptions", notRejected(cfg, handleWithBody(notificationsService.Subscribe)))
 	mux.Handle("POST /notifications/subscriptions/status", notRejected(cfg, handleWithBodyAndReturnValue(notificationsService.GetSubscriptionStatus)))
 	mux.Handle("DELETE /notifications/subscriptions", notRejected(cfg, handleWithBody(notificationsService.Unsubscribe)))
-	mux.Handle("POST /notifications/subscriptions/release", notRejected(cfg, handleWithBody(notificationsService.ReleaseDevice)))
 	mux.Handle("DELETE /notifications/subscriptions/all", notRejected(cfg, handleWithoutInput(notificationsService.UnsubscribeAll)))
 	mux.Handle("POST /notifications/test", authenticated(cfg, handleWithoutInput(notificationsService.SendTest)))
 	// Which kinds of notifications the caller gets. Approved accounts only: the only
 	// notifications pending accounts get (their approval) can't be switched off.
 	mux.Handle("GET /notifications/settings", authenticated(cfg, handleAndReturnList(notificationsService.GetSettings)))
 	mux.Handle("PUT /notifications/settings", authenticated(cfg, handleWithBody(notificationsService.UpdateSetting)))
+	// Removes this device's registration when signing out or when someone else signs in. No
+	// session needed — it may already have expired, and the device must still stop getting
+	// the previous person's notifications. The subscription's secret proves the caller is on
+	// that device.
+	mux.Handle("POST /notifications/subscriptions/release", handleWithBody(notificationsService.ReleaseDevice))
 }
 
 type userService interface {

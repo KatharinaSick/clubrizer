@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { isAxiosError } from 'axios'
 import Header from '@/components/Header.vue'
@@ -8,8 +8,10 @@ import Alert from '@/components/Alert.vue'
 import Divider from '@/components/Divider.vue'
 import Toggle from '@/components/Toggle.vue'
 import IconCircle from '@/components/IconCircle.vue'
+import NumberedSteps from '@/components/NumberedSteps.vue'
 import IconBell from '@/components/icons/IconBell.vue'
 import RequestError from '@/components/RequestError.vue'
+import i18n from '@/plugins/i18n'
 import { useAuthStore } from '@/stores/auth'
 import notificationsService, { type NotificationSetting } from '@/service/notifications'
 import {
@@ -77,7 +79,7 @@ async function updateSetting(setting: NotificationSetting, enabled: boolean) {
   }
 }
 
-const homeScreenSteps = [1, 2, 3, 4]
+const homeScreenSteps = computed(() => [1, 2, 3, 4].map((n) => i18n.global.t(`notifications.homeScreen.step${n}`)))
 
 const turnOn = () => run('turnOn', async () => {
   state.value = await turnOnPush(auth.user.email)
@@ -112,12 +114,7 @@ const turnOffAllDevices = () => run('offAllDevices', async () => {
         <IconCircle><IconBell /></IconCircle>
         <h2 class="notificationsIntroTitle">{{ $t('notifications.homeScreen.title') }}</h2>
         <p class="notificationsIntroText">{{ $t('notifications.homeScreen.intro') }}</p>
-        <ol class="notificationsSteps">
-          <li v-for="step in homeScreenSteps" :key="step" class="notificationsStep">
-            <span class="notificationsStepNumber">{{ step }}</span>
-            <span class="notificationsStepText">{{ $t(`notifications.homeScreen.step${step}`) }}</span>
-          </li>
-        </ol>
+        <NumberedSteps class="notificationsSteps" :steps="homeScreenSteps" />
       </div>
 
       <Alert
@@ -235,39 +232,7 @@ const turnOffAllDevices = () => run('offAllDevices', async () => {
 }
 
 .notificationsSteps {
-  list-style: none;
-  margin: calc(var(--padding) * 2) 0 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: calc(var(--padding) * 1.5);
-  text-align: left;
-}
-
-.notificationsStep {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--padding);
-}
-
-.notificationsStepNumber {
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: var(--gradient);
-  color: var(--white);
-  font-size: var(--font-size-small);
-  font-weight: var(--font-weight-bold);
-}
-
-.notificationsStepText {
-  padding-top: 6px;
-  font-size: var(--font-size-small);
-  line-height: 1.5;
+  margin-top: calc(var(--padding) * 2);
 }
 
 .notificationsSection + .notificationsSection {

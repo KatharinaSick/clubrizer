@@ -22,9 +22,24 @@ function isSupported(): boolean {
   return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
 }
 
+// getBrowserSubscription returns this browser's subscription, or null if there is none or no
+// service worker is registered. Unlike navigator.serviceWorker.ready it never waits forever.
 async function getBrowserSubscription(): Promise<PushSubscription | null> {
-  const registration = await navigator.serviceWorker.ready
-  return registration.pushManager.getSubscription()
+  const registration = await navigator.serviceWorker.getRegistration()
+  return (await registration?.pushManager.getSubscription()) ?? null
+}
+
+// readyRegistration waits for the active service worker, which subscribing needs. ready never
+// settles if the worker failed to register, so give up after a while instead of hanging.
+const SERVICE_WORKER_TIMEOUT_MS = 10_000
+
+function readyRegistration(): Promise<ServiceWorkerRegistration> {
+  return Promise.race([
+    navigator.serviceWorker.ready,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('service worker not ready')), SERVICE_WORKER_TIMEOUT_MS),
+    ),
+  ])
 }
 
 export async function getPushState(): Promise<PushState> {
@@ -86,7 +101,7 @@ export async function turnOnPush(ownerEmail: string): Promise<PushState> {
     return 'off'
   }
 
-  const registration = await navigator.serviceWorker.ready
+  const registration = await readyRegistration()
   let subscription = await registration.pushManager.getSubscription()
   if (!subscription) {
     const publicKey = await notificationsService.getVapidPublicKey()
@@ -118,17 +133,19 @@ export async function turnOffPushOnAllDevices(): Promise<void> {
   setOwner(null)
 }
 
-// unregisterPushOnLogout stops notifications to this device before signing out, so nothing
-// arrives here while nobody is signed in. The browser keeps its subscription and owner, so the
-// same person gets notifications back on their next sign-in. Never blocks the logout.
-export async function unregisterPushOnLogout(): Promise<void> {
-  if (!isSupported() || Notification.permission !== 'granted') {
+// releasePushOnLogout stops notifications to this device when signing out, so nothing arrives
+// here while nobody is signed in. Works even if the session has already expired (e.g. a failed
+// token refresh). The browser keeps its subscription and owner, so the same person gets
+// notifications back on their next sign-in (see restorePushOnSignIn). Never blocks the logout.
+export async function releasePushOnLogout(): Promise<void> {
+  if (!isSupported()) {
     return
   }
   try {
     const subscription = await getBrowserSubscription()
     if (subscription) {
-      await notificationsService.unsubscribe(subscription.endpoint)
+      const json = subscription.toJSON() as PushSubscriptionPayload
+      await notificationsService.releaseDevice(json.endpoint, json.keys.auth)
     }
   } catch {
     // ignore — logging out matters more

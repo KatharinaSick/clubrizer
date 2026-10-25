@@ -66,7 +66,7 @@ const value = defineModel<boolean>({ required: true })
   position: relative;
   width: 44px;
   height: 24px;
-  border-radius: 12px;
+  border-radius: var(--border-radius);
   background: var(--gray);
   transition: background 0.2s;
 }

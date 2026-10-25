@@ -210,12 +210,15 @@ func (s *Service) UpsertEventResponse(ctx context.Context, eventId string, req U
 		if status != "approved" {
 			return apperrors.NewForbidden("this kid is not approved yet")
 		}
-		if err := s.store.upsertKidEventResponse(ctx, uuidId, *req.KidID, *req.Response); err != nil {
+		changed, err := s.store.upsertKidEventResponse(ctx, uuidId, *req.KidID, *req.Response)
+		if err != nil {
 			return err
 		}
-		s.listener.ResponseChanged(ctx, ResponseChanged{
-			Event: event, ActorID: claims.ID, KidID: req.KidID, Name: kidName, Response: *req.Response,
-		})
+		if changed {
+			s.listener.ResponseChanged(ctx, ResponseChanged{
+				Event: event, ActorID: claims.ID, KidID: req.KidID, Name: kidName, Response: *req.Response,
+			})
+		}
 		return nil
 	}
 
@@ -224,12 +227,16 @@ func (s *Service) UpsertEventResponse(ctx context.Context, eventId string, req U
 	if !claims.SelfParticipates {
 		return apperrors.NewForbidden("this account does not participate in events itself")
 	}
-	if err := s.store.upsertEventResponse(ctx, uuidId, claims.ID, *req.Response); err != nil {
+	changed, err := s.store.upsertEventResponse(ctx, uuidId, claims.ID, *req.Response)
+	if err != nil {
 		return err
 	}
-	s.listener.ResponseChanged(ctx, ResponseChanged{
-		Event: event, ActorID: claims.ID, Name: displayName(claims), Response: *req.Response,
-	})
+	// Answering the same again changes nothing, so there is nothing to tell anyone.
+	if changed {
+		s.listener.ResponseChanged(ctx, ResponseChanged{
+			Event: event, ActorID: claims.ID, Name: displayName(claims), Response: *req.Response,
+		})
+	}
 	return nil
 }
 
@@ -258,7 +265,7 @@ func (s *Service) CreateEvent(ctx context.Context, e Event) (*Event, error) {
 	// Auto-RSVP the creator as going — but only if the account participates itself.
 	// (A guardian account can't create events anyway, since it holds no member role.)
 	if claims.SelfParticipates {
-		if err := s.store.upsertEventResponse(ctx, id, userId, true); err != nil {
+		if _, err := s.store.upsertEventResponse(ctx, id, userId, true); err != nil {
 			return nil, err
 		}
 	}

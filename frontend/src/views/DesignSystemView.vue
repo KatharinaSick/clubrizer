@@ -19,6 +19,7 @@ import IconPencil from '@/components/icons/IconPencil.vue'
 import IconTrash from '@/components/icons/IconTrash.vue'
 import IconBell from '@/components/icons/IconBell.vue'
 import IconCircle from '@/components/IconCircle.vue'
+import NumberedSteps from '@/components/NumberedSteps.vue'
 
 const showProfileModal = ref(false)
 const showKidProfileModal = ref(false)
@@ -993,6 +994,14 @@ const spacingLayout = [
           <code class="dsToken">IconCircle</code>
         </div>
       </div>
+
+      <h3 class="dsSubsectionTitle">NumberedSteps</h3>
+      <p class="dsSectionDesc">
+        <code>&lt;NumberedSteps :steps="steps" /&gt;</code> — a numbered list of instructions, each number in a
+        gradient circle. Takes the already translated steps as strings, so every screen keeps its own i18n keys.
+        Used for the iPhone home-screen instructions on the notification screen and announcement.
+      </p>
+      <NumberedSteps :steps="['Tap the Share button.', 'Choose Add to Home Screen.', 'Tap Add in the top right.']" />
     </section>
 
     <!-- ─── KIDS MANAGEMENT ─── -->

@@ -65,19 +65,24 @@ func (s *Service) EventCreated(ctx context.Context, created events.EventCreated)
 }
 
 // ResponseChanged tells the event's creator. The service worker groups responses to the
-// same event into one notification.
+// same event into one notification, keeping only the latest answer of each respondent.
 func (s *Service) ResponseChanged(ctx context.Context, changed events.ResponseChanged) {
 	response := "no"
 	if changed.Response {
 		response = "yes"
 	}
+	respondent := changed.ActorID
+	if changed.KidID != nil {
+		respondent = *changed.KidID
+	}
 	s.notify(ctx, excluding([]uuid.UUID{changed.Event.CreatedBy}, changed.ActorID), message{
 		Type: typeEventResponse,
 		Params: map[string]string{
-			"eventId":  changed.Event.ID.String(),
-			"name":     changed.Name,
-			"title":    changed.Event.Title,
-			"response": response,
+			"eventId":      changed.Event.ID.String(),
+			"respondentId": respondent.String(),
+			"name":         changed.Name,
+			"title":        changed.Event.Title,
+			"response":     response,
 		},
 		URL: eventUrl(changed.Event.ID),
 	})

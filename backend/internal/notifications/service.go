@@ -1,6 +1,7 @@
 package notifications
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -40,7 +41,7 @@ const pushTTL = 24 * time.Hour
 // that triggered them.
 const notifyTimeout = 10 * time.Second
 
-// notifyConcurrency is how many users Notify sends to at the same time.
+// notifyConcurrency is how many devices notify sends to at the same time.
 const notifyConcurrency = 10
 
 // Service is responsible for registering devices and sending Web Push notifications. It
@@ -110,9 +111,10 @@ func (s *Service) Unsubscribe(ctx context.Context, req UnsubscribeRequest) error
 	return s.store.deleteSubscription(ctx, userId, req.Endpoint)
 }
 
-// ReleaseDevice removes this device's subscription even if it belongs to someone else, e.g. a
-// previous user whose session expired without logging out. The app calls it when a different
-// person signs in on the device, so the previous person's notifications stop arriving there.
+// ReleaseDevice removes this device's subscription whoever it belongs to. The app calls it on
+// logout — also when the session has already expired — and when a different person signs in
+// on the device, so the previous person's notifications stop arriving there. Needs no
+// session: the subscription's secret proves the caller is on that device.
 func (s *Service) ReleaseDevice(ctx context.Context, req ReleaseDeviceRequest) error {
 	return s.store.deleteSubscriptionOfDevice(ctx, req.Endpoint, req.Auth)
 }
@@ -126,7 +128,11 @@ func (s *Service) UnsubscribeAll(ctx context.Context) error {
 func (s *Service) SendTest(ctx context.Context) error {
 	userId := ctx.Value(s.cfg.JWT.User.Key).(*users.Claims).ID
 
-	sent, err := s.sendToUser(ctx, userId, message{Type: typeTest, URL: "/notifications"})
+	subs, err := s.store.getSubscriptionsByUsers(ctx, []uuid.UUID{userId})
+	if err != nil {
+		return err
+	}
+	sent, err := s.sendToDevices(ctx, subs, message{Type: typeTest, URL: "/notifications"})
 	if err != nil {
 		return err
 	}
@@ -202,54 +208,63 @@ func (s *Service) notify(ctx context.Context, userIds []uuid.UUID, msg message) 
 	ctx, cancel := detached(ctx)
 	defer cancel()
 
-	userIds, err := s.withoutOptedOut(ctx, typeCategories[msg.Type], dedupe(userIds))
+	userIds, err := s.withoutOptedOut(ctx, typeCategories[msg.Type], userIds)
 	if err != nil {
 		// Rather send nothing than notify people who asked not to be.
 		s.log.Error("failed to load notification settings", "type", msg.Type, "error", err)
 		return
 	}
-
-	var wg sync.WaitGroup
-	limit := make(chan struct{}, notifyConcurrency)
-	for _, userId := range userIds {
-		wg.Add(1)
-		limit <- struct{}{}
-		go func() {
-			defer wg.Done()
-			defer func() { <-limit }()
-			if _, err := s.sendToUser(ctx, userId, msg); err != nil {
-				s.log.Warn("failed to send push notification", "user", userId, "type", msg.Type, "error", err)
-			}
-		}()
+	if len(userIds) == 0 {
+		return
 	}
-	wg.Wait()
+
+	subs, err := s.store.getSubscriptionsByUsers(ctx, userIds)
+	if err != nil {
+		s.log.Error("failed to load push subscriptions", "type", msg.Type, "error", err)
+		return
+	}
+	if _, err := s.sendToDevices(ctx, subs, msg); err != nil {
+		s.log.Error("failed to send push notifications", "type", msg.Type, "error", err)
+	}
 }
 
-// sendToUser delivers the message to every device of the user and returns how many devices
-// accepted it. Devices the push service reports as gone are removed; other failures are
-// logged and skipped so one broken device doesn't block the others.
-func (s *Service) sendToUser(ctx context.Context, userId uuid.UUID, msg message) (int, error) {
-	subs, err := s.store.getSubscriptionsByUser(ctx, userId)
-	if err != nil {
-		return 0, err
-	}
-
+// sendToDevices delivers the message to the given devices and returns how many accepted it.
+// Devices the push service reports as gone are removed; other failures are logged and
+// skipped so one broken device doesn't block the others.
+func (s *Service) sendToDevices(ctx context.Context, subs []*Subscription, msg message) (int, error) {
 	payload, err := json.Marshal(msg)
 	if err != nil {
 		return 0, errors.New(fmt.Sprintf("failed to encode push message: %s", err.Error()))
 	}
 
-	// Send one device after another: webpush-go v1.4.0 writes into the payload's spare
-	// capacity, so sharing payload across goroutines races. Fixed upstream (#83) but not
-	// released yet — only parallelize once a release includes it. (notify sending to several
-	// users in parallel is fine: each sendToUser call encodes its own payload.)
-	sent := 0
+	var (
+		wg        sync.WaitGroup
+		mu        sync.Mutex
+		delivered []uuid.UUID
+	)
+	limit := make(chan struct{}, notifyConcurrency)
 	for _, sub := range subs {
-		if s.send(ctx, sub, payload) {
-			sent++
-		}
+		wg.Add(1)
+		limit <- struct{}{}
+		go func() {
+			defer wg.Done()
+			defer func() { <-limit }()
+			// Each send gets its own copy: webpush-go v1.4.0 writes into the payload's spare
+			// capacity, so sharing one payload across goroutines races. Fixed upstream (#83)
+			// but not released yet.
+			if s.send(ctx, sub, bytes.Clone(payload)) {
+				mu.Lock()
+				delivered = append(delivered, sub.ID)
+				mu.Unlock()
+			}
+		}()
 	}
-	return sent, nil
+	wg.Wait()
+
+	if err := s.store.touchSubscriptions(ctx, delivered); err != nil {
+		s.log.Warn("failed to update push subscriptions", "error", err)
+	}
+	return len(delivered), nil
 }
 
 func (s *Service) send(ctx context.Context, sub *Subscription, payload []byte) bool {
@@ -278,9 +293,6 @@ func (s *Service) send(ctx context.Context, sub *Subscription, payload []byte) b
 		}
 		return false
 	case resp.StatusCode >= 200 && resp.StatusCode < 300:
-		if err := s.store.touchSubscription(ctx, sub.ID); err != nil {
-			s.log.Warn("failed to update push subscription", "subscription", sub.ID, "error", err)
-		}
 		return true
 	default:
 		s.log.Warn("push service rejected notification", "subscription", sub.ID, "status", resp.StatusCode)
@@ -288,8 +300,8 @@ func (s *Service) send(ctx context.Context, sub *Subscription, payload []byte) b
 	}
 }
 
-// withoutOptedOut drops the users who switched the category off. An empty category means the
-// message is always sent.
+// withoutOptedOut returns the users who didn't switch the category off. An empty category
+// means the message is always sent.
 func (s *Service) withoutOptedOut(ctx context.Context, category string, userIds []uuid.UUID) ([]uuid.UUID, error) {
 	if category == "" || len(userIds) == 0 {
 		return userIds, nil
@@ -298,7 +310,8 @@ func (s *Service) withoutOptedOut(ctx context.Context, category string, userIds 
 	if err != nil {
 		return nil, err
 	}
-	return slices.DeleteFunc(userIds, func(id uuid.UUID) bool { return optedOut[id] }), nil
+	// On a copy: callers may still need the full list (e.g. for emails).
+	return slices.DeleteFunc(slices.Clone(userIds), func(id uuid.UUID) bool { return optedOut[id] }), nil
 }
 
 func isAllowedEndpoint(endpoint string) bool {
@@ -314,18 +327,6 @@ func isAllowedEndpoint(endpoint string) bool {
 		}
 	}
 	return false
-}
-
-func dedupe(ids []uuid.UUID) []uuid.UUID {
-	seen := make(map[uuid.UUID]bool, len(ids))
-	out := make([]uuid.UUID, 0, len(ids))
-	for _, id := range ids {
-		if !seen[id] {
-			seen[id] = true
-			out = append(out, id)
-		}
-	}
-	return out
 }
 
 // detached returns a context that outlives the request (a client hanging up must not cancel

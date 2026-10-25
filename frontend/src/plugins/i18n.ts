@@ -369,6 +369,7 @@ export default createI18n({
         later: 'Later',
         noThanks: 'No thanks',
         deviceError: 'That didn\'t work on this device. Please try again.',
+        notAllowed: 'Notifications weren\'t allowed. Tap "Turn on" to try again.',
         homeScreen: {
           intro: 'On iPhone or iPad, add the app to your home screen first:',
           step1: 'Tap the Share button at the bottom (the square with an arrow pointing up).',
@@ -379,6 +380,11 @@ export default createI18n({
         done: {
           title: 'You\'re all set!',
           message: 'You can choose what you hear about in your profile under Notifications.',
+          close: 'Got it',
+        },
+        blocked: {
+          title: 'Notifications are blocked',
+          message: 'No problem! If you change your mind, you can allow them in your phone or browser settings.',
           close: 'Got it',
         },
       },
@@ -846,6 +852,7 @@ export default createI18n({
         later: 'Später',
         noThanks: 'Nein danke',
         deviceError: 'Das hat auf diesem Gerät nicht geklappt. Bitte versuch es nochmal.',
+        notAllowed: 'Benachrichtigungen wurden nicht erlaubt. Tipp auf „Einschalten“, um es nochmal zu versuchen.',
         homeScreen: {
           intro: 'Auf dem iPhone oder iPad füg die App zuerst zu deinem Home-Bildschirm hinzu:',
           step1: 'Tipp unten auf das Teilen-Symbol (das Quadrat mit dem Pfeil nach oben).',
@@ -856,6 +863,11 @@ export default createI18n({
         done: {
           title: 'Alles startklar!',
           message: 'In deinem Profil unter Benachrichtigungen kannst du aussuchen, worüber du Bescheid bekommst.',
+          close: 'Alles klar',
+        },
+        blocked: {
+          title: 'Benachrichtigungen sind blockiert',
+          message: 'Kein Problem! Falls du es dir anders überlegst, kannst du sie in den Einstellungen deines Handys oder Browsers erlauben.',
           close: 'Alles klar',
         },
       },
