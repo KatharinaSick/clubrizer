@@ -126,3 +126,16 @@ func (s *store) getEmails(ctx context.Context, userIds []uuid.UUID) ([]string, e
 	}
 	return emails, nil
 }
+
+// getApprovedUserIds returns the ids of all approved accounts.
+func (s *store) getApprovedUserIds(ctx context.Context) ([]uuid.UUID, error) {
+	rows, err := s.conn.Query(ctx, "SELECT id FROM users WHERE status = 'approved'")
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to query approved users: %s", err.Error()))
+	}
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[uuid.UUID])
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("failed to collect approved users: %s", err.Error()))
+	}
+	return ids, nil
+}

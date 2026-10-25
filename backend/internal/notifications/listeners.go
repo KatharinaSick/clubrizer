@@ -45,6 +45,44 @@ func (s *Service) CommentCreated(ctx context.Context, created events.CommentCrea
 	})
 }
 
+// EventCreated tells every approved member except the creator. The service worker groups
+// these into one "n new events" notification when several arrive in a row.
+func (s *Service) EventCreated(ctx context.Context, created events.EventCreated) {
+	members, err := s.store.getApprovedUserIds(ctx)
+	if err != nil {
+		s.log.Error("failed to load members for new event notification", "error", err)
+		return
+	}
+	s.notify(ctx, excluding(members, created.ActorID), message{
+		Type: typeNewEvent,
+		Params: map[string]string{
+			"eventId": created.Event.ID.String(),
+			"title":   created.Event.Title,
+			"date":    created.Event.StartTime.Format(time.RFC3339),
+		},
+		URL: eventUrl(created.Event.ID),
+	})
+}
+
+// ResponseChanged tells the event's creator. The service worker groups responses to the
+// same event into one notification.
+func (s *Service) ResponseChanged(ctx context.Context, changed events.ResponseChanged) {
+	response := "no"
+	if changed.Response {
+		response = "yes"
+	}
+	s.notify(ctx, excluding([]uuid.UUID{changed.Event.CreatedBy}, changed.ActorID), message{
+		Type: typeEventResponse,
+		Params: map[string]string{
+			"eventId":  changed.Event.ID.String(),
+			"name":     changed.Name,
+			"title":    changed.Event.Title,
+			"response": response,
+		},
+		URL: eventUrl(changed.Event.ID),
+	})
+}
+
 // ApprovalRequested tells everyone who can approve members, by push and email. The push
 // notification names nobody: applicants only enter their name after approval, and their
 // email address must not show up on lock screens. The email names them (falling back to the

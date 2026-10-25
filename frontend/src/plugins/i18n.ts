@@ -147,6 +147,20 @@ export default createI18n({
           title: '{name} commented on {title}',
           body: '{comment}',
         },
+        newEvent: {
+          title: 'New event: {title}',
+          body: '{date}',
+          groupTitle: '{count} new events',
+          groupBody: '{titles}',
+        },
+        eventResponse: {
+          title: '{name} responded to {title}',
+          body: '{answer}',
+          groupTitle: '{count} new responses to {title}',
+          groupBody: '{answers}',
+          yes: '✅ Is coming',
+          no: '❌ Can’t come',
+        },
         fallback: {
           title: 'LISC-2010',
           body: 'Something new happened in your club.',
@@ -619,6 +633,20 @@ export default createI18n({
         eventComment: {
           title: '{name} hat {title} kommentiert',
           body: '{comment}',
+        },
+        newEvent: {
+          title: 'Neues Event: {title}',
+          body: '{date}',
+          groupTitle: '{count} neue Events',
+          groupBody: '{titles}',
+        },
+        eventResponse: {
+          title: '{name} hat auf {title} geantwortet',
+          body: '{answer}',
+          groupTitle: '{count} neue Antworten zu {title}',
+          groupBody: '{answers}',
+          yes: '✅ Kommt',
+          no: '❌ Kommt nicht',
         },
         fallback: {
           title: 'LISC-2010',

@@ -203,14 +203,20 @@ func (s *Service) UpsertEventResponse(ctx context.Context, eventId string, req U
 	// enforced in the query (a kid belonging to someone else is reported as not
 	// found), and approval is gated here — never trust the client.
 	if req.KidID != nil {
-		status, err := s.store.getOwnedKidStatus(ctx, *req.KidID, claims.ID)
+		status, kidName, err := s.store.getOwnedKid(ctx, *req.KidID, claims.ID)
 		if err != nil {
 			return err
 		}
 		if status != "approved" {
 			return apperrors.NewForbidden("this kid is not approved yet")
 		}
-		return s.store.upsertKidEventResponse(ctx, uuidId, *req.KidID, *req.Response)
+		if err := s.store.upsertKidEventResponse(ctx, uuidId, *req.KidID, *req.Response); err != nil {
+			return err
+		}
+		s.listener.ResponseChanged(ctx, ResponseChanged{
+			Event: event, ActorID: claims.ID, KidID: req.KidID, Name: kidName, Response: *req.Response,
+		})
+		return nil
 	}
 
 	// Own response: only participating accounts may RSVP for themselves. A guardian
@@ -218,7 +224,13 @@ func (s *Service) UpsertEventResponse(ctx context.Context, eventId string, req U
 	if !claims.SelfParticipates {
 		return apperrors.NewForbidden("this account does not participate in events itself")
 	}
-	return s.store.upsertEventResponse(ctx, uuidId, claims.ID, *req.Response)
+	if err := s.store.upsertEventResponse(ctx, uuidId, claims.ID, *req.Response); err != nil {
+		return err
+	}
+	s.listener.ResponseChanged(ctx, ResponseChanged{
+		Event: event, ActorID: claims.ID, Name: displayName(claims), Response: *req.Response,
+	})
+	return nil
 }
 
 func (s *Service) CreateEvent(ctx context.Context, e Event) (*Event, error) {
@@ -251,6 +263,7 @@ func (s *Service) CreateEvent(ctx context.Context, e Event) (*Event, error) {
 		}
 	}
 
+	s.listener.EventCreated(ctx, EventCreated{Event: &e, ActorID: userId})
 	return &e, nil
 }
 

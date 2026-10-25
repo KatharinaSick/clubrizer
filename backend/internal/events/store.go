@@ -284,23 +284,22 @@ func (s *store) upsertKidEventResponse(ctx context.Context, eventId uuid.UUID, k
 	return nil
 }
 
-// getOwnedKidStatus returns the kid's approval status only if it belongs to userId and
-// hasn't been removed. A kid owned by someone else — or one that was soft-deleted — is
+// getOwnedKid returns the kid's approval status and given name only if it belongs to userId
+// and hasn't been removed. A kid owned by someone else — or one that was soft-deleted — is
 // reported as not found, so a guessed id reveals nothing and a removed kid can't receive
 // new responses.
-func (s *store) getOwnedKidStatus(ctx context.Context, kidId uuid.UUID, userId uuid.UUID) (string, error) {
-	var status string
-	err := s.conn.QueryRow(ctx,
-		"SELECT status FROM kids WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL",
+func (s *store) getOwnedKid(ctx context.Context, kidId uuid.UUID, userId uuid.UUID) (status string, name string, err error) {
+	err = s.conn.QueryRow(ctx,
+		"SELECT status, COALESCE(given_name, '') FROM kids WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL",
 		kidId, userId,
-	).Scan(&status)
+	).Scan(&status, &name)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return "", apperrors.NewNotFound(fmt.Sprintf("kid with id %s not found", kidId))
+			return "", "", apperrors.NewNotFound(fmt.Sprintf("kid with id %s not found", kidId))
 		}
-		return "", errors.New(fmt.Sprintf("failed to query kid status: %s", err.Error()))
+		return "", "", errors.New(fmt.Sprintf("failed to query kid: %s", err.Error()))
 	}
-	return status, nil
+	return status, name, nil
 }
 
 func (s *store) deleteEvent(ctx context.Context, id uuid.UUID) error {

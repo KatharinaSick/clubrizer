@@ -23,4 +23,6 @@ const (
 	typeEventUncancelled = "eventUncancelled"
 	typeEventDeleted     = "eventDeleted"
 	typeEventComment     = "eventComment"
+	typeNewEvent         = "newEvent"
+	typeEventResponse    = "eventResponse"
 )
